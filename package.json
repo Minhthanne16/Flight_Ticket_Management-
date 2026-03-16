@@ -1,0 +1,30 @@
+{
+  "name": "flight_ticket_management-",
+  "version": "1.0.0",
+  "description": "Hệ thống quản lý bán vé chuyến bay.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "postinstall": "cd frontend && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && ./mvnw spring-boot:run",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minhthanne16/Flight_Ticket_Management-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Minhthanne16/Flight_Ticket_Management-/issues"
+  },
+  "homepage": "https://github.com/Minhthanne16/Flight_Ticket_Management-#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
