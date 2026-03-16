@@ -23,24 +23,24 @@ npm install
 ```
 **Bước 2: Bắt đầu Task mới: (Luôn pull từ `develop` mới nhất)**
 ```bash
-    git checkout develop
-    git pull origin develop
-    git checkout -b feature/nhan-lich-chuyen-bay`
+git checkout develop
+git pull origin develop
+git checkout -b feature/nhan-lich-chuyen-bay`
 ``` 
 **Bước 3: Commit & Push: nhớ commit thường xuyên**
 ```bash
-    `git add .
-    git commit -m "feat: add flight schedule management api"
-    git push origin feature/nhan-lich-chuyen-bay`
+git add .
+git commit -m "feat: add flight schedule management api"
+git push origin feature/nhan-lich-chuyen-bay`
 ```
 **Bước 4: Tạo Pull Request (PR):**
 ```bash
-    - Target: `develop` ← Source: `feature/...`
-    - Yêu cầu: Có mô tả rõ ràng, đã qua bộ lọc kiểm tra (CI/CD).
+Target: `develop` ← Source: `feature/...`
+ Yêu cầu: Có mô tả rõ ràng, đã qua bộ lọc kiểm tra (CI/CD).
 ```
 **Bước 5: Sau khi yêu cầu được merge, xóa branch local:**
 ```bash
-    - git checkout develop
-    - git pull origin develop
-    - git branch -d ten_branch
+git checkout develop
+git pull origin develop
+git branch -d ten_branch
 ```
