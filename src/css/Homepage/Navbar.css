@@ -1,0 +1,81 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0 50px; 
+    background-color: rgb(255, 255, 255);
+    height: 80px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.navbar .logo-container {
+    flex: 1; 
+    display: flex;
+    align-items: center;
+}
+
+.navbar .logo-container img {
+    height: 50px;
+    width: auto;
+}
+
+.navbar .nav-menu-wrapper {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+    flex: 2; 
+}
+.navbar li a {
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 10px 15px;
+    margin: 0 10px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.navbar .authen {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end; 
+    align-items: center;
+    gap: 20px;
+}
+
+.authen {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.auth-link {
+    text-decoration: none;
+    color: #000000;
+    font-weight: 200;
+    transition: all 0.2s ease-in-out;
+    display: inline-block;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+.auth-link:first-child::after {
+    content: "/";
+    margin-left: 5px;
+    color: #000;      
+    font-weight: 200;  
+    text-decoration: none; 
+    display: inline-block;
+}
+
+
+.login-btn {
+    background-color: #ffffff;
+    color: #005aab !important;
+    margin-left: -15px;
+}

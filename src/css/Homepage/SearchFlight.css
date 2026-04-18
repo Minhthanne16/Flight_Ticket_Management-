@@ -1,0 +1,282 @@
+
+.searching-card {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.slogan {
+    font-size: 30px;
+    color: #1a1a3d;
+    margin-bottom: 0px;
+    font-weight: 650px;
+    text-align: center;
+}
+
+.searching-plane {
+    background: #ffffff;
+    padding: 25px 30px;
+    border-radius: 24px;
+    box-shadow: 0 45px 45px rgba(0, 0, 0, 0.1);
+}
+
+.options-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+
+.trip-type {
+    display: flex;
+    gap: 10px;
+    background: #f0f0f5;
+    padding: 3px;
+    border-radius: 12px;
+}
+
+
+
+.btn-one {
+    background: #5856D6; 
+    color: white;
+    padding: 9px 15px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-return {
+    background: transparent;
+    color: #666;
+    padding: 9px 15px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-return:hover {
+    background: #e2e2e2;
+}
+
+.filter-options {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.switch-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    border: 1px dashed #5856D6;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.select-input-wrapper {
+    position: relative; 
+    display: inline-block;
+    width: 150px;
+}
+
+.fa-couch {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #000000;
+    pointer-events: none;
+    z-index: 1; 
+}
+
+.select-input {
+    width: 100%; 
+    padding: 10px 10px 10px 35px; 
+    border-radius: 10px;
+    border: 1px dashed #5856D6;
+    background: white;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    
+    /* Ẩn mũi tên mặc định của trình duyệt để nhìn sạch hơn */
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.Search-row {
+    display: flex;
+    gap: 30px;
+    align-items: stretch;
+}
+
+
+.loaction-group {
+    display: flex;
+    flex: 3;
+    position: relative;
+    background: transparent;
+    border-radius: 16px;
+    min-height: 80px; 
+    max-width: 800px;
+    align-items: stretch; 
+}
+
+.loaction-group > div {
+    flex: 1; 
+    display: flex;
+}
+
+
+.airport-picker-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.loaction-group > div:first-child .airport-box {
+    background-color: #5856D6;
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+    width: 100%;
+    height: 100%;
+    padding-left: 30px
+}
+
+.loaction-group > div:last-child .airport-box {
+    background-color: #2E3192;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    width: 95%;
+    height: 100%;
+    padding-left: 30px
+}
+
+.swap-icon-container {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20; 
+    pointer-events: none;
+}
+
+.swap-circle {
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    pointer-events: auto; 
+    cursor: pointer;
+}
+
+.swap-symbol {
+    color: #5856D6;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+
+.airport-box {
+    color: white !important;
+    display: flex;
+    flex-direction: column;   /* Xếp các dòng chữ theo cột từ trên xuống */
+    align-items: flex-start;  /* Căn toàn bộ nội dung bám lề trái */
+    justify-content: center;  /* Căn giữa theo chiều dọc của box */
+    text-align: left;         
+    width: 100%;
+    height: 100%;
+    padding: 14px 18px;
+    cursor: pointer;
+    box-sizing: border-box;    /* Đảm bảo padding không làm tăng kích thước box */
+}
+.from-box {
+    background: #5856D6; 
+    border-right: 1px solid rgba(255,255,255,0.2);
+}
+
+.to-box{
+    padding: 24px 34px;
+}
+
+.from-box span, .to-box span, .departure-box span, .return-box span {
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+
+.date-group {
+    display: flex;
+    flex: 2;
+    background: #2E3192;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.departure-box, .return-box {
+    flex: 1;
+    padding: 15px 20px;
+    color: white;
+    text-align: left;
+    border-right: 1px solid rgba(255,255,255,0.2);
+}
+
+.departure-box {
+    background: #5856D6;
+}
+
+.return-box {
+    border: none;
+}
+
+
+.btn-searching {
+    background: #72A0E5; 
+    border: none;
+    width: 70px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-searching:hover {
+    background: #5856D6;
+    transform: scale(1.05);
+}
+
+.search-icon {
+    font-size: 24px;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .Search-row, .options-row {
+        flex-direction: column;
+    }
+    .loaction-group, .date-group, .btn-searching {
+        width: 100%;
+        height: 60px;
+    }
+}

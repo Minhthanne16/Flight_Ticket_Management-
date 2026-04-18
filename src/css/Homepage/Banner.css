@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Katibeh&display=swap');
+.banner a {
+    text-decoration: none;
+    color: inherit;
+    display: contents; 
+}
+.banner {
+    position: relative;
+    width: auto;
+    height: 400px; 
+    background: url("../../asset/sky.png") no-repeat center center;
+    background-size: cover;
+    
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+    overflow: hidden; 
+    border-radius: 20px; 
+    font-family: 'Katibeh', cursive;
+    
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+
+.plane-img {
+    position: absolute;
+    right: -0.25%; 
+    bottom: 0%;
+    height: 90%;  
+    width: auto;
+    max-height: 100%; 
+    max-width: 90%;
+    
+    object-fit: contain; 
+    z-index: 1;
+    pointer-events: none;
+    transition: all 0.3s ease-out;
+}
+
+
+
+.content-box {
+    position: relative; 
+    z-index: 10; 
+    
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    padding: 20px;
+    border-radius: 24px;
+    max-width: 450px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden; 
+
+    flex-direction: column;
+    align-items: center; 
+    text-align: center; 
+}
+
+.glow-img {
+    position: absolute; 
+    top: -30%; 
+    left: -20%;
+    width: 130%;
+    height: auto;
+    z-index: -1; 
+    opacity: 0.8; 
+}
+
+.content-box .subtext {
+    font-size: 20px;
+    color: #000000;
+    margin-bottom: -30px;
+    margin-top: 10px;
+}
+
+.content-box .main-text {
+    font-size: 50px; 
+    color: #1a1a3d;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+.content-box .button-group {
+    display: flex;
+    gap: 30px; 
+    justify-content: center;
+}
+
+.button-create {
+    flex: 1; 
+    padding: 15px 0; 
+    height: 55px; 
+    border-radius: 16px; 
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    gap: 0px; 
+    
+    transition: all 0.3s ease;
+    
+    background-color: #5856D6;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.content-box .button-create:hover {
+    background-color: #4034a8;
+}
+.content-box .button-login {
+    flex: 1; 
+    padding: 15px 0; 
+    height: 55px; 
+    border-radius: 16px; 
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    gap: 0px; 
+    
+    transition: all 0.3s ease;
+    
+    background-color: #ffffff;
+    color: #5856D6;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.content-box .button-login:hover {
+    background-color: #5856D6;
+    color: white;
+}

@@ -1,0 +1,88 @@
+.passenger-picker-container {
+  position: relative;
+  width: 250px;
+}
+/* ICON */
+.passenger-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #000000;
+    font-size: 14px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.select-display {
+  padding: 10px 15px 10px 40px; 
+  border: 1px dashed #5856D6; 
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #333;
+}
+
+.passenger-dropdown {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: white;
+  border-radius: 16px;
+  padding: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  z-index: 100;
+  width: 250px;
+}
+
+.passenger-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 15px;
+}
+
+.counter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #1a1a3d;
+  background: none;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #1a1a3d;
+  transition: all 0.2s;
+}
+
+.count-btn:hover {
+  background: #f0f0ff;
+}
+
+.count-value {
+  font-weight: bold;
+  font-size: 18px;
+  min-width: 15px;
+  text-align: center;
+}
+
+.passenger-label {
+  color: #1a1a3d;
+  font-size: 16px;
+}
+
+.passenger-label small {
+  font-style: italic;
+  opacity: 0.7;
+}

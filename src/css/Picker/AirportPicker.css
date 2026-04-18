@@ -1,0 +1,92 @@
+.airport-picker-container {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+/* BOX */
+.airport-box {
+    width: 100%;
+    height: 100%;
+    padding: 14px 18px;
+    cursor: pointer;
+}
+
+/* DROPDOWN */
+.airport-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    width: 420px;
+    max-width: 100%;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+    z-index: 999;
+    overflow: hidden;
+}
+
+/* SEARCH INPUT */
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eee;
+}
+
+.search-input-wrapper input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+}
+
+/* LIST */
+.airport-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* ITEM */
+.airport-item {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.airport-item:hover {
+    background: #f6f7ff;
+}
+
+/* Tạo dòng chứa Icon và Label */
+.label-row {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Khoảng cách giữa icon và chữ From/To */
+    margin-bottom: 4px;
+}
+
+/* Định dạng cho chữ label (From/To) */
+.label-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+    color: white;
+}
+
+/* Định dạng cho icon truyền vào */
+.picker-icon {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    color: white !important;
+}
+
+/* Đảm bảo thẻ i bên trong nhận màu trắng */
+.picker-icon i {
+    color: white !important;
+}
