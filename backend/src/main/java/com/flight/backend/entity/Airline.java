@@ -1,5 +1,6 @@
 package com.flight.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,6 +37,7 @@ public class Airline {
     @Column(name = "logo", length = 255)
     private String logo;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "airline")
     private List<Airplane> airplanes = new ArrayList<>();
 }
