@@ -1,5 +1,5 @@
 package com.flight.backend.entity;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flight.backend.entity.enums.SeatStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -59,7 +59,8 @@ public class Seat {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private SeatStatus status;
-
+    
+    @JsonIgnore
     @OneToMany(mappedBy = "seat")
     private List<FlightSeat> flightSeats = new ArrayList<>();
 }
