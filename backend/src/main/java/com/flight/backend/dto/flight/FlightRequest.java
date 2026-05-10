@@ -1,4 +1,4 @@
-package com.flight.backend.dto;
+package com.flight.backend.dto.flight;
 
 import java.time.LocalDateTime;
 import lombok.Getter;

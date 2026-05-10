@@ -34,9 +34,6 @@ public class Customer {
     @JoinColumn(name = "customer_id", referencedColumnName = "user_id")
     private User user;
 
-    @Column(name = "full_name", length = 255)
-    private String fullName;
-
     @Column(name = "birthday")
     private LocalDate birthday;
 

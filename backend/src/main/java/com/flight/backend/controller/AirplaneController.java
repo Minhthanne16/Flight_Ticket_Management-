@@ -1,7 +1,7 @@
 package com.flight.backend.controller;
 
-import com.flight.backend.dto.AirplaneRequest;
-import com.flight.backend.dto.AirplaneResponse;
+import com.flight.backend.dto.airplane.AirplaneRequest;
+import com.flight.backend.dto.airplane.AirplaneResponse;
 import com.flight.backend.service.AirplaneService;
 import org.springframework.web.bind.annotation.*;
 

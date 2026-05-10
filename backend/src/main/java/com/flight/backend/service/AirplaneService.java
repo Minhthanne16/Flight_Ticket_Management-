@@ -1,7 +1,7 @@
 package com.flight.backend.service;
 
-import com.flight.backend.dto.AirplaneRequest;
-import com.flight.backend.dto.AirplaneResponse;
+import com.flight.backend.dto.airplane.AirplaneRequest;
+import com.flight.backend.dto.airplane.AirplaneResponse;
 import com.flight.backend.entity.Airline;
 import com.flight.backend.entity.Airplane;
 import com.flight.backend.entity.enums.AirplaneStatus;
@@ -18,7 +18,7 @@ public class AirplaneService {
     private final AirlineRepository airlineRepository;
 
     public AirplaneService(AirplaneRepository airplaneRepository,
-                           AirlineRepository airlineRepository) {
+            AirlineRepository airlineRepository) {
         this.airplaneRepository = airplaneRepository;
         this.airlineRepository = airlineRepository;
     }
@@ -38,8 +38,7 @@ public class AirplaneService {
         airplane.setStatus(
                 request.status != null
                         ? AirplaneStatus.valueOf(request.status.toUpperCase())
-                        : AirplaneStatus.ACTIVE
-        );
+                        : AirplaneStatus.ACTIVE);
 
         Airplane saved = airplaneRepository.save(airplane);
 

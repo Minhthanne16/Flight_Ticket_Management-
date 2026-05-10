@@ -1,7 +1,7 @@
 package com.flight.backend.service;
 
-import com.flight.backend.dto.AirportRequest;
-import com.flight.backend.dto.AirportResponse;
+import com.flight.backend.dto.airport.AirportRequest;
+import com.flight.backend.dto.airport.AirportResponse;
 import com.flight.backend.entity.Airport;
 import com.flight.backend.repository.AirportRepository;
 import org.springframework.stereotype.Service;
