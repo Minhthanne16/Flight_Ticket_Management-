@@ -37,9 +37,6 @@ public class Staff {
     @Column(name = "staff_code")
     private Integer staffCode;
 
-    @Column(name = "name", length = 255)
-    private String name;
-
     @Column(name = "department", length = 255)
     private String department;
 

@@ -1,6 +1,6 @@
 package com.flight.backend.service;
 
-import com.flight.backend.dto.FlightRequest;
+import com.flight.backend.dto.flight.FlightRequest;
 import com.flight.backend.entity.Airplane;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.entity.Route;
@@ -21,8 +21,7 @@ public class FlightService {
     public FlightService(
             FlightRepository flightRepo,
             AirplaneRepository airplaneRepo,
-            RouteRepository routeRepo
-    ) {
+            RouteRepository routeRepo) {
         this.flightRepo = flightRepo;
         this.airplaneRepo = airplaneRepo;
         this.routeRepo = routeRepo;

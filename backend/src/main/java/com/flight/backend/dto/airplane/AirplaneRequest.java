@@ -1,4 +1,4 @@
-package com.flight.backend.dto;
+package com.flight.backend.dto.airplane;
 
 import lombok.Getter;
 import lombok.Setter;

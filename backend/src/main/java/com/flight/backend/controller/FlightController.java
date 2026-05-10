@@ -1,6 +1,6 @@
 package com.flight.backend.controller;
 
-import com.flight.backend.dto.FlightRequest;
+import com.flight.backend.dto.flight.FlightRequest;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.service.FlightService;
 import org.springframework.web.bind.annotation.*;
