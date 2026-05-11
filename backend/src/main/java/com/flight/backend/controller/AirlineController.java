@@ -2,10 +2,16 @@ package com.flight.backend.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.flight.backend.dto.ApiResponse;
+import com.flight.backend.dto.airline.AirlineResponse;
+import com.flight.backend.dto.airline.CreateAirlineRequest;
+import com.flight.backend.dto.airline.UpdateAirlineRequest;
 import com.flight.backend.entity.Airline;
 import com.flight.backend.service.AirlineService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/airlines")
@@ -19,8 +25,10 @@ public class AirlineController {
 
     // POST /airlines
     @PostMapping
-    public Airline createAirline(@RequestBody Airline airline) {
-        return airlineService.createAirline(airline);
+    public ResponseEntity<ApiResponse<AirlineResponse>> createAirline(
+            @Valid @RequestBody CreateAirlineRequest airline) {
+        AirlineResponse response = airlineService.createAirline(airline);
+        return ApiResponse.success(response, "Tạo mới hãng bay thành công.");
     }
 
     // GET /airlines
@@ -31,11 +39,12 @@ public class AirlineController {
 
     // PUT /airlines/{id}
     @PutMapping("/{id}")
-    public Airline updateAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> updateAirline(
             @PathVariable Long id,
-            @RequestBody Airline airline
-    ) {
-        return airlineService.updateAirline(id, airline);
+            @RequestBody UpdateAirlineRequest airline) {
+
+        AirlineResponse res = this.airlineService.updateAirline(id, airline);
+        return ApiResponse.success(res, "Cập nhật hãng bay thành công.");
     }
 
     // DELETE /airlines/{id}

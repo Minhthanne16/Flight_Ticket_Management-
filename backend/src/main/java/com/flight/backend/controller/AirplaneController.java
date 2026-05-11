@@ -1,6 +1,6 @@
 package com.flight.backend.controller;
 
-import com.flight.backend.dto.airplane.AirplaneRequest;
+import com.flight.backend.dto.airplane.CreateAirplaneRequest;
 import com.flight.backend.dto.airplane.AirplaneResponse;
 import com.flight.backend.service.AirplaneService;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class AirplaneController {
     }
 
     @PostMapping
-    public AirplaneResponse create(@RequestBody AirplaneRequest request) {
+    public AirplaneResponse create(@RequestBody CreateAirplaneRequest request) {
         return airplaneService.create(request);
     }
 

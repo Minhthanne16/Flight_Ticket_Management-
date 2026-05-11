@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.flight.backend.dto.airline.AirlineResponse;
+import com.flight.backend.dto.airline.CreateAirlineRequest;
+import com.flight.backend.dto.airline.UpdateAirlineRequest;
 import com.flight.backend.entity.Airline;
 import com.flight.backend.repository.AirlineRepository;
 
@@ -17,8 +20,28 @@ public class AirlineService {
     }
 
     // CREATE
-    public Airline createAirline(Airline airline) {
-        return airlineRepository.save(airline);
+    public AirlineResponse createAirline(CreateAirlineRequest req) {
+        if (airlineRepository.existsByAirlineCode(req.getAirlineCode())) {
+            throw new RuntimeException("Code already exists");
+        }
+
+        Airline airline = new Airline();
+
+        airline.setAirlineCode(req.getAirlineCode());
+        airline.setAirlineName(req.getAirlineName());
+        airline.setDescription(req.getDescription());
+        airline.setLogo(req.getLogo());
+
+        Airline saved = airlineRepository.save(airline);
+
+        AirlineResponse response = new AirlineResponse();
+        response.setId(saved.getId());
+        response.setAirlineCode(saved.getAirlineCode());
+        response.setAirlineName(saved.getAirlineName());
+        response.setDescription(saved.getDescription());
+        response.setLogo(saved.getLogo());
+
+        return response;
     }
 
     // GET ALL
@@ -27,16 +50,26 @@ public class AirlineService {
     }
 
     // UPDATE
-    public Airline updateAirline(Long id, Airline updatedAirline) {
+    public AirlineResponse updateAirline(Long id, UpdateAirlineRequest updatedAirline) {
 
         Airline airline = airlineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Airline not found"));
 
         airline.setAirlineCode(updatedAirline.getAirlineCode());
-        airline.setName(updatedAirline.getName());
+        airline.setAirlineName(updatedAirline.getAirlineName());
+        airline.setDescription(updatedAirline.getDescription());
         airline.setLogo(updatedAirline.getLogo());
 
-        return airlineRepository.save(airline);
+        Airline saved = this.airlineRepository.save(airline);
+
+        AirlineResponse response = new AirlineResponse();
+        response.setId(saved.getId());
+        response.setAirlineCode(saved.getAirlineCode());
+        response.setAirlineName(saved.getAirlineName());
+        response.setDescription(saved.getDescription());
+        response.setLogo(saved.getLogo());
+
+        return response;
     }
 
     // DELETE

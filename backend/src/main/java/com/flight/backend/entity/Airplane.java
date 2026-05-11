@@ -20,8 +20,9 @@ public class Airplane {
     @Column(name = "airplane_code", unique = true, length = 10)
     private String airplaneCode;
 
-    @Column(name = "model")
-    private String model;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "model_id")
+    private AirplaneModel model;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "airline_id")
@@ -29,7 +30,4 @@ public class Airplane {
 
     @Enumerated(EnumType.STRING)
     private AirplaneStatus status;
-
-    @Column(name = "total_seats")
-    private Integer totalSeats;
 }

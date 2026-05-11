@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AirportRequest {
+public class CreateAirportRequest {
     public String airportCode;
     public String name;
     public String city;
