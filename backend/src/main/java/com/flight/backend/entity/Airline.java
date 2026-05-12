@@ -32,7 +32,10 @@ public class Airline {
     private String airlineCode;
 
     @Column(name = "name", length = 255)
-    private String name;
+    private String airlineName;
+
+    @Column(name = "description")
+    private String description;
 
     @Column(name = "logo", length = 255)
     private String logo;

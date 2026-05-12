@@ -44,4 +44,7 @@ public class FlightStop {
 
     @Column(name = "stop_duration")
     private Integer stopDuration;
+
+    @Column(name = "stop_order")
+    private int stopOrder;
 }

@@ -1,14 +1,15 @@
 package com.flight.backend.dto.airplane;
 
+import com.flight.backend.entity.enums.AirplaneStatus;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class AirplaneRequest {
+public class CreateAirplaneRequest {
     public String airplaneCode;
-    public String model;
+    public Long modelId;
     public Long airlineId;
-    public Integer totalSeats;
-    public String status;
+    public AirplaneStatus status;
 }

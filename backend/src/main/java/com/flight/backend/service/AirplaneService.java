@@ -1,11 +1,12 @@
 package com.flight.backend.service;
 
-import com.flight.backend.dto.airplane.AirplaneRequest;
 import com.flight.backend.dto.airplane.AirplaneResponse;
+import com.flight.backend.dto.airplane.CreateAirplaneRequest;
 import com.flight.backend.entity.Airline;
 import com.flight.backend.entity.Airplane;
-import com.flight.backend.entity.enums.AirplaneStatus;
+import com.flight.backend.entity.AirplaneModel;
 import com.flight.backend.repository.AirlineRepository;
+import com.flight.backend.repository.AirplaneModelRepository;
 import com.flight.backend.repository.AirplaneRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,29 +17,32 @@ public class AirplaneService {
 
     private final AirplaneRepository airplaneRepository;
     private final AirlineRepository airlineRepository;
+    private final AirplaneModelRepository airplaneModelRepository;
 
-    public AirplaneService(AirplaneRepository airplaneRepository,
-            AirlineRepository airlineRepository) {
+    public AirplaneService(
+            AirplaneRepository airplaneRepository,
+            AirlineRepository airlineRepository,
+            AirplaneModelRepository airplaneModelRepository) {
         this.airplaneRepository = airplaneRepository;
         this.airlineRepository = airlineRepository;
+        this.airplaneModelRepository = airplaneModelRepository;
     }
 
     // CREATE
-    public AirplaneResponse create(AirplaneRequest request) {
+    public AirplaneResponse create(CreateAirplaneRequest request) {
 
         Airline airline = airlineRepository.findById(request.airlineId)
                 .orElseThrow(() -> new RuntimeException("Airline not found"));
 
+        AirplaneModel airplaneModel = airplaneModelRepository.findById(request.modelId)
+                .orElseThrow(() -> new RuntimeException("Model not found"));
+
         Airplane airplane = new Airplane();
         airplane.setAirplaneCode(request.airplaneCode);
-        airplane.setModel(request.model);
+        airplane.setModel(airplaneModel);
         airplane.setAirline(airline);
-        airplane.setTotalSeats(request.totalSeats);
 
-        airplane.setStatus(
-                request.status != null
-                        ? AirplaneStatus.valueOf(request.status.toUpperCase())
-                        : AirplaneStatus.ACTIVE);
+        airplane.setStatus(request.status);
 
         Airplane saved = airplaneRepository.save(airplane);
 
@@ -67,9 +71,8 @@ public class AirplaneService {
         res.id = a.getId();
         res.airplaneCode = a.getAirplaneCode();
         res.model = a.getModel();
-        res.totalSeats = a.getTotalSeats();
         res.status = a.getStatus().name();
-        res.airlineName = a.getAirline() != null ? a.getAirline().getName() : null;
+        res.airlineName = a.getAirline().getAirlineName();
         return res;
     }
 }

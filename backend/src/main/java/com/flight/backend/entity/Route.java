@@ -13,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -45,21 +44,9 @@ public class Route {
     @JoinColumn(name = "arrival_airport_id")
     private Airport arrivalAirport;
 
-    @Column(name = "base_distance")
-    private Integer baseDistance;
-
-    @Column(name = "estimated_duration")
-    private Integer estimatedDuration;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private RouteStatus status;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "route")
     private List<Flight> flights = new ArrayList<>();
