@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Passenger {
 
     @Id
@@ -34,11 +36,14 @@ public class Passenger {
     @Column(name = "full_name", length = 255)
     private String fullName;
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "id_card_number", length = 255)
-    private String idCardNumber;
+    private String documentNumber;
 
     @Column(name = "birthday")
-    private LocalDate birthday;
+    private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 20)

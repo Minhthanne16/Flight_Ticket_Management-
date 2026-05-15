@@ -6,9 +6,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AirportResponse {
-    public Long id;
-    public String airportCode;
-    public String name;
-    public String city;
-    public String country;
+    private Long id;
+    private String airportCode;
+    private String name;
+    private String city;
+    private String country;
 }

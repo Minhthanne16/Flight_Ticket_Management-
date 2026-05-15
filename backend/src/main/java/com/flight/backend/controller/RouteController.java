@@ -12,7 +12,7 @@ import com.flight.backend.dto.route.RouteResponse;
 import com.flight.backend.service.RouteService;
 
 @RestController
-@RequestMapping("/routes")
+@RequestMapping("/admin/routes")
 public class RouteController {
     private final RouteService routeService;
 
