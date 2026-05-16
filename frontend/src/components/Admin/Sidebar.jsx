@@ -1,86 +1,142 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, PlaneTakeoff, Ticket, Calendar, Headset, User, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  LayoutGrid,
+  Plane,
+  BookOpen,
+  MapPin,
+  Users,
+  SlidersHorizontal,
+  Settings,
+  LogOut,
+  Plus,
+} from 'lucide-react';
 import logoImg from '../../assets/logo.png';
+
+const navItems = [
+  { path: '/admin/dashboard',     label: 'Tổng quan',         icon: LayoutGrid },
+  { path: '/admin/flight-schedule', label: 'Quản lý chuyến bay', icon: Plane },
+  { path: '/admin/bookings',      label: 'Quản lý đặt chỗ',   icon: BookOpen },
+  { path: '/admin/airports',      label: 'Sân bay & Tuyến bay', icon: MapPin },
+  { path: '/admin/staff',         label: 'Nhân viên',          icon: Users },
+  { path: '/admin/regulations',   label: 'Cấu hình hệ thống', icon: SlidersHorizontal },
+];
 
 const Sidebar = () => {
   const location = useLocation();
-
-  const menuGroups = [
-    {
-      title: 'MAIN',
-      items: [
-        { path: '/admin', label: 'Dashboard', icon: LayoutGrid },
-        { path: '/admin/flight-schedule', label: 'Flight Schedule', icon: PlaneTakeoff },
-        { path: '/admin/booking', label: 'Booking', icon: Ticket },
-      ]
-    },
-    {
-      title: 'OPERATIONS',
-      items: [
-        { path: '/admin/work-schedule', label: 'Work Schedule', icon: Calendar },
-        { path: '/admin/customer-support', label: 'Customer Support', icon: Headset },
-      ]
-    },
-    {
-      title: 'ACCOUNT',
-      items: [
-        { path: '/admin/profile', label: 'Personal Info', icon: User },
-      ]
-    }
-  ];
+  const navigate = useNavigate();
 
   const isActive = (path) => {
-    if (path === '/admin') {
-      return location.pathname === '/admin' || location.pathname === '/admin/';
+    if (path === '/admin/dashboard') {
+      return location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard';
     }
     return location.pathname.startsWith(path);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/signin');
+  };
+
   return (
-    <div className="w-64 bg-[#F4F7FE] min-h-screen border-r border-slate-200 flex flex-col font-sans">
-      {/* Logo */}
-      <div className="p-6 flex items-center mb-2">
-        <img src={logoImg} alt="EasyFlight Logo" className="h-10 w-auto object-contain" />
+    <div
+      style={{ backgroundColor: '#2D2F3E', width: '200px', minWidth: '200px' }}
+      className="min-h-screen flex flex-col font-sans select-none"
+    >
+      {/* ── Logo ── */}
+      <div className="px-4 py-10 flex items-center justify-center">
+        <img
+          src={logoImg}
+          alt="EasyFlight"
+          style={{ height: '82px', width: 'auto', objectFit: 'contain' }}
+        />
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 px-4 overflow-y-auto">
-        {menuGroups.map((group, index) => (
-          <div key={index} className="mb-8">
-            <h3 className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider px-2">
-              {group.title}
-            </h3>
-            <ul className="space-y-1">
-              {group.items.map((item, itemIndex) => {
-                const active = isActive(item.path);
-                const Icon = item.icon;
-                return (
-                  <li key={itemIndex}>
-                    <Link
-                      to={item.path}
-                      className={`flex items-center px-4 py-3 rounded-xl transition-all ${
-                        active 
-                          ? 'bg-[#704FF7] text-white shadow-sm' 
-                          : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 mr-4 ${active ? 'text-white' : 'text-slate-500'}`} strokeWidth={active ? 2.5 : 2} />
-                      <span className="font-medium text-[15px]">{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+      {/* ── Nút Đặt vé mới ── */}
+      <div className="px-4 mb-5">
+        <Link
+          to="/admin/flight-schedule"
+          className="flex items-center justify-center gap-2 w-full rounded-lg py-2.5 text-white text-sm font-semibold transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#7C5CFC' }}
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          Đặt vé mới
+        </Link>
       </div>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-slate-200/60 mt-auto">
-        <button className="flex items-center w-full px-4 py-3 text-slate-600 hover:bg-slate-200/50 hover:text-red-600 rounded-xl transition-all group">
-          <LogOut className="w-5 h-5 mr-4 text-slate-500 group-hover:text-red-600 transition-colors" />
-          <span className="font-medium text-[15px]">Logout</span>
+      {/* ── Nav Items ── */}
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: active ? '#7C5CFC' : 'transparent',
+                color: active ? '#ffffff' : '#A0A3BD',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)';
+                  e.currentTarget.style.color = '#ffffff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#A0A3BD';
+                }
+              }}
+            >
+              <Icon
+                size={18}
+                strokeWidth={active ? 2.5 : 2}
+                style={{ color: active ? '#ffffff' : '#A0A3BD', flexShrink: 0 }}
+              />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* ── Bottom: Settings + Logout ── */}
+      <div className="px-3 pb-5 space-y-1 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)', paddingTop: '12px' }}>
+        <Link
+          to="/admin/settings"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+          style={{ color: '#A0A3BD' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#A0A3BD';
+          }}
+        >
+          <Settings size={18} strokeWidth={2} style={{ color: '#A0A3BD', flexShrink: 0 }} />
+          Cài đặt hệ thống
+        </Link>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all"
+          style={{ color: '#A0A3BD' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)';
+            e.currentTarget.style.color = '#ff6b6b';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#A0A3BD';
+          }}
+        >
+          <LogOut size={18} strokeWidth={2} style={{ flexShrink: 0 }} />
+          Đăng xuất
         </button>
       </div>
     </div>

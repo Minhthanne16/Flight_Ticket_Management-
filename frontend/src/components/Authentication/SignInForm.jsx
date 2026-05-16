@@ -18,9 +18,10 @@ function SignInForm() {
         setIsLoading(true);
         try {
             const response = await authService.login({ email, password });
-            if (response.success) {
+            // Backend trả về { status: "success", message: "...", data: { email, role, accessToken } }
+            if (response.status === 'success' && response.data) {
                 const { data } = response;
-                localStorage.setItem('token', data.token);
+                localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('user', JSON.stringify({
                     email: data.email,
                     role: data.role
