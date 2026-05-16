@@ -14,6 +14,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,7 @@ public class Booking {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
-    private Customer customer;
+    private User customer;
 
     @Column(name = "booking_date")
     private LocalDateTime bookingDate;
@@ -50,7 +52,7 @@ public class Booking {
     private LocalDateTime expirationTime;
 
     @Column(name = "total_amount")
-    private Long totalAmount;
+    private BigDecimal totalAmount;
 
     @Column(name = "pnr_code", unique = true, length = 10)
     private String pnrCode;
@@ -68,8 +70,8 @@ public class Booking {
     @OneToMany(mappedBy = "booking")
     private List<Ticket> tickets = new ArrayList<>();
 
-    @OneToMany(mappedBy = "booking")
-    private List<Payment> payments = new ArrayList<>();
+    @OneToOne(mappedBy = "booking")
+    private Payment payment;
 
     @OneToMany(mappedBy = "booking")
     private List<Notification> notifications = new ArrayList<>();

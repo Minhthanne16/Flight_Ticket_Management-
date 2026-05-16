@@ -15,21 +15,20 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-        name = "flight_seats",
-        uniqueConstraints = {
-            @UniqueConstraint(name = "uk_flight_seat_flight_seat", columnNames = {"flight_id", "seat_id"})
-        }
-)
+@Table(name = "flight_seats", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_flight_seat_flight_seat", columnNames = { "flight_id", "seat_id" })
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class FlightSeat {
 
     @Id

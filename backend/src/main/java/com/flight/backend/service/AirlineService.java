@@ -45,8 +45,16 @@ public class AirlineService {
     }
 
     // GET ALL
-    public List<Airline> getAllAirlines() {
-        return airlineRepository.findAll();
+    public List<AirlineResponse> getAllAirlines() {
+        return airlineRepository.findAll().stream().map(a -> {
+            AirlineResponse res = new AirlineResponse();
+            res.setId(a.getId());
+            res.setAirlineCode(a.getAirlineCode());
+            res.setAirlineName(a.getAirlineName());
+            res.setDescription(a.getDescription());
+            res.setLogo(a.getLogo());
+            return res;
+        }).toList();
     }
 
     // UPDATE

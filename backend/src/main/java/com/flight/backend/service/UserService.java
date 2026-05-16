@@ -90,4 +90,9 @@ public class UserService {
 
         return new LoginResponse(userDetails.getUsername(), role, token);
     }
+
+    public User getUserById(Long id) {
+        return this.userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

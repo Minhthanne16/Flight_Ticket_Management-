@@ -16,4 +16,6 @@ public interface AirplaneRepository extends JpaRepository<Airplane, Long> {
     List<Airplane> findByStatus(AirplaneStatus status);
 
     Optional<Airplane> findByAirplaneCode(String airplaneCode);
+
+    Boolean existsByAirplaneCode(String airplaneCode);
 }

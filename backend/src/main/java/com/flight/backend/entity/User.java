@@ -65,4 +65,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Notification> notifications = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer")
+    private List<Booking> bookings = new ArrayList<>();
 }

@@ -28,11 +28,11 @@ public class AirportService {
         Airport saved = airportRepository.save(airport);
 
         AirportResponse res = new AirportResponse();
-        res.id = saved.getId();
-        res.airportCode = saved.getAirportCode();
-        res.name = saved.getName();
-        res.city = saved.getCity();
-        res.country = saved.getCountry();
+        res.setId(saved.getId());
+        res.setAirportCode(saved.getAirportCode());
+        res.setName(saved.getName());
+        res.setCity(saved.getCity());
+        res.setCountry(saved.getCountry());
 
         return res;
     }
@@ -40,11 +40,11 @@ public class AirportService {
     public List<AirportResponse> getAll() {
         return airportRepository.findAll().stream().map(a -> {
             AirportResponse res = new AirportResponse();
-            res.id = a.getId();
-            res.airportCode = a.getAirportCode();
-            res.name = a.getName();
-            res.city = a.getCity();
-            res.country = a.getCountry();
+            res.setId(a.getId());
+            res.setAirportCode(a.getAirportCode());
+            res.setName(a.getName());
+            res.setCity(a.getCity());
+            res.setCountry(a.getCountry());
             return res;
         }).toList();
     }

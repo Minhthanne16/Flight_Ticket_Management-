@@ -14,6 +14,8 @@ import com.flight.backend.repository.AirplaneModelRepository;
 import com.flight.backend.repository.SeatRepository;
 import com.flight.backend.repository.TicketClassRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class AirplaneModelService {
     private final AirplaneModelRepository airplaneModelRepository;
@@ -29,6 +31,7 @@ public class AirplaneModelService {
         this.seatRepository = seatRepository;
     }
 
+    @Transactional
     public AirplaneModelResponse createAirplaneModel(CreateAirplaneModelRequest request) {
 
         // 1. Tạo Airplane Model

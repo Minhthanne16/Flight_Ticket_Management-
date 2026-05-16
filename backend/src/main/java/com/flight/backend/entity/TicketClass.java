@@ -1,4 +1,5 @@
 package com.flight.backend.entity;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,6 +40,9 @@ public class TicketClass {
 
     @Column(name = "price_multiplier", precision = 10, scale = 2)
     private BigDecimal priceMultiplier;
+
+    @Column(name = "baggage_allowance")
+    private int baggageAllowanceKg;
 
     @JsonIgnore
     @OneToMany(mappedBy = "ticketClass")

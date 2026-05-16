@@ -13,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +57,7 @@ public class Flight {
     private LocalDateTime arrivalTime;
 
     @Column(name = "base_price")
-    private Long basePrice;
+    private BigDecimal basePrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)

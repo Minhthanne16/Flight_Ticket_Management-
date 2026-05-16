@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/ticket-classes")
+@RequestMapping("/admin/ticket-classes")
 public class TicketClassController {
 
     private final TicketClassService ticketClassService;

@@ -1,14 +1,17 @@
 package com.flight.backend.controller;
 
 import com.flight.backend.dto.airport.CreateAirportRequest;
+import com.flight.backend.dto.ApiResponse;
 import com.flight.backend.dto.airport.AirportResponse;
 import com.flight.backend.service.AirportService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/airports")
+@RequestMapping("/admin/airports")
 public class AirportController {
 
     private final AirportService airportService;
@@ -18,12 +21,14 @@ public class AirportController {
     }
 
     @PostMapping
-    public AirportResponse create(@RequestBody CreateAirportRequest req) {
-        return airportService.create(req);
+    public ResponseEntity<ApiResponse<AirportResponse>> create(@RequestBody CreateAirportRequest req) {
+        AirportResponse resp = this.airportService.create(req);
+        return ApiResponse.success(resp, "Tạo mới sân bay thành công");
     }
 
     @GetMapping
-    public List<AirportResponse> getAll() {
-        return airportService.getAll();
+    public ResponseEntity<ApiResponse<List<AirportResponse>>> getAll() {
+        List<AirportResponse> airportList = this.airportService.getAll();
+        return ApiResponse.success(airportList, "Lấy danh sách các sân bay thành công");
     }
 }

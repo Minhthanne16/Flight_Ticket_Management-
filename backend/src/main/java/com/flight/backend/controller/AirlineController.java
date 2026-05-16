@@ -8,13 +8,12 @@ import com.flight.backend.dto.ApiResponse;
 import com.flight.backend.dto.airline.AirlineResponse;
 import com.flight.backend.dto.airline.CreateAirlineRequest;
 import com.flight.backend.dto.airline.UpdateAirlineRequest;
-import com.flight.backend.entity.Airline;
 import com.flight.backend.service.AirlineService;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/airlines")
+@RequestMapping("/admin/airlines")
 public class AirlineController {
 
     private final AirlineService airlineService;
@@ -33,8 +32,9 @@ public class AirlineController {
 
     // GET /airlines
     @GetMapping
-    public List<Airline> getAllAirlines() {
-        return airlineService.getAllAirlines();
+    public ResponseEntity<ApiResponse<List<AirlineResponse>>> getAllAirlines() {
+        List<AirlineResponse> airlineList = this.airlineService.getAllAirlines();
+        return ApiResponse.success(airlineList, "Lấy danh sách các hãng bay thành công.");
     }
 
     // PUT /airlines/{id}

@@ -2,6 +2,7 @@ package com.flight.backend.service;
 
 import com.flight.backend.dto.flight.CreateFlightRequest;
 import com.flight.backend.dto.flight.FlightResponse;
+import com.flight.backend.dto.flight.FlightSearchResponse;
 import com.flight.backend.entity.Airplane;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.entity.FlightSeat;
@@ -99,12 +100,65 @@ public class FlightService {
         return resp;
     }
 
-    public Flight getFlight(Long id) {
-        return flightRepo.findById(id)
+    public FlightResponse getFlight(Long id) {
+        Flight flight = flightRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Flight not found"));
+
+        return FlightResponse.builder()
+                .id(flight.getId())
+                .flightCode(flight.getFlightCode())
+                .departureTime(flight.getDepartureTime())
+                .estimateDuration(flight.getEstimateDuration())
+                .basePrice(flight.getBasePrice())
+                .status(flight.getStatus())
+                .airplaneId(flight.getAirplane().getId())
+                .routeId(flight.getRoute().getId())
+                .build();
     }
 
     public List<Flight> getAll() {
         return flightRepo.findAll();
+    }
+
+    @Transactional
+    public List<FlightSearchResponse> searchFlights(Long fromAirportId, Long toAirportId, java.time.LocalDate date,
+            Long airlineId, Long minPrice, Long maxPrice) {
+        org.springframework.data.jpa.domain.Specification<Flight> spec = org.springframework.data.jpa.domain.Specification
+                .where(com.flight.backend.specification.FlightSpecification.hasDepartureAirport(fromAirportId))
+                .and(com.flight.backend.specification.FlightSpecification.hasArrivalAirport(toAirportId))
+                .and(com.flight.backend.specification.FlightSpecification.hasDepartureDate(date))
+                .and(com.flight.backend.specification.FlightSpecification.hasAirline(airlineId))
+                .and(com.flight.backend.specification.FlightSpecification.priceBetween(minPrice, maxPrice));
+
+        List<Flight> flights = flightRepo.findAll(spec);
+
+        List<FlightSearchResponse> responses = new ArrayList<>();
+        for (Flight flight : flights) {
+            FlightSearchResponse resp = FlightSearchResponse.builder()
+                    .id(flight.getId())
+                    .flightCode(flight.getFlightCode())
+                    .airlineId(flight.getAirplane().getAirline().getId())
+                    .airlineName(flight.getAirplane().getAirline().getAirlineName())
+                    .airlineLogo(flight.getAirplane().getAirline().getLogo())
+                    .departureAirportId(flight.getRoute().getDepartureAirport().getId())
+                    .departureAirportCode(flight.getRoute().getDepartureAirport().getAirportCode())
+                    .departureCity(flight.getRoute().getDepartureAirport().getCity())
+                    .arrivalAirportId(flight.getRoute().getArrivalAirport().getId())
+                    .arrivalAirportCode(flight.getRoute().getArrivalAirport().getAirportCode())
+                    .arrivalCity(flight.getRoute().getArrivalAirport().getCity())
+                    .departureTime(flight.getDepartureTime())
+                    .arrivalTime(flight.getArrivalTime())
+                    .estimateDuration(flight.getEstimateDuration())
+                    .basePrice(flight.getBasePrice())
+                    .status(flight.getStatus())
+                    .build();
+            responses.add(resp);
+        }
+        return responses;
+    }
+
+    public Flight getFlightById(Long id) {
+        return this.flightRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Flight not found"));
     }
 }

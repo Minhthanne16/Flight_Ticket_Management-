@@ -3,12 +3,15 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.airplane.CreateAirplaneRequest;
 import com.flight.backend.dto.airplane.AirplaneResponse;
 import com.flight.backend.service.AirplaneService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/airplanes")
+@RequestMapping("/admin/airplanes")
 public class AirplaneController {
 
     private final AirplaneService airplaneService;
@@ -18,7 +21,7 @@ public class AirplaneController {
     }
 
     @PostMapping
-    public AirplaneResponse create(@RequestBody CreateAirplaneRequest request) {
+    public AirplaneResponse create(@Valid @RequestBody CreateAirplaneRequest request) {
         return airplaneService.create(request);
     }
 
