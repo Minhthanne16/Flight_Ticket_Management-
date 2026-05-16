@@ -30,6 +30,9 @@ public class AirplaneService {
 
     // CREATE
     public AirplaneResponse create(CreateAirplaneRequest request) {
+        if (airplaneRepository.existsByAirplaneCode(request.getAirplaneCode())) {
+            throw new RuntimeException("Airplane code already exists");
+        }
 
         Airline airline = airlineRepository.findById(request.airlineId)
                 .orElseThrow(() -> new RuntimeException("Airline not found"));
