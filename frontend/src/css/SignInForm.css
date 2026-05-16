@@ -1,0 +1,424 @@
+/* =============================================
+   SignInForm.css — Redesigned to match mockup
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* =========================================
+   Wrapper: 2-column full height
+   ========================================= */
+.signin-wrapper {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* =========================================
+   LEFT COLUMN — Hero
+   ========================================= */
+.signin-hero {
+    flex: 0 0 45%;
+    position: relative;
+    overflow: hidden;
+}
+
+.signin-hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Purple gradient overlay on top of image */
+.signin-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        rgba(109, 40, 217, 0.75) 0%,
+        rgba(76, 29, 149, 0.55) 40%,
+        rgba(30, 27, 75, 0.45) 100%
+    );
+    display: flex;
+    align-items: center;
+    padding: 48px 44px;
+}
+
+.signin-hero__content {
+    max-width: 380px;
+}
+
+.signin-hero__title {
+    color: #ffffff;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 20px;
+    letter-spacing: -0.8px;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+}
+
+.signin-hero__desc {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+    line-height: 1.7;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* =========================================
+   RIGHT COLUMN — Panel
+   ========================================= */
+.signin-panel {
+    flex: 1;
+    background: #F5F3FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+/* White card */
+.signin-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(124, 58, 237, 0.1);
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+/* Brand */
+.signin-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.signin-brand__icon {
+    color: #7C3AED;
+    font-size: 20px;
+}
+
+.signin-brand__name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #7C3AED;
+    letter-spacing: -0.3px;
+}
+
+/* Heading */
+.signin-heading {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 10px;
+    letter-spacing: -0.5px;
+    line-height: 1.25;
+}
+
+.signin-subtext {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 28px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   Form fields
+   ========================================= */
+.signin-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.si-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.si-form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Input with icon */
+.si-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.si-input-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 14px;
+    color: #9CA3AF;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.si-input-wrapper input {
+    width: 100%;
+    padding: 13px 44px 13px 42px;
+    background: #F3F4F6;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.si-input-wrapper input::placeholder {
+    color: #9CA3AF;
+}
+
+.si-input-wrapper input:focus {
+    border-color: #7C3AED;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.si-toggle-pwd {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9CA3AF;
+    font-size: 14px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.si-toggle-pwd:hover {
+    color: #7C3AED;
+}
+
+/* =========================================
+   Options row: remember + forgot
+   ========================================= */
+.si-options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -4px;
+}
+
+.si-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.si-remember input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #7C3AED;
+    cursor: pointer;
+}
+
+.si-forgot {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7C3AED;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+.si-forgot:hover {
+    color: #6D28D9;
+    text-decoration: underline;
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+.btn-signin-new {
+    width: 100%;
+    padding: 14px;
+    background: #7C3AED;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+    margin-top: 4px;
+}
+
+/* Shimmer effect */
+.btn-signin-new::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 55%;
+    height: 200%;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.28) 50%,
+        transparent 70%
+    );
+    transition: left 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: skewX(-20deg);
+}
+
+.btn-signin-new:hover {
+    background: #6D28D9;
+    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.55);
+    transform: translateY(-1px);
+}
+
+.btn-signin-new:hover::after {
+    left: 160%;
+}
+
+.btn-signin-new:active {
+    transform: translateY(0px) scale(0.98);
+    transition-duration: 0.1s;
+}
+
+/* =========================================
+   Divider
+   ========================================= */
+.si-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #9CA3AF;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.si-divider::before,
+.si-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E5E7EB;
+}
+
+/* =========================================
+   Social Buttons
+   ========================================= */
+.si-social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.si-social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.si-social-btn:hover {
+    border-color: #7C3AED;
+    color: #7C3AED;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Facebook button */
+.si-social-btn--fb .fa-facebook-f {
+    color: #1877F2;
+    font-size: 16px;
+}
+
+.si-social-btn--fb:hover {
+    border-color: #1877F2;
+    color: #1877F2;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.15);
+}
+
+/* =========================================
+   Signup Prompt
+   ========================================= */
+.si-signup-prompt {
+    text-align: center;
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0;
+}
+
+.si-signup-link {
+    color: #7C3AED;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.si-signup-link:hover {
+    color: #6D28D9;
+    text-decoration: underline;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+@media (max-width: 768px) {
+    .signin-wrapper {
+        flex-direction: column;
+    }
+
+    .signin-hero {
+        flex: 0 0 220px;
+    }
+
+    .signin-hero__title {
+        font-size: 28px;
+    }
+
+    .signin-hero__desc {
+        display: none;
+    }
+
+    .signin-card {
+        padding: 32px 24px;
+    }
+
+    .signin-heading {
+        font-size: 24px;
+    }
+}

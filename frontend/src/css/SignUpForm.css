@@ -1,0 +1,396 @@
+/* =============================================
+   SignUpForm.css — Redesigned to match mockup
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* === Wrapper: 2-column layout === */
+.signup-wrapper {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* =========================================
+   LEFT COLUMN — Hero Image
+   ========================================= */
+.signup-hero {
+    flex: 0 0 45%;
+    position: relative;
+    overflow: hidden;
+}
+
+.signup-hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.signup-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.65) 0%,
+        rgba(0, 0, 0, 0.15) 50%,
+        transparent 100%
+    );
+    display: flex;
+    align-items: flex-end;
+    padding: 48px 40px;
+}
+
+.signup-hero__tagline {
+    color: #ffffff;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    letter-spacing: -0.5px;
+}
+
+/* =========================================
+   RIGHT COLUMN — Form Panel
+   ========================================= */
+.signup-panel {
+    flex: 1;
+    background: #F5F3FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    overflow-y: auto;
+}
+
+.signup-panel__inner {
+    width: 100%;
+    max-width: 440px;
+}
+
+/* Brand */
+.signup-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.signup-brand__icon {
+    color: #7C3AED;
+    font-size: 20px;
+}
+
+.signup-brand__name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #7C3AED;
+    letter-spacing: -0.3px;
+}
+
+/* Heading */
+.signup-heading {
+    font-size: 32px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 10px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.signup-subtext {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 28px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   Form fields
+   ========================================= */
+.signup-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    letter-spacing: 0.1px;
+}
+
+/* Input wrapper with icon */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 14px;
+    color: #9CA3AF;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 13px 42px 13px 40px;
+    background: #EDE9FE;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.input-wrapper input::placeholder {
+    color: #9CA3AF;
+}
+
+.input-wrapper input:focus {
+    border-color: #7C3AED;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9CA3AF;
+    font-size: 14px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.toggle-password:hover {
+    color: #7C3AED;
+}
+
+/* =========================================
+   Checkbox Terms
+   ========================================= */
+.terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+.terms-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    accent-color: #7C3AED;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.link-inline {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7C3AED;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+.link-inline:hover {
+    color: #6D28D9;
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+.btn-create-account {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.btn-create-account::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 55%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    transition: left 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: skewX(-20deg);
+}
+
+.btn-create-account:hover {
+    background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.55);
+    transform: translateY(-1px);
+}
+
+.btn-create-account:hover::after {
+    left: 160%;
+}
+
+.btn-create-account:active {
+    transform: translateY(0px) scale(0.98);
+    transition-duration: 0.1s;
+}
+
+.btn-arrow {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.btn-create-account:hover .btn-arrow {
+    transform: translateX(4px);
+}
+
+/* =========================================
+   Divider
+   ========================================= */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #9CA3AF;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 4px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #DDD6FE;
+}
+
+/* =========================================
+   Social Buttons
+   ========================================= */
+.social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.social-btn:hover {
+    border-color: #7C3AED;
+    color: #7C3AED;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    transform: translateY(-1px);
+}
+
+.social-btn__apple-icon {
+    font-size: 18px;
+}
+
+/* =========================================
+   Sign In Prompt
+   ========================================= */
+.signin-prompt {
+    text-align: center;
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0;
+}
+
+.signin-link {
+    color: #7C3AED;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.signin-link:hover {
+    color: #6D28D9;
+    text-decoration: underline;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+@media (max-width: 768px) {
+    .signup-wrapper {
+        flex-direction: column;
+    }
+
+    .signup-hero {
+        flex: 0 0 240px;
+    }
+
+    .signup-hero__tagline {
+        font-size: 26px;
+    }
+
+    .signup-heading {
+        font-size: 26px;
+    }
+
+    .signup-panel {
+        padding: 32px 20px;
+    }
+}
