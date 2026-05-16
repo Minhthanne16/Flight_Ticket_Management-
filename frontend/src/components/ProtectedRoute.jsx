@@ -8,7 +8,7 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
 
     // Nếu không có user hoặc không đúng Role thì đá về trang chủ/login
     if (!user || !allowedRoles.includes(user.role)) {
-        return <Navigate to="/" state={{ from: location }} replace />;
+        return <Navigate to="/signin" state={{ from: location }} replace />;
     }
 
     return children;

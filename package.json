@@ -26,5 +26,9 @@
   "homepage": "https://github.com/Minhthanne16/Flight_Ticket_Management-#readme",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "jwt-decode": "^4.0.0",
+    "zustand": "^5.0.13"
   }
 }

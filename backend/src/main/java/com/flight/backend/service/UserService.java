@@ -82,7 +82,8 @@ public class UserService {
                 .stream()
                 .findFirst()
                 .get()
-                .getAuthority();
+                .getAuthority()
+                .replace("ROLE_", "");
 
         // 4. Generate JWT
         String token = jwtUtil.generateToken(userDetails.getUsername(), role);
