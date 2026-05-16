@@ -44,4 +44,9 @@ public class TicketClassService {
     public List<TicketClass> getAll() {
         return ticketClassRepository.findAll();
     }
+
+    public TicketClass findTicketClassById(Long id) {
+        return this.ticketClassRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("TicketClass not found"));
+    }
 }

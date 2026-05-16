@@ -120,15 +120,18 @@ public class FlightService {
         return flightRepo.findAll();
     }
 
-    public List<FlightSearchResponse> searchFlights(Long fromAirportId, Long toAirportId, java.time.LocalDate date, Long airlineId, Long minPrice, Long maxPrice) {
-        org.springframework.data.jpa.domain.Specification<Flight> spec = org.springframework.data.jpa.domain.Specification.where(com.flight.backend.specification.FlightSpecification.hasDepartureAirport(fromAirportId))
+    @Transactional
+    public List<FlightSearchResponse> searchFlights(Long fromAirportId, Long toAirportId, java.time.LocalDate date,
+            Long airlineId, Long minPrice, Long maxPrice) {
+        org.springframework.data.jpa.domain.Specification<Flight> spec = org.springframework.data.jpa.domain.Specification
+                .where(com.flight.backend.specification.FlightSpecification.hasDepartureAirport(fromAirportId))
                 .and(com.flight.backend.specification.FlightSpecification.hasArrivalAirport(toAirportId))
                 .and(com.flight.backend.specification.FlightSpecification.hasDepartureDate(date))
                 .and(com.flight.backend.specification.FlightSpecification.hasAirline(airlineId))
                 .and(com.flight.backend.specification.FlightSpecification.priceBetween(minPrice, maxPrice));
 
         List<Flight> flights = flightRepo.findAll(spec);
-        
+
         List<FlightSearchResponse> responses = new ArrayList<>();
         for (Flight flight : flights) {
             FlightSearchResponse resp = FlightSearchResponse.builder()
@@ -152,5 +155,10 @@ public class FlightService {
             responses.add(resp);
         }
         return responses;
+    }
+
+    public Flight getFlightById(Long id) {
+        return this.flightRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Flight not found"));
     }
 }

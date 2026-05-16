@@ -1,5 +1,7 @@
 package com.flight.backend.entity;
 
+import java.math.BigDecimal;
+
 import com.flight.backend.entity.enums.TicketStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,7 +49,7 @@ public class Ticket {
     private FlightSeat flightSeat;
 
     @Column(name = "price")
-    private Long price;
+    private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)

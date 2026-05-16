@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.flight.backend.entity.Flight;
 import com.flight.backend.entity.FlightSeat;
 import com.flight.backend.entity.enums.FlightSeatStatus;
 import com.flight.backend.repository.FlightSeatRepository;
@@ -14,6 +15,14 @@ public class FlightSeatService {
 
     public FlightSeatService(FlightSeatRepository flightSeatRepository) {
         this.flightSeatRepository = flightSeatRepository;
+    }
+
+    public FlightSeat createFlightSeat(Flight flight) {
+        FlightSeat flightSeat = FlightSeat.builder()
+                .flight(flight)
+                .status(FlightSeatStatus.HELD)
+                .build();
+        return flightSeatRepository.save(flightSeat);
     }
 
     // Xem sơ đồ ghế

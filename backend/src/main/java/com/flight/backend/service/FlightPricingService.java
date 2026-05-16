@@ -18,36 +18,25 @@ public class FlightPricingService {
 
     public FlightPricingService(
             FlightRepository flightRepository,
-            TicketClassRepository ticketClassRepository
-    ) {
+            TicketClassRepository ticketClassRepository) {
         this.flightRepository = flightRepository;
         this.ticketClassRepository = ticketClassRepository;
     }
 
     public List<String> getFlightPrices(Long flightId) {
-
         Flight flight = flightRepository.findById(flightId)
-                .orElseThrow(() ->
-                        new RuntimeException("Flight not found"));
+                .orElseThrow(() -> new RuntimeException("Flight not found"));
 
-        List<TicketClass> ticketClasses =
-                ticketClassRepository.findAll();
+        List<TicketClass> ticketClasses = ticketClassRepository.findAll();
 
         List<String> result = new ArrayList<>();
 
         for (TicketClass ticketClass : ticketClasses) {
-
-            BigDecimal finalPrice =
-                    BigDecimal.valueOf(flight.getBasePrice())
-                            .multiply(
-                                    ticketClass.getPriceMultiplier()
-                            );
-
+            BigDecimal finalPrice = flight.getBasePrice().multiply(ticketClass.getPriceMultiplier());
             result.add(
                     ticketClass.getClassName()
                             + " : "
-                            + finalPrice
-            );
+                            + finalPrice);
         }
 
         return result;

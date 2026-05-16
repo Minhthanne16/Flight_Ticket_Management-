@@ -34,7 +34,6 @@ public class PassengerController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PassengerResponse>> getPassengerById(
             @PathVariable Long id) {
-
         PassengerResponse resp = this.passengerService.getPassengerById(id);
 
         return ApiResponse.success(resp, "Lấy thông tin hành khách thành công");
@@ -42,9 +41,7 @@ public class PassengerController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PassengerResponse>>> getAllPassengers() {
-
         List<PassengerResponse> resp = this.passengerService.getAllPassengers();
-
         return ApiResponse.success(resp, "Lấy danh sách hành khách thành công");
     }
 
