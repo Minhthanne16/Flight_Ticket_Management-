@@ -48,11 +48,17 @@ function Sidebar() {
     <aside className="w-[240px] bg-[#0F0B1E] flex flex-col justify-between shrink-0 h-screen overflow-y-auto border-r border-white/[0.05]">
       {/* Logo */}
       <div>
-        <div className="h-[72px] flex items-center px-5 border-b border-white/[0.06]">
+        <div className="h-[72px] flex items-center overflow-hidden border-b border-white/[0.06]" style={{ paddingLeft: '30px' }}>
           <img
             src={logoImg}
             alt="EasyFlight"
-            className="h-8 w-auto object-contain"
+            style={{
+              height: '45px',
+              width: 'auto',
+              objectFit: 'contain',
+              transform: 'scale(3.5)',
+              transformOrigin: 'left center'
+            }}
             onError={(e) => {
               // fallback nếu logo.png chưa có
               e.target.style.display = 'none';

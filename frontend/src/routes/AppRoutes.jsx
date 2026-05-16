@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import StaffLayout from '../layouts/StaffLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
-import { STAFF_USER } from '../data/sharedData';
 
+// --- Staff Pages ---
 import StaffDashboard from '../pages/Staff/StaffDashboard';
 import FlightSchedulePage from '../pages/Staff/FlightSchedulePage';
 import BookingPage from '../pages/Staff/BookingPage';
@@ -12,25 +11,37 @@ import WorkSchedulePage from '../pages/Staff/WorkSchedulePage';
 import CustomerSupportPage from '../pages/Staff/CustomerSupportPage';
 import ProfilePage from '../pages/Staff/ProfilePage';
 
-function AppRoutes() {
-  useEffect(() => {
-    // Tự động gán quyền STAFF khi chạy ở localhost
-    if (window.location.hostname === 'localhost') {
-      localStorage.setItem('user', JSON.stringify({
-        role: 'STAFF',
-        name: STAFF_USER.name,
-        fullName: STAFF_USER.fullName,
-        email: STAFF_USER.email,
-        department: STAFF_USER.department,
-      }));
-    }
-  }, []);
+// --- Customer Pages ---
+import Homepage from '../pages/Customer/Homepage';
+import SignIn from '../pages/Customer/SignIn';
+import SignUp from '../pages/Customer/SignUp';
 
+// --- Admin Pages ---
+import AdminDashboard from '../pages/Admin/Dashboard';
+
+function AppRoutes() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/staff/dashboard" replace />} />
+        {/* Public Routes */}
+        <Route path="/" element={<Homepage />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
 
+        {/* Customer Routes (Protected) */}
+        <Route
+          path="/customer/*"
+          element={
+            <ProtectedRoute allowedRoles={['CUSTOMER']}>
+              <Routes>
+                <Route path="home" element={<Homepage />} />
+                <Route path="*" element={<Navigate to="home" replace />} />
+              </Routes>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Staff Routes (Protected) */}
         <Route
           path="/staff"
           element={
@@ -48,6 +59,19 @@ function AppRoutes() {
           <Route path="customer-support" element={<CustomerSupportPage />} />
           <Route path="personal-info" element={<ProfilePage />} />
         </Route>
+
+        {/* Admin Routes (Protected) */}
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Routes>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
+              </Routes>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
