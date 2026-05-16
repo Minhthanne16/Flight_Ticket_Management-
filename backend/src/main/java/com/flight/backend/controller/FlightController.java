@@ -1,8 +1,12 @@
 package com.flight.backend.controller;
 
-import com.flight.backend.dto.flight.FlightRequest;
+import com.flight.backend.dto.ApiResponse;
+import com.flight.backend.dto.flight.CreateFlightRequest;
+import com.flight.backend.dto.flight.FlightResponse;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.service.FlightService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +22,9 @@ public class FlightController {
     }
 
     @PostMapping
-    public Flight create(@RequestBody FlightRequest request) {
-        return flightService.createFlight(request);
+    public ResponseEntity<ApiResponse<FlightResponse>> create(@RequestBody CreateFlightRequest request) {
+        FlightResponse res = this.flightService.createFlight(request);
+        return ApiResponse.success(res, "Tạo mới chuyến bay thành công.");
     }
 
     @GetMapping("/{id}")

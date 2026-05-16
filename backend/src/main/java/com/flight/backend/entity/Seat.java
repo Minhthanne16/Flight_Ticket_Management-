@@ -1,4 +1,5 @@
 package com.flight.backend.entity;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flight.backend.entity.enums.SeatStatus;
 import jakarta.persistence.Column;
@@ -22,12 +23,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-        name = "seats",
-        uniqueConstraints = {
-            @UniqueConstraint(name = "uk_seat_airplane_seat_number", columnNames = {"airplane_id", "seat_number"})
-        }
-)
+@Table(name = "seats", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_seat_airplane_seat_number", columnNames = { "airplane_id", "seat_number" })
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,8 +38,8 @@ public class Seat {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "airplane_id")
-    private Airplane airplane;
+    @JoinColumn(name = "airplane_model_id")
+    private AirplaneModel airplaneModel;
 
     @Column(name = "seat_number", length = 3)
     private String seatNumber;
@@ -50,7 +48,7 @@ public class Seat {
     @JoinColumn(name = "ticket_class_id")
     private TicketClass ticketClass;
 
-    @Column(name = "row_number")
+    @Column(name = "row_index")
     private Integer rowNumber;
 
     @Column(name = "column_letter", length = 1)
@@ -59,7 +57,7 @@ public class Seat {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private SeatStatus status;
-    
+
     @JsonIgnore
     @OneToMany(mappedBy = "seat")
     private List<FlightSeat> flightSeats = new ArrayList<>();

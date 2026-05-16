@@ -1,7 +1,7 @@
 package com.flight.backend.service;
 
-import com.flight.backend.dto.airport.AirportRequest;
 import com.flight.backend.dto.airport.AirportResponse;
+import com.flight.backend.dto.airport.CreateAirportRequest;
 import com.flight.backend.entity.Airport;
 import com.flight.backend.repository.AirportRepository;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ public class AirportService {
         this.airportRepository = airportRepository;
     }
 
-    public AirportResponse create(AirportRequest req) {
+    public AirportResponse create(CreateAirportRequest req) {
 
         Airport airport = new Airport();
         airport.setAirportCode(req.airportCode);

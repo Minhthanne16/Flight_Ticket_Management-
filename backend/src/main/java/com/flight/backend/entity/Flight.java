@@ -48,11 +48,11 @@ public class Flight {
     @Column(name = "departure_time")
     private LocalDateTime departureTime;
 
+    @Column(name = "estimate_duration")
+    private int estimateDuration;
+
     @Column(name = "arrival_time")
     private LocalDateTime arrivalTime;
-
-    @Column(name = "flight_duration")
-    private Integer flightDuration;
 
     @Column(name = "base_price")
     private Long basePrice;
