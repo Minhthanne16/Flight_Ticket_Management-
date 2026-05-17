@@ -31,4 +31,6 @@ public class TicketResponse {
     private TicketStatus status;
 
     private FlightSeatStatus seatStatus;
+
+    private String seatNumber;
 }
