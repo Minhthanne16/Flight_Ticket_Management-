@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,6 +47,9 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                     .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")  
                     .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
                     .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                    .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
+                    .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**").hasAnyRole("ADMIN", "STAFF")
                     .anyRequest().authenticated())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
