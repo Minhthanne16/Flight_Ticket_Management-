@@ -54,6 +54,12 @@ public class Booking {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
+    @Column(name = "final_amount")
+    private BigDecimal finalAmount;
+
     @Column(name = "pnr_code", unique = true, length = 10)
     private String pnrCode;
 
@@ -76,6 +82,4 @@ public class Booking {
     @OneToMany(mappedBy = "booking")
     private List<Notification> notifications = new ArrayList<>();
 
-    @OneToOne(mappedBy = "booking")
-    private BookingVoucher bookingVoucher;
 }
