@@ -26,7 +26,7 @@ Dự án Quản lý bán vé máy bay, được phát triển theo mô hình Agi
 | STT | Họ và Tên | Vai trò (Role) | Khác |
 | :---: | :--- | :--- | :--- |
 | 1 | **Thân Nhật Minh** |  |  |
-| 2 | **Nguyễn Thị Ngọc Xuyến** |  | |
+| 2 | **Trần Thị Ngọc Xuyến** |  | |
 | 3 | **Cao Hoàng Phúc**  |  | |
 | 4 | **Trần Nguyễn Phú Thuận**  |  |  |
 | 5 | **Nguyễn Trần Phương Vy**  |  |  |
