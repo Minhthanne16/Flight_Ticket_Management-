@@ -41,6 +41,30 @@ function SignInForm() {
         } catch (error) {
             console.error('Login error:', error);
             if (!error.response) {
+                // Tự động fallback sang Mock login nếu không kết nối được server (offline)
+                const mockUsers = {
+                    'admin@easyflight.vn': { password: 'admin123', role: 'ADMIN', token: 'mock-admin-token' },
+                    'staff@easyflight.vn': { password: 'staff123', role: 'STAFF', token: 'mock-staff-token' },
+                    'customer@gmail.com': { password: '123', role: 'CUSTOMER', token: 'mock-customer-token' }
+                };
+
+                const matchedUser = mockUsers[email];
+                if (matchedUser && matchedUser.password === password) {
+                    console.log('Server offline. Falling back to local mock login for:', email);
+                    localStorage.setItem('token', matchedUser.token);
+                    localStorage.setItem('user', JSON.stringify({
+                        email: email,
+                        role: matchedUser.role
+                    }));
+                    if (matchedUser.role === 'ADMIN') {
+                        navigate('/admin/dashboard');
+                    } else if (matchedUser.role === 'STAFF') {
+                        navigate('/staff/dashboard');
+                    } else {
+                        navigate('/customer/home');
+                    }
+                    return;
+                }
                 alert('Không thể kết nối đến server. Vui lòng kiểm tra xem Backend đã khởi động chưa (cổng 5000)!');
             } else {
                 alert(error.response?.data?.message || 'Sai email hoặc mật khẩu!');
@@ -50,30 +74,7 @@ function SignInForm() {
         }
     };
 
-    const handleQuickLogin = (role) => {
-        let testEmail = '';
-        let testPassword = '123'; // Mặc định hoặc từ database
 
-        if (role === 'ADMIN') {
-            testEmail = 'admin@easyflight.vn';
-            testPassword = 'admin123';
-        } else if (role === 'STAFF') {
-            testEmail = 'staff@easyflight.vn';
-            testPassword = 'staff123';
-        } else {
-            testEmail = 'customer@gmail.com';
-            testPassword = '123';
-        }
-
-        setEmail(testEmail);
-        setPassword(testPassword);
-        
-        // Tự động nhấn nút đăng nhập sau khi điền thông tin
-        setTimeout(() => {
-            const submitBtn = document.querySelector('.btn-signin-new');
-            if (submitBtn) submitBtn.click();
-        }, 100);
-    };
 
     return (
         <div className="signin-wrapper">
@@ -168,23 +169,7 @@ function SignInForm() {
                             {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                         </button>
 
-                        {/* Divider */}
-                        <div className="si-divider">
-                            <span>Hoặc đăng nhập nhanh (Test)</span>
-                        </div>
 
-                        {/* Social / Quick Login */}
-                        <div className="si-social-buttons" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                            <button type="button" className="si-social-btn" onClick={() => handleQuickLogin('CUSTOMER')} style={{ padding: '8px 10px', fontSize: '13px' }}>
-                                Khách hàng
-                            </button>
-                            <button type="button" className="si-social-btn" onClick={() => handleQuickLogin('STAFF')} style={{ padding: '8px 10px', fontSize: '13px' }}>
-                                Staff
-                            </button>
-                            <button type="button" className="si-social-btn" onClick={() => handleQuickLogin('ADMIN')} style={{ padding: '8px 10px', fontSize: '13px' }}>
-                                Admin
-                            </button>
-                        </div>
 
                         {/* Signup link */}
                         <p className="si-signup-prompt">
