@@ -4,6 +4,9 @@ import com.flight.backend.entity.Booking;
 import com.flight.backend.entity.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.math.BigDecimal;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,4 +35,17 @@ public interface BookingRepository
     List<Booking> findByFlight_Id(
             Long flightId
     );
+
+    @Query("""
+    SELECT COALESCE(SUM(b.totalAmount), 0)
+    FROM Booking b
+    WHERE MONTH(b.bookingDate) = :month
+    AND YEAR(b.bookingDate) = :year
+    AND b.status = :status
+""")
+BigDecimal getRevenueByMonth(
+        @Param("month") int month,
+        @Param("year") int year,
+        @Param("status") BookingStatus status
+);
 }
