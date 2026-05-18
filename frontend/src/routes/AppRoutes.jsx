@@ -8,9 +8,10 @@ import StaffDashboard from '../pages/Staff/StaffDashboard';
 import FlightSchedulePage from '../pages/Staff/FlightSchedulePage';
 import BookingPage from '../pages/Staff/BookingPage';
 import BookingDetailPage from '../pages/Staff/BookingDetailPage';
-import WorkSchedulePage from '../pages/Staff/WorkSchedulePage';
+import PromotionPage from '../pages/Staff/PromotionPage';
 import CustomerSupportPage from '../pages/Staff/CustomerSupportPage';
 import ProfilePage from '../pages/Staff/ProfilePage';
+import RegulationsPage from '../pages/Staff/RegulationsPage';
 
 // --- Customer Pages ---
 import Homepage from '../pages/Customer/Homepage';
@@ -61,9 +62,10 @@ function AppRoutes() {
           <Route path="flight-schedule" element={<FlightSchedulePage />} />
           <Route path="booking" element={<BookingPage />} />
           <Route path="booking/:id" element={<BookingDetailPage />} />
-          <Route path="work-schedule" element={<WorkSchedulePage />} />
+          <Route path="promotion" element={<PromotionPage />} />
           <Route path="customer-support" element={<CustomerSupportPage />} />
           <Route path="personal-info" element={<ProfilePage />} />
+          <Route path="regulations" element={<RegulationsPage />} />
         </Route>
 
         {/* Admin Routes (Protected) - với AdminLayout */}
