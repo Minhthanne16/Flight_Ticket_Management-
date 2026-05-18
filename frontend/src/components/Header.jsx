@@ -6,9 +6,10 @@ const PAGE_LABELS = {
   dashboard: 'Dashboard',
   'flight-schedule': 'Flight Schedule',
   booking: 'Booking',
-  'work-schedule': 'Work Schedule',
+  promotion: 'Promotion',
   'customer-support': 'Customer Support',
   'personal-info': 'Personal Info',
+  regulations: 'Regulations',
 };
 
 function Header() {
@@ -18,44 +19,42 @@ function Header() {
   const currentPage = PAGE_LABELS[pageKey] || pageKey.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   return (
-    <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-400 font-medium">Staff Portal</span>
-        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-        <span className="font-semibold text-slate-700">{currentPage}</span>
+    <header className="h-[72px] bg-white border-b border-[#E8E8F0] flex items-center justify-between px-6 shrink-0">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-sm">
+        <ChevronRight className="w-3.5 h-3.5 text-[#6C5CE7]" />
+        <span className="font-semibold text-[#6C5CE7]">{currentPage}</span>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Center: Search */}
+      <div className="flex-1 flex justify-center max-w-xl mx-8">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
           <input
             type="text"
-            placeholder="Tìm kiếm..."
-            className="w-56 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
+            placeholder="Search system commands..."
+            className="w-full pl-10 pr-4 py-2.5 bg-[#F5F6FA] border border-[#E8E8F0] rounded-full text-sm text-[#27273F] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/40 transition-all"
           />
         </div>
+      </div>
 
-        <div className="flex items-center gap-1">
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-            <Bell className="w-[18px] h-[18px]" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-violet-500 border-2 border-white" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-            <HelpCircle className="w-[18px] h-[18px]" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-            <Settings className="w-[18px] h-[18px]" />
-          </button>
-        </div>
+      {/* Right: icons + avatar */}
+      <div className="flex items-center gap-2">
+        <button className="relative w-9 h-9 flex items-center justify-center rounded-full text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7] transition-colors">
+          <Bell className="w-[18px] h-[18px]" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#EF4444] border-2 border-white" />
+        </button>
+        <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7] transition-colors">
+          <HelpCircle className="w-[18px] h-[18px]" />
+        </button>
+        <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7] transition-colors">
+          <Settings className="w-[18px] h-[18px]" />
+        </button>
 
-        <div className="flex items-center gap-2.5 pl-3 border-l border-slate-100">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-sm shadow-violet-500/30">
-            <span className="text-[11px] font-bold text-white">LM</span>
-          </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-semibold text-slate-700 leading-none">{STAFF_USER.name}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{STAFF_USER.role}</p>
-          </div>
+        <div className="ml-1 w-9 h-9 rounded-full bg-gradient-to-br from-[#6C5CE7] to-[#7E6FF2] flex items-center justify-center shadow-sm shadow-[#6C5CE7]/20 cursor-pointer">
+          <span className="text-[11px] font-bold text-white">
+            {STAFF_USER.fullName?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+          </span>
         </div>
       </div>
     </header>

@@ -4,11 +4,11 @@ import Header from '../components/Header';
 
 function StaffLayout() {
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f8fafc' }}>
+    <div className="flex h-screen bg-[#F5F6FA]">
       <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Header />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>

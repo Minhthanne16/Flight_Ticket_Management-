@@ -1,184 +1,400 @@
 import { useState } from 'react';
-import { Search, Send, CheckCircle2, Clock, AlertCircle, X, ChevronRight } from 'lucide-react';
-import { SUPPORT_TICKETS, STAFF_USER } from '../../data/sharedData';
+import { Search, Eye, ChevronLeft, ChevronRight, FileDown, ArrowLeft, MessageSquare, Filter } from 'lucide-react';
+import { CANCEL_REQUESTS, REFUND_REQUESTS, COMPLAINTS, SYSTEM_ERRORS } from '../../data/sharedData';
 
-const priorityStyle = {
-  High: 'text-red-600 bg-red-50 border-red-200',
-  Medium: 'text-amber-700 bg-amber-50 border-amber-200',
-  Low: 'text-slate-500 bg-slate-100 border-slate-200',
+const TABS = [
+  { id: 'cancel', label: 'Yêu cầu huỷ vé' },
+  { id: 'refund', label: 'Yêu cầu hoàn tiền' },
+  { id: 'complaint', label: 'Khiếu nại' },
+  { id: 'system', label: 'Lỗi hệ thống vé' },
+];
+
+const cancelStatusStyle = {
+  'Đang chờ': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'Đã duyệt': 'text-emerald-700 bg-emerald-50 border border-emerald-200',
+  'Bị từ chối': 'text-red-600 bg-red-50 border border-red-200',
 };
 
-const statusStyle = {
-  Open: 'text-red-600 bg-red-50 border-red-200',
-  'In Progress': 'text-violet-700 bg-violet-50 border-violet-200',
-  Resolved: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+const refundStatusStyle = {
+  'Đã hoàn': 'text-emerald-700 bg-emerald-50 border border-emerald-200',
+  'Chờ hoàn': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'Từ chối': 'text-red-600 bg-red-50 border border-red-200',
 };
 
-function CustomerSupportPage() {
-  const [tickets, setTickets] = useState(SUPPORT_TICKETS);
-  const [selected, setSelected] = useState(null);
-  const [reply, setReply] = useState('');
+const processStatusStyle = {
+  'N/A': 'text-[#9CA3AF] bg-[#F5F6FA]',
+  'Đang duyệt': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'Lưu trữ': 'text-[#6C5CE7] bg-[#E9E8FC] border border-[#D4D0F8]',
+  'Đã phê duyệt': 'text-emerald-700 bg-emerald-50 border border-emerald-200',
+};
+
+const complaintStatusStyle = {
+  'OPEN': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'IN PROGRESS': 'text-[#6C5CE7] bg-[#E9E8FC] border border-[#D4D0F8]',
+  'RESOLVED': 'text-emerald-700 bg-emerald-50 border border-emerald-200',
+  'CLOSED': 'text-[#6E7491] bg-[#F0F0F5] border border-[#E8E8F0]',
+};
+
+const severityStyle = {
+  'CRITICAL': 'text-red-700 bg-red-50 border border-red-200',
+  'HIGH': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'MEDIUM': 'text-[#6C5CE7] bg-[#E9E8FC] border border-[#D4D0F8]',
+};
+
+const errorStatusDot = {
+  'Chờ xử lý': 'bg-red-500',
+  'Đang xử lý': 'bg-amber-500',
+  'Đã xử lý': 'bg-emerald-500',
+};
+
+function Avatar({ initials, color }) {
+  const colors = ['bg-[#6C5CE7]', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-sky-500'];
+  const bg = color || colors[initials.charCodeAt(0) % colors.length];
+  return (
+    <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0`}>
+      <span className="text-[10px] font-bold text-white">{initials}</span>
+    </div>
+  );
+}
+
+function Pagination({ current, total, onChange }) {
+  if (total <= 1) return null;
+  return (
+    <div className="px-6 py-4 border-t border-[#E8E8F0] flex items-center justify-between">
+      <button onClick={() => onChange(Math.max(1, current - 1))} disabled={current === 1}
+        className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-[#6E7491] border border-[#E8E8F0] rounded-lg disabled:opacity-30 hover:bg-[#F0EFFA] transition-colors">
+        <ChevronLeft className="w-3.5 h-3.5" /> Trước
+      </button>
+      <div className="flex items-center gap-1">
+        {Array.from({ length: Math.min(total, 3) }, (_, i) => (
+          <button key={i + 1} onClick={() => onChange(i + 1)}
+            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${current === i + 1 ? 'bg-[#6C5CE7] text-white' : 'text-[#6E7491] hover:bg-[#F0EFFA]'}`}>
+            {i + 1}
+          </button>
+        ))}
+        {total > 3 && <span className="px-1 text-[#9CA3AF]">...</span>}
+        {total > 3 && (
+          <button onClick={() => onChange(total)}
+            className={`w-8 h-8 rounded-lg text-xs font-bold ${current === total ? 'bg-[#6C5CE7] text-white' : 'text-[#6E7491] hover:bg-[#F0EFFA]'}`}>{total}</button>
+        )}
+      </div>
+      <button onClick={() => onChange(Math.min(total, current + 1))} disabled={current === total}
+        className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-[#6E7491] border border-[#E8E8F0] rounded-lg disabled:opacity-30 hover:bg-[#F0EFFA] transition-colors">
+        Tiếp <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function SearchFilter({ search, setSearch, onFilter }) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 p-5 bg-[#FAFAFE] rounded-xl border border-[#E8E8F0] mb-5">
+      <div className="flex-1">
+        <label className="text-xs font-semibold text-[#6E7491] mb-1.5 block">Tìm kiếm</label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Booking ID, tên khách hàng hoặc số điện thoại..."
+            className="w-full pl-9 pr-4 py-2.5 border border-[#E8E8F0] rounded-lg text-sm placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/40 bg-white transition-all" />
+        </div>
+      </div>
+      <div className="w-48">
+        <label className="text-xs font-semibold text-[#6E7491] mb-1.5 block">Trạng thái</label>
+        <select className="w-full px-3 py-2.5 border border-[#E8E8F0] rounded-lg text-sm text-[#6E7491] bg-white focus:outline-none cursor-pointer">
+          <option>Tất cả trạng thái</option>
+        </select>
+      </div>
+      <div className="flex items-end">
+        <button className="px-5 py-2.5 bg-white border border-[#E8E8F0] rounded-lg text-sm font-semibold text-[#27273F] hover:bg-[#F0EFFA] transition-colors">
+          Lọc kết quả
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── TAB: Cancel Requests ───────────────────────────────────────────────────
+function CancelTab() {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-
-  const filtered = tickets.filter(t => {
-    const q = search.toLowerCase();
-    const matchSearch = !q || t.customer.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q);
-    const matchStatus = statusFilter === 'All' || t.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const selectedTicket = selected ? tickets.find(t => t.id === selected) : null;
-
-  const handleSendReply = () => {
-    if (!reply.trim() || !selected) return;
-    setTickets(prev => prev.map(t => {
-      if (t.id !== selected) return t;
-      return {
-        ...t,
-        status: t.status === 'Open' ? 'In Progress' : t.status,
-        messages: [...t.messages, { from: 'staff', text: reply.trim(), time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }],
-      };
-    }));
-    setReply('');
-  };
-
-  const handleResolve = (id) => {
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
-  };
-
-  const openCount = tickets.filter(t => t.status === 'Open').length;
-  const inProgressCount = tickets.filter(t => t.status === 'In Progress').length;
+  const pendingCount = CANCEL_REQUESTS.filter(r => r.status === 'Đang chờ').length;
 
   return (
-    <div className="space-y-5 h-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Customer Support</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Quản lý yêu cầu hỗ trợ từ hành khách.</p>
+          <h2 className="text-2xl font-bold text-[#27273F]">Yêu cầu huỷ vé</h2>
+          <p className="text-sm text-[#6E7491] mt-1">Bạn có <span className="font-bold text-[#6C5CE7]">{pendingCount * 3} yêu cầu</span> đang chờ xử lý.</p>
         </div>
-        <div className="flex gap-2 text-xs font-semibold">
-          <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl">
-            <AlertCircle className="w-3.5 h-3.5" /> {openCount} Open
-          </div>
-          <div className="flex items-center gap-1.5 bg-violet-50 border border-violet-200 text-violet-700 px-3 py-2 rounded-xl">
-            <Clock className="w-3.5 h-3.5" /> {inProgressCount} In Progress
-          </div>
-        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-[#6C5CE7] text-white rounded-lg text-sm font-semibold hover:bg-[#5A4BD1] transition-colors">
+          <FileDown className="w-4 h-4" /> Xuất báo cáo
+        </button>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 min-h-[600px]">
-        {/* Ticket list */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-100 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm ticket..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all" />
-            </div>
-            <div className="flex gap-1">
-              {['All', 'Open', 'In Progress', 'Resolved'].map(s => (
-                <button key={s} onClick={() => setStatusFilter(s)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${statusFilter === s ? 'bg-violet-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-            {filtered.length === 0 ? (
-              <div className="py-10 text-center text-sm text-slate-400">Không có ticket nào</div>
-            ) : filtered.map(t => (
-              <button key={t.id} onClick={() => setSelected(t.id)}
-                className={`w-full text-left px-4 py-3.5 hover:bg-slate-50 transition-colors ${selected === t.id ? 'bg-violet-50/60 border-r-2 border-violet-500' : ''}`}>
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <span className="text-xs font-bold text-violet-600">{t.id}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusStyle[t.status]}`}>{t.status}</span>
-                </div>
-                <p className="text-sm font-semibold text-slate-700 leading-tight">{t.subject}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{t.customer} · {t.created}</p>
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${priorityStyle[t.priority]}`}>{t.priority}</span>
-                  <span className="text-[10px] text-slate-400">Booking {t.booking}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Chat / detail panel */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          {!selectedTicket ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400 p-8">
-              <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center">
-                <ChevronRight className="w-6 h-6 text-violet-400" />
-              </div>
-              <p className="text-sm font-medium">Chọn một ticket để xem chi tiết</p>
-            </div>
-          ) : (
-            <>
-              {/* Ticket header */}
-              <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-violet-600">{selectedTicket.id}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusStyle[selectedTicket.status]}`}>{selectedTicket.status}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${priorityStyle[selectedTicket.priority]}`}>{selectedTicket.priority}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-800">{selectedTicket.subject}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {selectedTicket.customer} · {selectedTicket.email} · Booking {selectedTicket.booking}
-                  </p>
-                </div>
-                {selectedTicket.status !== 'Resolved' && (
-                  <button onClick={() => handleResolve(selected)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:bg-emerald-600 transition-colors shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Đã giải quyết
-                  </button>
-                )}
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {selectedTicket.messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.from === 'staff' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${msg.from === 'staff'
-                        ? 'bg-violet-600 text-white rounded-br-sm'
-                        : 'bg-slate-100 text-slate-700 rounded-bl-sm'
-                      }`}>
-                      <p>{msg.text}</p>
-                      <p className={`text-[10px] mt-1 ${msg.from === 'staff' ? 'text-violet-200' : 'text-slate-400'}`}>{msg.time}</p>
+      <SearchFilter search={search} setSearch={setSearch} />
+      <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+              <th className="px-6 py-4">Booking ID</th>
+              <th className="px-6 py-4">Khách Hàng</th>
+              <th className="px-6 py-4">Thông Tin Chuyến Bay</th>
+              <th className="px-6 py-4">Lý Do</th>
+              <th className="px-6 py-4">Ngày Yêu Cầu</th>
+              <th className="px-6 py-4">Số Tiền Hoàn</th>
+              <th className="px-6 py-4 text-center">Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F0F0F5]">
+            {CANCEL_REQUESTS.map(r => (
+              <tr key={r.id} className="hover:bg-[#FAFAFE] transition-colors">
+                <td className="px-6 py-4 text-sm font-bold text-[#6C5CE7]">{r.id}</td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar initials={r.avatar} />
+                    <div>
+                      <div className="text-sm font-semibold text-[#27273F]">{r.customer}</div>
+                      <div className="text-[11px] text-[#9CA3AF]">{r.email}</div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm font-semibold text-[#27273F]">{r.flight}</div>
+                  <div className="text-[11px] text-[#9CA3AF]">{r.flightCode} • {r.flightDate}</div>
+                </td>
+                <td className="px-6 py-4 text-sm text-[#6E7491]">{r.reason}</td>
+                <td className="px-6 py-4 text-sm text-[#6E7491]">{r.requestDate}</td>
+                <td className="px-6 py-4 text-sm font-bold text-[#6C5CE7]">{r.refundAmount}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${cancelStatusStyle[r.status]}`}>{r.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination current={1} total={3} onChange={() => {}} />
+      </div>
+    </div>
+  );
+}
 
-              {/* Reply box */}
-              {selectedTicket.status !== 'Resolved' ? (
-                <div className="p-4 border-t border-slate-100 flex gap-2">
-                  <input
-                    type="text"
-                    value={reply}
-                    onChange={e => setReply(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSendReply()}
-                    placeholder="Nhập phản hồi..."
-                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
-                  />
-                  <button onClick={handleSendReply} disabled={!reply.trim()}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                    <Send className="w-4 h-4" />
+// ─── TAB: Refund Requests ───────────────────────────────────────────────────
+function RefundTab() {
+  const [search, setSearch] = useState('');
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold text-[#27273F]">Yêu cầu hoàn tiền</h2>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-[#6C5CE7] text-white rounded-lg text-sm font-semibold hover:bg-[#5A4BD1] transition-colors">
+          <FileDown className="w-4 h-4" /> Xuất báo cáo
+        </button>
+      </div>
+      <SearchFilter search={search} setSearch={setSearch} />
+      <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+              <th className="px-6 py-4">Ticket ID</th>
+              <th className="px-6 py-4">Phương Thức Thanh Toán</th>
+              <th className="px-6 py-4">Số Tiền Hoàn</th>
+              <th className="px-6 py-4">Trạng Thái Hoàn Tiền</th>
+              <th className="px-6 py-4">Trạng Thái Xử Lý</th>
+              <th className="px-6 py-4 text-center">Hành Động</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F0F0F5]">
+            {REFUND_REQUESTS.map(r => (
+              <tr key={r.id} className="hover:bg-[#FAFAFE] transition-colors">
+                <td className="px-6 py-4">
+                  <div className="text-sm font-bold text-[#6C5CE7]">{r.id}</div>
+                  <div className="text-[11px] text-[#9CA3AF]">{r.customer}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2 text-sm text-[#27273F]">
+                    <span>{r.paymentIcon}</span> {r.paymentMethod}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-[#27273F]">{r.amount}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${refundStatusStyle[r.refundStatus]}`}>{r.refundStatus}</span>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${processStatusStyle[r.processStatus]}`}>{r.processStatus}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <button className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all">
+                    <Eye className="w-4 h-4" />
                   </button>
-                </div>
-              ) : (
-                <div className="p-4 border-t border-slate-100 text-center text-xs text-emerald-600 font-semibold flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" /> Ticket đã được giải quyết
-                </div>
-              )}
-            </>
-          )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination current={1} total={12} onChange={() => {}} />
+      </div>
+    </div>
+  );
+}
+
+// ─── TAB: Complaints ────────────────────────────────────────────────────────
+function ComplaintTab() {
+  const [search, setSearch] = useState('');
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-2xl font-bold text-[#27273F]">Khiếu nại</h2>
+          <p className="text-sm text-[#6E7491] mt-1">Quản lý và phản hồi các vấn đề phát sinh từ khách hàng.</p>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 border border-[#E8E8F0] rounded-lg text-sm font-semibold text-[#27273F] hover:bg-[#F0EFFA] transition-colors">
+          <Filter className="w-4 h-4" /> Bộ lọc nâng cao
+        </button>
+      </div>
+      <SearchFilter search={search} setSearch={setSearch} />
+      <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+              <th className="px-6 py-4">Complaint ID</th>
+              <th className="px-6 py-4">Khách Hàng</th>
+              <th className="px-6 py-4">Chủ Đề</th>
+              <th className="px-6 py-4">Ngày Gửi</th>
+              <th className="px-6 py-4">Trạng Thái</th>
+              <th className="px-6 py-4 text-center">Hành Động</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F0F0F5]">
+            {COMPLAINTS.map(c => (
+              <tr key={c.id} className="hover:bg-[#FAFAFE] transition-colors">
+                <td className="px-6 py-4 text-sm font-bold text-[#6C5CE7]">{c.id}</td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar initials={c.avatar} />
+                    <div>
+                      <div className="text-sm font-semibold text-[#27273F]">{c.customer}</div>
+                      <div className="text-[11px] text-[#9CA3AF]">{c.email}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-[#27273F]">{c.subject}</div>
+                  <div className="text-[11px] text-[#9CA3AF]">{c.flightInfo}</div>
+                </td>
+                <td className="px-6 py-4 text-sm text-[#6E7491]">{c.date}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${complaintStatusStyle[c.status]}`}>{c.status}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <button className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all">
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination current={1} total={3} onChange={() => {}} />
+      </div>
+    </div>
+  );
+}
+
+// ─── TAB: System Errors ─────────────────────────────────────────────────────
+function SystemErrorTab() {
+  const [search, setSearch] = useState('');
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-2xl font-bold text-[#27273F]">Lỗi hệ thống vé</h2>
+          <p className="text-sm text-[#6E7491] mt-1">Quản lý và xử lý các sự cố kỹ thuật phát sinh trong quá trình đặt vé và thanh toán.</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-2 px-4 py-2.5 border border-[#E8E8F0] rounded-lg text-sm font-semibold text-[#27273F] hover:bg-[#F0EFFA] transition-colors">
+            <Filter className="w-4 h-4" /> Bộ lọc
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#6C5CE7] text-white rounded-lg text-sm font-semibold hover:bg-[#5A4BD1] transition-colors">
+            Cập nhật dữ liệu
+          </button>
         </div>
       </div>
+      <SearchFilter search={search} setSearch={setSearch} />
+      <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+              <th className="px-6 py-4">Loại Lỗi</th>
+              <th className="px-6 py-4">Ticket ID</th>
+              <th className="px-6 py-4">Nội Dung Lỗi</th>
+              <th className="px-6 py-4">Thời Gian</th>
+              <th className="px-6 py-4">Mức Độ</th>
+              <th className="px-6 py-4">Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F0F0F5]">
+            {SYSTEM_ERRORS.map(e => (
+              <tr key={e.id} className="hover:bg-[#FAFAFE] transition-colors">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <span>{e.typeIcon}</span>
+                    <span className="text-sm font-semibold text-[#27273F]">{e.type}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-[#6C5CE7]">{e.id}</td>
+                <td className="px-6 py-4 text-sm text-[#6E7491] max-w-[240px] truncate">{e.description}</td>
+                <td className="px-6 py-4">
+                  <div className="text-sm font-medium text-[#27273F]">{e.time}</div>
+                  <div className="text-[11px] text-[#9CA3AF]">{e.timeLabel}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${severityStyle[e.severity]}`}>{e.severity}</span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${errorStatusDot[e.status]}`} />
+                    <span className="text-xs font-semibold text-[#6E7491]">{e.status}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination current={1} total={16} onChange={() => {}} />
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN PAGE ──────────────────────────────────────────────────────────────
+function CustomerSupportPage() {
+  const [activeTab, setActiveTab] = useState('cancel');
+
+  return (
+    <div className="space-y-5">
+      {/* Tabs */}
+      <div className="flex gap-0 border-b border-[#E8E8F0]">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 ${activeTab === tab.id
+                ? 'text-[#6C5CE7] border-[#6C5CE7]'
+                : 'text-[#9CA3AF] border-transparent hover:text-[#6E7491]'
+              }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'cancel' && <CancelTab />}
+      {activeTab === 'refund' && <RefundTab />}
+      {activeTab === 'complaint' && <ComplaintTab />}
+      {activeTab === 'system' && <SystemErrorTab />}
     </div>
   );
 }
