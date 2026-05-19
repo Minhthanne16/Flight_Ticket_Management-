@@ -2,6 +2,7 @@ package com.flight.backend.dto.flight;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.flight.backend.entity.enums.FlightStatus;
 
@@ -18,4 +19,5 @@ public class CreateFlightRequest {
     private int estimateDuration;
     private BigDecimal basePrice;
     private FlightStatus status;
+    private List<CreateFlightStopRequest> flightStops;
 }

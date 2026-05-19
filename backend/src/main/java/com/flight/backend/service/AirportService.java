@@ -48,4 +48,9 @@ public class AirportService {
             return res;
         }).toList();
     }
+
+    public Airport getAirportById(Long id) {
+        return this.airportRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Airport not found"));
+    }
 }
