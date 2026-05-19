@@ -3,16 +3,15 @@ package com.flight.backend.config;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
-
 import com.flight.backend.entity.User;
 import com.flight.backend.entity.Staff;
 import com.flight.backend.entity.enums.UserRole;
 import com.flight.backend.entity.enums.StaffStatus;
 import com.flight.backend.repository.UserRepository;
 import com.flight.backend.repository.StaffRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
@@ -48,6 +47,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setFullName("Cao Hoàng Phúc");
             admin.setEmail(customAdminEmail);
             admin.setPasswordHash(passwordEncoder.encode("admin123"));
+            admin.setPhoneNumber("0909090909");
             admin.setRole(UserRole.ADMIN);
             admin.setActive(true);
             admin.setCreatedAt(LocalDateTime.now());
