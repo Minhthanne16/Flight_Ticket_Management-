@@ -2,6 +2,7 @@ package com.flight.backend.dto.flight;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.flight.backend.entity.enums.FlightStatus;
 
@@ -25,4 +26,5 @@ public class FlightResponse {
     private FlightStatus status;
     private Long airplaneId;
     private Long routeId;
+    private List<FlightStopResponse> flightStops;
 }

@@ -1,13 +1,11 @@
 package com.flight.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flight.backend.entity.enums.VoucherDiscountType;
 import com.flight.backend.entity.enums.VoucherStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -75,7 +73,6 @@ public class Voucher {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY)
-    private List<BookingVoucher> bookingVouchers;
+    @OneToMany(mappedBy = "voucher")
+    private List<BookingVoucher> bookingVouchers = new ArrayList<>();
 }

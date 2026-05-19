@@ -3,6 +3,7 @@ package com.flight.backend.service;
 import com.flight.backend.dto.flight.CreateFlightRequest;
 import com.flight.backend.dto.flight.FlightResponse;
 import com.flight.backend.dto.flight.FlightSearchResponse;
+import com.flight.backend.dto.flight.FlightStopResponse;
 import com.flight.backend.entity.Airplane;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.entity.FlightSeat;
@@ -29,18 +30,21 @@ public class FlightService {
     private final RouteRepository routeRepo;
     private final SeatRepository seatRepo;
     private final FlightSeatRepository flightSeatRepo;
+    private final FlightStopService flightStopService;
 
     public FlightService(
             FlightRepository flightRepo,
             AirplaneRepository airplaneRepo,
             RouteRepository routeRepo,
             SeatRepository seatRepo,
-            FlightSeatRepository flightSeatRepo) {
+            FlightSeatRepository flightSeatRepo,
+            FlightStopService flightStopService) {
         this.flightRepo = flightRepo;
         this.airplaneRepo = airplaneRepo;
         this.routeRepo = routeRepo;
         this.seatRepo = seatRepo;
         this.flightSeatRepo = flightSeatRepo;
+        this.flightStopService = flightStopService;
     }
 
     // CREATE FLIGHT
@@ -87,6 +91,10 @@ public class FlightService {
         // 7. Lưu toàn bộ FlightSeat
         flightSeatRepo.saveAll(flightSeats);
 
+        // 8. Lưu FlightStop
+        List<FlightStopResponse> flightStops = this.flightStopService.createFlightStop(savedFlight,
+                req.getFlightStops());
+
         FlightResponse resp = new FlightResponse();
         resp.setId(savedFlight.getId());
         resp.setFlightCode(savedFlight.getFlightCode());
@@ -96,6 +104,7 @@ public class FlightService {
         resp.setStatus(savedFlight.getStatus());
         resp.setAirplaneId(airplane.getId());
         resp.setRouteId(route.getId());
+        resp.setFlightStops(flightStops);
 
         return resp;
     }
