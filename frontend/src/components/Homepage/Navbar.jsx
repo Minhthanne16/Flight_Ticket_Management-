@@ -5,14 +5,33 @@ import logoImg from '../../assets/logo.png';
 
 function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
+
+    // Get user from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    setUser(null);
+    window.location.href = '/';
+  };
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
@@ -46,12 +65,43 @@ function Navbar() {
              <Globe className="w-4 h-4" />
              <span className="font-medium text-sm">VND | VN</span>
           </div>
-          <Link to="/signin" className={`px-4 py-2 rounded-xl font-semibold transition-colors ${isScrolled ? 'text-blue-600 hover:bg-blue-50' : 'text-white hover:bg-white/20'}`}>
-            Đăng nhập
-          </Link>
-          <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-            Đăng ký
-          </Link>
+
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className={`font-medium text-sm ${isScrolled ? 'text-slate-700' : 'text-white'}`}>
+                Xin chào, <span className="font-bold text-blue-600">{user.fullName || user.email}</span>
+              </span>
+              {user.role === 'ADMIN' && (
+                <Link to="/admin/dashboard" className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                  Quản trị
+                </Link>
+              )}
+              {user.role === 'STAFF' && (
+                <Link to="/staff/dashboard" className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                  Nhân viên
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
+                  isScrolled 
+                    ? 'text-red-600 hover:bg-red-50' 
+                    : 'text-white hover:bg-white/20 bg-red-600/80 hover:bg-red-600'
+                }`}
+              >
+                Đăng xuất
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link to="/signin" className={`px-4 py-2 rounded-xl font-semibold transition-colors ${isScrolled ? 'text-blue-600 hover:bg-blue-50' : 'text-white hover:bg-white/20'}`}>
+                Đăng nhập
+              </Link>
+              <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

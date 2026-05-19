@@ -88,7 +88,11 @@ public class UserService {
         // 4. Generate JWT
         String token = jwtUtil.generateToken(userDetails.getUsername(), role);
 
-        return new LoginResponse(userDetails.getUsername(), role, token);
+        // 5. Fetch user details to get fullName
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new LoginResponse(userDetails.getUsername(), role, token, user.getFullName());
     }
 
     public User getUserById(Long id) {

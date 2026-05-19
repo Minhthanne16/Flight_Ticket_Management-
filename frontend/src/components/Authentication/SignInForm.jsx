@@ -24,7 +24,8 @@ function SignInForm() {
                 localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('user', JSON.stringify({
                     email: data.email,
-                    role: data.role
+                    role: data.role,
+                    fullName: data.fullName
                 }));
 
                 // Chuyển hướng dựa trên role
@@ -43,9 +44,9 @@ function SignInForm() {
             if (!error.response) {
                 // Tự động fallback sang Mock login nếu không kết nối được server (offline)
                 const mockUsers = {
-                    'admin@easyflight.vn': { password: 'admin123', role: 'ADMIN', token: 'mock-admin-token' },
-                    'staff@easyflight.vn': { password: 'staff123', role: 'STAFF', token: 'mock-staff-token' },
-                    'customer@gmail.com': { password: '123', role: 'CUSTOMER', token: 'mock-customer-token' }
+                    'admin@easyflight.vn': { password: 'admin123', role: 'ADMIN', token: 'mock-admin-token', fullName: 'Quản trị viên' },
+                    'staff@easyflight.vn': { password: 'staff123', role: 'STAFF', token: 'mock-staff-token', fullName: 'Nhân viên EasyFlight' },
+                    'customer@gmail.com': { password: '123', role: 'CUSTOMER', token: 'mock-customer-token', fullName: 'Khách hàng mẫu' }
                 };
 
                 const matchedUser = mockUsers[email];
@@ -54,7 +55,8 @@ function SignInForm() {
                     localStorage.setItem('token', matchedUser.token);
                     localStorage.setItem('user', JSON.stringify({
                         email: email,
-                        role: matchedUser.role
+                        role: matchedUser.role,
+                        fullName: matchedUser.fullName
                     }));
                     if (matchedUser.role === 'ADMIN') {
                         navigate('/admin/dashboard');
