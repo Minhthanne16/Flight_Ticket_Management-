@@ -2,12 +2,79 @@ import '../../css/Authentication/SignUpForm.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import airplaneWindow from '../../assets/airplane_window.png';
 import logoImg from '../../assets/logo.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import authService from '../../api/authService';
 
 function SignUpForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        password: '',
+        confirmPassword: ''
+    });
+
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+
+    const handleChange = (e) => {
+        const { id, value } = e.target;
+        // Map input IDs to state properties
+        const fieldMap = {
+            'fullname': 'fullName',
+            'signup-email': 'email',
+            'signup-phone': 'phoneNumber',
+            'signup-password': 'password',
+            'confirm-password': 'confirmPassword'
+        };
+        setFormData(prev => ({
+            ...prev,
+            [fieldMap[id] || id]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setErrorMsg('');
+        setSuccessMsg('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setErrorMsg('Mật khẩu xác nhận không khớp!');
+            return;
+        }
+
+        if (formData.password.length < 8) {
+            setErrorMsg('Mật khẩu phải chứa ít nhất 8 ký tự!');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authService.register(formData);
+            if (response && response.status === 'success') {
+                setSuccessMsg('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
+                setTimeout(() => {
+                    navigate('/signin');
+                }, 2000);
+            } else {
+                setErrorMsg(response.message || 'Đăng ký tài khoản thất bại.');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            setErrorMsg(
+                error.response?.data?.message || 
+                'Đã xảy ra lỗi khi kết nối tới máy chủ. Vui lòng thử lại!'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="signup-wrapper">
@@ -35,7 +102,33 @@ function SignUpForm() {
                     <p className="signup-subtext">Tạo tài khoản để trải nghiệm dịch vụ hàng không đẳng cấp.</p>
 
                     {/* Form */}
-                    <form className="signup-form-fields" onSubmit={(e) => e.preventDefault()}>
+                    <form className="signup-form-fields" onSubmit={handleSubmit}>
+
+                        {/* Error and Success Alerts */}
+                        {errorMsg && (
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#FEE2E2',
+                                color: '#991B1B',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                border: '1px solid #FCA5A5'
+                            }}>
+                                {errorMsg}
+                            </div>
+                        )}
+                        {successMsg && (
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#D1FAE5',
+                                color: '#065F46',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                border: '1px solid #6EE7B7'
+                            }}>
+                                {successMsg}
+                            </div>
+                        )}
 
                         {/* Họ và Tên */}
                         <div className="form-group">
@@ -46,6 +139,8 @@ function SignUpForm() {
                                     type="text"
                                     id="fullname"
                                     placeholder="Nhập họ và tên của bạn"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
                                     required
                                 />
                             </div>
@@ -60,6 +155,24 @@ function SignUpForm() {
                                     type="email"
                                     id="signup-email"
                                     placeholder="name@example.com"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Số điện thoại */}
+                        <div className="form-group">
+                            <label htmlFor="signup-phone">Số điện thoại</label>
+                            <div className="input-wrapper">
+                                <i className="fas fa-phone input-icon"></i>
+                                <input
+                                    type="tel"
+                                    id="signup-phone"
+                                    placeholder="Nhập số điện thoại (ví dụ: 0912345678)"
+                                    value={formData.phoneNumber}
+                                    onChange={handleChange}
                                     required
                                 />
                             </div>
@@ -73,7 +186,9 @@ function SignUpForm() {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     id="signup-password"
-                                    placeholder="Tạo mật khẩu an toàn"
+                                    placeholder="Tạo mật khẩu an toàn (tối thiểu 8 ký tự)"
+                                    value={formData.password}
+                                    onChange={handleChange}
                                     required
                                 />
                                 <button
@@ -96,6 +211,8 @@ function SignUpForm() {
                                     type={showConfirm ? 'text' : 'password'}
                                     id="confirm-password"
                                     placeholder="Nhập lại mật khẩu"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
                                     required
                                 />
                                 <button
@@ -119,8 +236,9 @@ function SignUpForm() {
                         </label>
 
                         {/* Submit */}
-                        <button type="submit" className="btn-create-account">
-                            Tạo tài khoản <span className="btn-arrow">→</span>
+                        <button type="submit" className="btn-create-account" disabled={loading}>
+                            {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}{' '}
+                            {!loading && <span className="btn-arrow">→</span>}
                         </button>
 
                         {/* Divider */}
