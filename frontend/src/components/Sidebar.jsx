@@ -14,25 +14,25 @@ import logoImg from '../assets/logo.png';
 
 const navGroups = [
   {
-    title: 'MAIN',
+    title: 'CHÍNH',
     items: [
-      { name: 'Dashboard', path: '/staff/dashboard', icon: LayoutDashboard },
-      { name: 'Flight Schedule', path: '/staff/flight-schedule', icon: Calendar },
-      { name: 'Booking', path: '/staff/booking', icon: Ticket },
+      { name: 'Bảng điều khiển', path: '/staff/dashboard', icon: LayoutDashboard },
+      { name: 'Lịch bay', path: '/staff/flight-schedule', icon: Calendar },
+      { name: 'Đặt vé', path: '/staff/booking', icon: Ticket },
     ]
   },
   {
-    title: 'OPERATIONS',
+    title: 'VẬN HÀNH',
     items: [
-      { name: 'Promotion', path: '/staff/promotion', icon: Tag },
-      { name: 'Customer Support', path: '/staff/customer-support', icon: Headset },
+      { name: 'Khuyến mãi', path: '/staff/promotion', icon: Tag },
+      { name: 'Hỗ trợ khách hàng', path: '/staff/customer-support', icon: Headset },
     ]
   },
   {
-    title: 'ACCOUNT',
+    title: 'TÀI KHOẢN',
     items: [
-      { name: 'Personal Info', path: '/staff/personal-info', icon: User },
-      { name: 'Regulations', path: '/staff/regulations', icon: ScrollText },
+      { name: 'Thông tin cá nhân', path: '/staff/personal-info', icon: User },
+      { name: 'Quy định', path: '/staff/regulations', icon: ScrollText },
     ]
   }
 ];
@@ -50,11 +50,12 @@ function Sidebar() {
     <aside className="w-[240px] bg-[#FAFAFE] flex flex-col justify-between shrink-0 h-screen overflow-y-auto border-r border-[#E8E8F0]">
       {/* Logo */}
       <div>
-        <div className="h-[72px] flex items-center px-5 border-b border-[#E8E8F0]">
+        <div className="flex items-center justify-center px-2 py-2 border-b border-[#E8E8F0]">
           <img
             src={logoImg}
             alt="EasyFlight"
-            className="h-8 w-auto object-contain"
+            className="w-full object-contain"
+            style={{ height: '100px' }}
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
@@ -83,8 +84,8 @@ function Sidebar() {
                       key={item.name}
                       to={item.path}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 group ${isActive
-                          ? 'bg-gradient-to-r from-[#6C5CE7] to-[#7E6FF2] text-white shadow-md shadow-[#6C5CE7]/20'
-                          : 'text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7]'
+                        ? 'bg-gradient-to-r from-[#6C5CE7] to-[#7E6FF2] text-white shadow-md shadow-[#6C5CE7]/20'
+                        : 'text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7]'
                         }`}
                     >
                       <item.icon
@@ -108,7 +109,7 @@ function Sidebar() {
           className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-[#6E7491] hover:bg-[#F0EFFA] hover:text-[#6C5CE7] transition-all duration-200"
         >
           <LogOut className="w-[18px] h-[18px]" />
-          <span className="text-sm font-medium">Logout</span>
+          <span className="text-sm font-medium">Đăng xuất</span>
         </button>
       </div>
     </aside>
