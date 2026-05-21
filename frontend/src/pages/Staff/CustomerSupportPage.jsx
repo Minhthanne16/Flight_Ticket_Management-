@@ -4,7 +4,7 @@ import { CANCEL_REQUESTS, REFUND_REQUESTS, COMPLAINTS, SYSTEM_ERRORS } from '../
 
 const TABS = [
   { id: 'cancel', label: 'Yêu cầu huỷ vé' },
-  { id: 'refund', label: 'Yêu cầu hoàn tiền' },
+  { id: 'exchange', label: 'Yêu cầu đổi vé' },
   { id: 'complaint', label: 'Khiếu nại' },
   { id: 'system', label: 'Lỗi hệ thống vé' },
 ];
@@ -176,13 +176,41 @@ function CancelTab() {
   );
 }
 
-// ─── TAB: Refund Requests ───────────────────────────────────────────────────
-function RefundTab() {
+// ─── TAB: Ticket Exchange Requests ───────────────────────────────────────────
+const EXCHANGE_REQUESTS = [
+  { id: 'EX-0041', customer: 'Nguyễn Văn A', avatar: 'NA', email: 'nva@gmail.com', flight: 'HAN → SGN', flightCode: 'VN202', flightDate: '22/05/2026', type: 'Nâng hạng', from: 'Ghế phổ thông', to: 'Ghế thương gia', requestDate: '21/05/2026', status: 'Đang chờ' },
+  { id: 'EX-0042', customer: 'Trần Thị B', avatar: 'TB', email: 'ttb@gmail.com', flight: 'SGN → DAD', flightCode: 'VN530', flightDate: '23/05/2026', type: 'Đổi ghế', from: '14A', to: '2F (cạnh cửa sổ)', requestDate: '21/05/2026', status: 'Đã duyệt' },
+  { id: 'EX-0043', customer: 'Lê Minh C', avatar: 'LC', email: 'lmc@gmail.com', flight: 'DAD → HAN', flightCode: 'VN171', flightDate: '24/05/2026', type: 'Đổi ngày bay', from: '24/05/2026', to: '26/05/2026', requestDate: '20/05/2026', status: 'Bị từ chối' },
+  { id: 'EX-0044', customer: 'Phạm Quốc D', avatar: 'PD', email: 'pqd@gmail.com', flight: 'HAN → PQC', flightCode: 'VN461', flightDate: '25/05/2026', type: 'Nâng hạng', from: 'Ghế phổ thông', to: 'Ghế hạng nhất', requestDate: '21/05/2026', status: 'Đang chờ' },
+  { id: 'EX-0045', customer: 'Hoàng Thị E', avatar: 'HE', email: 'hte@gmail.com', flight: 'SGN → HAN', flightCode: 'VN231', flightDate: '26/05/2026', type: 'Đổi ghế', from: '22C', to: '10A (cạnh lối đi)', requestDate: '21/05/2026', status: 'Đã duyệt' },
+];
+
+const exchangeTypeStyle = {
+  'Nâng hạng': 'text-violet-700 bg-violet-50 border border-violet-200',
+  'Đổi ghế': 'text-sky-700 bg-sky-50 border border-sky-200',
+  'Đổi ngày bay': 'text-amber-700 bg-amber-50 border border-amber-200',
+};
+
+const exchangeStatusStyle = {
+  'Đang chờ': 'text-amber-700 bg-amber-50 border border-amber-200',
+  'Đã duyệt': 'text-emerald-700 bg-emerald-50 border border-emerald-200',
+  'Bị từ chối': 'text-red-600 bg-red-50 border border-red-200',
+};
+
+function ExchangeTab() {
   const [search, setSearch] = useState('');
+  const pendingCount = EXCHANGE_REQUESTS.filter(r => r.status === 'Đang chờ').length;
+  const filtered = EXCHANGE_REQUESTS.filter(r =>
+    r.customer.toLowerCase().includes(search.toLowerCase()) ||
+    r.id.toLowerCase().includes(search.toLowerCase())
+  );
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-[#27273F]">Yêu cầu hoàn tiền</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-[#27273F]">Yêu cầu đổi vé</h2>
+          <p className="text-sm text-[#6E7491] mt-1">Có <span className="font-bold text-[#6C5CE7]">{pendingCount} yêu cầu</span> đang chờ xử lý.</p>
+        </div>
         <button className="flex items-center gap-2 px-4 py-2.5 bg-[#6C5CE7] text-white rounded-lg text-sm font-semibold hover:bg-[#5A4BD1] transition-colors">
           <FileDown className="w-4 h-4" /> Xuất báo cáo
         </button>
@@ -192,32 +220,50 @@ function RefundTab() {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
-              <th className="px-6 py-4">Ticket ID</th>
-              <th className="px-6 py-4">Phương Thức Thanh Toán</th>
-              <th className="px-6 py-4">Số Tiền Hoàn</th>
-              <th className="px-6 py-4">Trạng Thái Hoàn Tiền</th>
-              <th className="px-6 py-4">Trạng Thái Xử Lý</th>
+              <th className="px-6 py-4">Mã yêu cầu</th>
+              <th className="px-6 py-4">Khách Hàng</th>
+              <th className="px-6 py-4">Chuyến Bay</th>
+              <th className="px-6 py-4">Loại Đổi</th>
+              <th className="px-6 py-4">Từ → Sang</th>
+              <th className="px-6 py-4">Ngày Yêu Cầu</th>
+              <th className="px-6 py-4 text-center">Trạng Thái</th>
               <th className="px-6 py-4 text-center">Hành Động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F0F0F5]">
-            {REFUND_REQUESTS.map(r => (
+            {filtered.map(r => (
               <tr key={r.id} className="hover:bg-[#FAFAFE] transition-colors">
+                <td className="px-6 py-4 text-sm font-bold text-[#6C5CE7]">{r.id}</td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-bold text-[#6C5CE7]">{r.id}</div>
-                  <div className="text-[11px] text-[#9CA3AF]">{r.customer}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-sm text-[#27273F]">
-                    <span>{r.paymentIcon}</span> {r.paymentMethod}
+                  <div className="flex items-center gap-2.5">
+                    <Avatar initials={r.avatar} />
+                    <div>
+                      <div className="text-sm font-semibold text-[#27273F]">{r.customer}</div>
+                      <div className="text-[11px] text-[#9CA3AF]">{r.email}</div>
+                    </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm font-bold text-[#27273F]">{r.amount}</td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${refundStatusStyle[r.refundStatus]}`}>{r.refundStatus}</span>
+                  <div className="text-sm font-semibold text-[#27273F]">{r.flight}</div>
+                  <div className="text-[11px] text-[#9CA3AF]">{r.flightCode} • {r.flightDate}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${processStatusStyle[r.processStatus]}`}>{r.processStatus}</span>
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${exchangeTypeStyle[r.type] || 'text-slate-600 bg-slate-100'}`}>
+                    {r.type}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-xs text-[#6E7491]">
+                    <span className="line-through opacity-60">{r.from}</span>
+                    <span className="mx-1 text-[#6C5CE7] font-bold">→</span>
+                    <span className="font-semibold text-[#27273F]">{r.to}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm text-[#6E7491]">{r.requestDate}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${exchangeStatusStyle[r.status]}`}>
+                    {r.status}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   <button className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all">
@@ -228,7 +274,7 @@ function RefundTab() {
             ))}
           </tbody>
         </table>
-        <Pagination current={1} total={12} onChange={() => {}} />
+        <Pagination current={1} total={3} onChange={() => {}} />
       </div>
     </div>
   );
@@ -392,7 +438,7 @@ function CustomerSupportPage() {
 
       {/* Tab Content */}
       {activeTab === 'cancel' && <CancelTab />}
-      {activeTab === 'refund' && <RefundTab />}
+      {activeTab === 'exchange' && <ExchangeTab />}
       {activeTab === 'complaint' && <ComplaintTab />}
       {activeTab === 'system' && <SystemErrorTab />}
     </div>

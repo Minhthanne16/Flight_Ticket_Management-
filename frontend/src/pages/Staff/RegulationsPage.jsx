@@ -105,11 +105,7 @@ function CardTitle({ icon: Icon, iconBg, iconColor, title, description, action }
 }
 
 // ─── Integration Status Row ──────────────────────────────────────────────────
-const integrations = [
-  { name: 'GDS Network', sub: 'Amadeus & Sabre', icon: Globe, status: 'active' },
-  { name: 'Weather API', sub: 'NOAA National', icon: CloudLightning, status: 'active' },
-  { name: 'Fuel Price Index', sub: 'IATA Fuel Monitor', icon: Fuel, status: 'error' },
-];
+const integrations = [];
 
 function IntegrationRow({ icon: Icon, name, sub, status }) {
   const isActive = status === 'active';
@@ -128,12 +124,12 @@ function IntegrationRow({ icon: Icon, name, sub, status }) {
         {isActive ? (
           <>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-emerald-600">Active</span>
+            <span className="text-xs font-semibold text-emerald-600">Hoạt động</span>
           </>
         ) : (
           <>
             <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-xs font-semibold text-red-500">Error</span>
+            <span className="text-xs font-semibold text-red-500">Lỗi</span>
           </>
         )}
       </div>
@@ -175,16 +171,16 @@ function RegulationsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#27273F]">Regulations</h1>
+          <h1 className="text-2xl font-bold text-[#27273F]">Quy định</h1>
           <p className="text-sm text-[#6E7491] mt-1">
-            Manage airline booking, refund, and operational flight regulations.
+            Quản lý các quy định về đặt vé, hoàn tiền và khai thác chuyến bay.
           </p>
         </div>
         <div className="flex items-center gap-3">
           {isViewOnly && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F0EFFA] border border-[#D4D0F8] rounded-xl">
               <Eye className="w-4 h-4 text-[#6C5CE7]" />
-              <span className="text-xs font-semibold text-[#6C5CE7]">View Only</span>
+              <span className="text-xs font-semibold text-[#6C5CE7]">Chỉ xem</span>
             </div>
           )}
           {!isViewOnly && (
@@ -196,9 +192,9 @@ function RegulationsPage() {
                 }`}
             >
               {saved ? (
-                <><CheckCircle2 className="w-4 h-4" /> Saved!</>
+                <><CheckCircle2 className="w-4 h-4" /> Đã lưu!</>
               ) : (
-                <><Save className="w-4 h-4" /> Save Changes</>
+                <><Save className="w-4 h-4" /> Lưu thay đổi</>
               )}
             </button>
           )}
@@ -214,36 +210,36 @@ function RegulationsPage() {
             icon={BookOpen}
             iconBg="bg-[#E9E8FC]"
             iconColor="text-[#6C5CE7]"
-            title="Booking Policies"
-            description="Define ticketing rules, hold times, and cancellation fees"
+            title="Chính sách đặt vé"
+            description="Xác định quy tắc xuất vé, thời gian giữ chỗ và phí hủy"
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
             <InputField
-              label="Maximum Hold Time"
+              label="Thời gian giữ chỗ tối đa"
               value={holdTime}
               onChange={setHoldTime}
-              suffix="hrs"
+              suffix="giờ"
               icon={Clock}
-              helper="Max duration before unpaid bookings auto-expire"
+              helper="Thời gian tối đa trước khi vé chưa thanh toán tự động hủy"
               readOnly={isViewOnly}
             />
             <InputField
-              label="Late Cancellation Fee"
+              label="Phí hủy muộn"
               value={lateFee}
               onChange={setLateFee}
               suffix="USD"
               icon={DollarSign}
-              helper="Applied when cancelled within 24h of departure"
+              helper="Áp dụng khi hủy trong vòng 24h trước khi khởi hành"
               readOnly={isViewOnly}
             />
             <InputField
-              label="Overbooking Threshold"
+              label="Ngưỡng bán quá vé"
               value={overbooking}
               onChange={setOverbooking}
               suffix="%"
               icon={Percent}
-              helper="Allowed automatic overbooking percentage per flight"
+              helper="Tỷ lệ phần trăm cho phép tự động bán quá số ghế mỗi chuyến"
               readOnly={isViewOnly}
             />
           </div>
@@ -252,21 +248,21 @@ function RegulationsPage() {
           <div className="bg-[#FAFAFE] rounded-xl border border-[#E8E8F0] p-4">
             <div className="flex items-center gap-2 mb-3">
               <RefreshCw className="w-4 h-4 text-[#6C5CE7]" />
-              <span className="text-sm font-bold text-[#27273F]">Refund Rules</span>
+              <span className="text-sm font-bold text-[#27273F]">Quy tắc hoàn tiền</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-white rounded-xl border border-[#E8E8F0] p-3.5">
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Refund Timeframe</p>
-                <p className="text-sm font-bold text-[#27273F]">7 – 14 business days</p>
-                <p className="text-[11px] text-[#9CA3AF] mt-1">Processing time after approved cancellation request</p>
+                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Thời gian hoàn tiền</p>
+                <p className="text-sm font-bold text-[#27273F]">7 – 14 ngày làm việc</p>
+                <p className="text-[11px] text-[#9CA3AF] mt-1">Thời gian xử lý sau khi yêu cầu hủy được phê duyệt</p>
               </div>
               <div className="bg-white rounded-xl border border-[#E8E8F0] p-3.5">
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Refund Percentage</p>
+                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Tỷ lệ hoàn tiền</p>
                 <div className="flex items-baseline gap-1">
                   <p className="text-2xl font-black text-emerald-600">80%</p>
-                  <p className="text-xs text-[#6E7491]">if cancelled &gt;48h before flight</p>
+                  <p className="text-xs text-[#6E7491]">nếu hủy &gt;48h trước chuyến bay</p>
                 </div>
-                <p className="text-[11px] text-[#9CA3AF] mt-1">Excluding taxes and service fees</p>
+                <p className="text-[11px] text-[#9CA3AF] mt-1">Không bao gồm thuế và phí dịch vụ</p>
               </div>
             </div>
           </div>
@@ -278,8 +274,8 @@ function RegulationsPage() {
             icon={Wifi}
             iconBg="bg-emerald-50"
             iconColor="text-emerald-500"
-            title="System Integrations"
-            description="Connected third-party services"
+            title="Tích hợp hệ thống"
+            description="Các dịch vụ bên thứ ba đã kết nối"
           />
 
           <div className="divide-y divide-[#F0F0F5]">
@@ -291,7 +287,7 @@ function RegulationsPage() {
           {!isViewOnly && (
             <button className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-[#E8E8F0] rounded-xl text-sm font-semibold text-[#6C5CE7] hover:border-[#6C5CE7]/40 hover:bg-[#F0EFFA] transition-all">
               <Plus className="w-4 h-4" />
-              Add New Connector
+              Thêm kết nối mới
             </button>
           )}
         </Card>
@@ -306,8 +302,8 @@ function RegulationsPage() {
             icon={Plane}
             iconBg="bg-sky-50"
             iconColor="text-sky-500"
-            title="Operational Flight Regulations"
-            description="Safety checks and pre-departure validation rules"
+            title="Quy định khai thác chuyến bay"
+            description="Kiểm tra an toàn và quy tắc xác thực trước khi khởi hành"
           />
 
           <div className="space-y-0">
@@ -315,8 +311,8 @@ function RegulationsPage() {
               icon={Shield}
               iconBg="bg-[#E9E8FC]"
               iconColor="text-[#6C5CE7]"
-              label="Pre-flight Safety Validation"
-              description="Enforce mandatory safety checklist completion before any departure clearance is issued"
+              label="Xác thực an toàn trước chuyến bay"
+              description="Bắt buộc hoàn thành danh sách kiểm tra an toàn trước khi cấp phép khởi hành"
               enabled={preflightValidation}
               onChange={setPreflightValidation}
               disabled={isViewOnly}
@@ -325,8 +321,8 @@ function RegulationsPage() {
               icon={FileWarning}
               iconBg="bg-amber-50"
               iconColor="text-amber-500"
-              label="Automated NOTAM Scanning"
-              description="Automatically scan and flag relevant NOTAMs for each scheduled flight route"
+              label="Quét NOTAM tự động"
+              description="Tự động quét và đánh dấu các NOTAM liên quan cho mỗi chặng bay theo lịch trình"
               enabled={notamScanning}
               onChange={setNotamScanning}
               disabled={isViewOnly}
@@ -335,8 +331,8 @@ function RegulationsPage() {
               icon={Scale}
               iconBg="bg-emerald-50"
               iconColor="text-emerald-500"
-              label="Strict Weight & Balance Validation"
-              description="Reject boarding if aircraft W&B calculations fall outside certified limits"
+              label="Xác thực nghiêm ngặt Trọng tải & Cân bằng"
+              description="Từ chối cho hành khách lên máy bay nếu tính toán W&B của máy bay vượt quá giới hạn chứng nhận"
               enabled={weightBalance}
               onChange={setWeightBalance}
               disabled={isViewOnly}
@@ -347,12 +343,12 @@ function RegulationsPage() {
           <div className="mt-5 pt-5 border-t border-[#F0F0F5]">
             <div className="max-w-xs">
               <InputField
-                label="Minimum Ground Stop Duration"
+                label="Thời gian dừng trên mặt đất tối thiểu"
                 value={groundStop}
                 onChange={setGroundStop}
-                suffix="min"
+                suffix="phút"
                 icon={Clock}
-                helper="Minimum mandated ground time between consecutive flights for the same aircraft"
+                helper="Thời gian dừng bắt buộc tối thiểu giữa các chuyến bay liên tiếp của cùng một máy bay"
                 readOnly={isViewOnly}
               />
             </div>
@@ -365,8 +361,8 @@ function RegulationsPage() {
             icon={Settings2}
             iconBg="bg-slate-100"
             iconColor="text-slate-500"
-            title="System Preferences"
-            description="Notifications and security settings"
+            title="Tùy chọn hệ thống"
+            description="Cài đặt thông báo và bảo mật"
           />
 
           <div className="space-y-0">
@@ -374,8 +370,8 @@ function RegulationsPage() {
               icon={Bell}
               iconBg="bg-[#E9E8FC]"
               iconColor="text-[#6C5CE7]"
-              label="Email Summaries"
-              description="Daily digest of regulation changes and system alerts"
+              label="Tóm tắt qua Email"
+              description="Tóm tắt hàng ngày về thay đổi quy định và cảnh báo hệ thống"
               enabled={emailSummaries}
               onChange={setEmailSummaries}
               disabled={isViewOnly}
@@ -384,8 +380,8 @@ function RegulationsPage() {
               icon={MessageSquare}
               iconBg="bg-emerald-50"
               iconColor="text-emerald-500"
-              label="SMS Critical Alerts"
-              description="Instant SMS for CRITICAL severity system errors"
+              label="Cảnh báo SMS khẩn cấp"
+              description="Gửi SMS ngay lập tức cho các lỗi hệ thống có mức độ nghiêm trọng KHẨN CẤP"
               enabled={smsAlerts}
               onChange={setSmsAlerts}
               disabled={isViewOnly}
@@ -394,8 +390,8 @@ function RegulationsPage() {
               icon={Lock}
               iconBg="bg-amber-50"
               iconColor="text-amber-500"
-              label="2FA Enforcement"
-              description="Require two-factor authentication for all admin actions"
+              label="Bắt buộc 2FA"
+              description="Yêu cầu xác thực hai yếu tố cho tất cả các hành động của quản trị viên"
               enabled={twoFA}
               onChange={setTwoFA}
               disabled={isViewOnly}
@@ -410,13 +406,13 @@ function RegulationsPage() {
           <AlertTriangle className="w-5 h-5 text-amber-600" />
         </div>
         <div>
-          <p className="text-sm font-bold text-amber-800">Approval Required</p>
+          <p className="text-sm font-bold text-amber-800">Yêu cầu phê duyệt</p>
           <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-            Changing these regulations requires <span className="font-bold">Level 3 Executive approval</span>. All modifications are logged for FAA auditing and compliance tracking.
+            Thay đổi các quy định này yêu cầu <span className="font-bold">Phê duyệt của Ban điều hành Cấp 3</span>. Tất cả các sửa đổi đều được ghi lại để theo dõi tuân thủ và kiểm toán của Cục Hàng không.
           </p>
         </div>
         <button className="ml-auto shrink-0 flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-900 transition-colors">
-          Learn more <ChevronRight className="w-3.5 h-3.5" />
+          Tìm hiểu thêm <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
 

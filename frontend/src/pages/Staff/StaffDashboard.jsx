@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   PlaneTakeoff, AlertCircle,
-  HeadphonesIcon, TrendingUp, Users, Plane, Bell, CheckCircle2,
+  TrendingUp, Users, Plane, Bell, CheckCircle2,
   X, Clock, Activity, ChevronRight
 } from 'lucide-react';
 import { FLIGHTS, DASHBOARD_METRICS, ACTIVITY_LOG, STAFF_USER } from '../../data/sharedData';
@@ -320,14 +320,6 @@ function StaffDashboard() {
                 ))
               )}
 
-              <div className="bg-violet-50 border border-violet-100 rounded-xl p-3.5 flex gap-3 items-start">
-                <HeadphonesIcon className="w-4 h-4 text-violet-600 mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-violet-800">2 yêu cầu hỗ trợ đang chờ</p>
-                  <p className="text-xs text-violet-600 mt-0.5">Khách hàng đang chờ phản hồi trên chat</p>
-                  <button className="mt-2 text-xs font-semibold text-violet-600 hover:underline">Mở chat →</button>
-                </div>
-              </div>
             </div>
           </div>
 
