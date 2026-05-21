@@ -60,6 +60,32 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                     // ================= STAFF =================
                     .requestMatchers("/staffs","/staffs/**").hasRole("ADMIN")
 
+                  // ================= CUSTOMER =================
+                    .requestMatchers(HttpMethod.GET,
+                            "/customers/**")
+                    .hasAnyRole("ADMIN", "STAFF")
+
+                    .requestMatchers(HttpMethod.POST,
+                            "/customers")
+                    .hasRole("ADMIN")
+
+                    .requestMatchers(HttpMethod.PUT,
+                            "/customers/**")
+                    .hasRole("ADMIN")
+
+                    .requestMatchers(HttpMethod.DELETE,
+                            "/customers/**")
+                    .hasRole("ADMIN")
+
+                        // ================= NOTIFICATION =================
+                        .requestMatchers(HttpMethod.GET,"/notifications").hasRole("STAFF")
+
+                        .requestMatchers(HttpMethod.GET, "/notifications/my").hasAnyRole("CUSTOMER", "STAFF")
+
+                        .requestMatchers(HttpMethod.POST,"/notifications").hasRole("STAFF")
+
+                        .requestMatchers(HttpMethod.PUT,"/notifications/**").hasRole("STAFF")
+
                     .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
                     .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**").hasAnyRole("ADMIN", "STAFF")
                     .anyRequest().authenticated())
