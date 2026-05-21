@@ -1,0 +1,79 @@
+package com.flight.backend.service;
+
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+
+import com.flight.backend.dto.payment.PaymentResponse;
+import com.flight.backend.entity.Booking;
+import com.flight.backend.entity.FlightSeat;
+import com.flight.backend.entity.Payment;
+import com.flight.backend.entity.Ticket;
+import com.flight.backend.entity.enums.BookingStatus;
+import com.flight.backend.entity.enums.FlightSeatStatus;
+import com.flight.backend.entity.enums.PaymentStatus;
+import com.flight.backend.entity.enums.TicketStatus;
+import com.flight.backend.mapper.PaymentMapper;
+import com.flight.backend.repository.PaymentRepository;
+
+import jakarta.transaction.Transactional;
+
+@Service
+public class PaymentService {
+    private final PaymentRepository paymentRepository;
+    private final PaymentMapper paymentMapper;
+
+    public PaymentService(
+            PaymentRepository paymentRepository,
+            PaymentMapper paymentMapper) {
+        this.paymentRepository = paymentRepository;
+        this.paymentMapper = paymentMapper;
+    }
+
+    public void createPayment(Booking booking) {
+        Payment payment = new Payment();
+        payment.setBooking(booking);
+        payment.setAmount(booking.getTotalAmount());
+        payment.setPaymentTime(LocalDateTime.now().plusMinutes(5));
+        payment.setStatus(PaymentStatus.PENDING);
+
+        this.paymentRepository.save(payment);
+    }
+
+    public PaymentResponse getPaymentById(Long id) {
+        Payment payment = this.paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        return this.paymentMapper.toResponse(payment);
+    }
+
+    @Transactional
+    public PaymentResponse paymentSuccess(Long paymentId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        // Update payment
+        payment.setStatus(PaymentStatus.SUCCESS);
+
+        payment.setPaymentTime(LocalDateTime.now());
+
+        // Booking
+        Booking booking = payment.getBooking();
+
+        booking.setStatus(BookingStatus.PAID);
+
+        // Ticket + Seat
+        for (Ticket ticket : booking.getTickets()) {
+
+            ticket.setStatus(TicketStatus.ISSUED);
+
+            FlightSeat seat = ticket.getFlightSeat();
+
+            seat.setStatus(FlightSeatStatus.BOOKED);
+        }
+
+        paymentRepository.save(payment);
+
+        return paymentMapper.toResponse(payment);
+    }
+}

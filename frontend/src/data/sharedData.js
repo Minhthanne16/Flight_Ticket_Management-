@@ -12,6 +12,32 @@ export const STAFF_USER = {
     avatarSeed: 'Felix',
 };
 
+export const MOCK_USERS = [
+    {
+        email: 'admin@skybound.vn',
+        password: '123',
+        role: 'ADMIN',
+        name: 'Admin User',
+        fullName: 'SkyBound Admin',
+    },
+    {
+        email: 'staff@skybound.vn',
+        password: '123',
+        role: 'STAFF',
+        name: 'Staff User',
+        fullName: 'SkyBound Staff',
+        department: 'Ground Operations'
+    },
+    {
+        email: 'customer@gmail.com',
+        password: '123',
+        role: 'CUSTOMER',
+        name: 'Customer',
+        fullName: 'SkyBound Customer',
+    }
+];
+
+
 export const FLIGHTS = [
     {
         id: 'VN123',

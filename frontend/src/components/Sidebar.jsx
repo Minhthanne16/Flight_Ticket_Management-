@@ -55,7 +55,7 @@ function Sidebar() {
             src={logoImg}
             alt="EasyFlight"
             className="w-full object-contain"
-            style={{ height: '100px' }}
+            style={{ height: '160px' }}
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';

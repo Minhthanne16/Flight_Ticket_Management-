@@ -1,0 +1,46 @@
+
+@import "react-day-picker/dist/style.css";
+
+.rdp {
+  --rdp-accent-color: #007bff; 
+  --rdp-background-color: #e7f1ff; 
+  margin: 1em;
+}
+
+.date-group {
+    display: flex;
+    flex: 2;
+    border-radius: 16px;
+    overflow: visible; /* QUAN TRỌNG */
+    position: relative; /* QUAN TRỌNG */
+}
+
+.departure-box,
+.return-box {
+    flex: 1;
+    padding: 15px 20px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.departure-box {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+
+.return-box {
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.datepicker-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 9999;
+
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 12px;
+}
