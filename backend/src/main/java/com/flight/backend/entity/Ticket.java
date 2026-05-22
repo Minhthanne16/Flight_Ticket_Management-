@@ -1,6 +1,8 @@
 package com.flight.backend.entity;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.flight.backend.entity.enums.TicketStatus;
 import jakarta.persistence.Column;
@@ -13,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -54,4 +57,7 @@ public class Ticket {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private TicketStatus status;
+
+    @OneToMany(mappedBy = "ticket")
+    private List<Support> supports = new ArrayList<>();
 }

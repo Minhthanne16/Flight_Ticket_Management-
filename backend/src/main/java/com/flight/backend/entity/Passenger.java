@@ -53,5 +53,6 @@ public class Passenger {
     private String nationality;
 
     @OneToMany(mappedBy = "passenger")
+    @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
 }
