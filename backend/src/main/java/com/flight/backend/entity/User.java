@@ -69,7 +69,7 @@ public class User {
     @OneToMany(mappedBy = "customer")
     private List<Booking> bookings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "createBy")
+    @OneToMany(mappedBy = "createdBy")
     private List<Support> createdRequests = new ArrayList<>();
 
     @OneToMany(mappedBy = "approvedBy")

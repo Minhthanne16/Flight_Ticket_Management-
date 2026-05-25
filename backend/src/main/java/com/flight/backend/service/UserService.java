@@ -138,7 +138,7 @@ public class UserService {
             throw new RuntimeException("OTP đã được sử dụng");
         }
 
-        if (otpCode.getExpiryTime().isBefore(LocalDateTime.now())) {
+        if (otpCode.getExpiredAt().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("OTP đã hết hạn");
         }
 

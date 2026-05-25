@@ -29,7 +29,7 @@ public class OtpCodeService {
         otpCode.setEmail(email);
         otpCode.setOtp(otp);
         otpCode.setType(OtpType.RESET_PASSWORD);
-        otpCode.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+        otpCode.setExpiredAt(LocalDateTime.now().plusMinutes(5));
         otpCode.setUsed(false);
 
         otpCodeRepository.save(otpCode);
@@ -44,7 +44,7 @@ public class OtpCodeService {
             return false;
         }
 
-        if (!otpCode.getOtp().equals(inputOtp) || otpCode.getExpiryTime().isBefore(LocalDateTime.now())) {
+        if (!otpCode.getOtp().equals(inputOtp) || otpCode.getExpiredAt().isBefore(LocalDateTime.now())) {
             return false;
         }
 
