@@ -39,7 +39,7 @@ public class OtpCode {
     private String otp;
 
     @Column(name = "expired_at")
-    private LocalDateTime expiryTime;
+    private LocalDateTime expiredAt;
 
     @Column(name = "used")
     private boolean used;
