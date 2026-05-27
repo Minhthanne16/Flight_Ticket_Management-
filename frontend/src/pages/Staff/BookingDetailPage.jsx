@@ -1,6 +1,9 @@
-import { useState, useCallback } from 'react';
-import { ArrowLeft, CheckCircle2, Ticket, Printer, Send, Plane, AlertCircle, User, Settings, X, MessageSquare, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect } from 'react';
+import { ArrowLeft, CheckCircle2, Ticket, Printer, Send, Plane, AlertCircle, User, Settings, X, MessageSquare, ChevronRight, Loader2 } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useApi } from '../../hooks/useApi';
+import { bookingService } from '../../api/services/bookingService';
+import { flightService } from '../../api/services/flightService';
 
 // Toast (local, minimal)
 function Toast({ toasts, onRemove }) {
@@ -25,7 +28,7 @@ function ConfirmDialog({ open, title, message, confirmLabel, confirmClass, onCon
         <h3 className="text-base font-bold text-slate-800 mb-2">{title}</h3>
         <p className="text-sm text-slate-500 mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">Hủy</button>
           <button onClick={onConfirm} className={`px-4 py-2 rounded-lg text-sm font-medium text-white ${confirmClass}`}>{confirmLabel}</button>
         </div>
       </div>
@@ -33,50 +36,164 @@ function ConfirmDialog({ open, title, message, confirmLabel, confirmClass, onCon
   );
 }
 
+const STATUS_STYLES = {
+  CONFIRMED: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+  PENDING: 'text-amber-700 bg-amber-50 border-amber-200',
+  CANCELLED: 'text-slate-500 bg-slate-100 border-slate-200',
+  EXPIRED: 'text-red-700 bg-red-50 border-red-200'
+};
+
+const STATUS_LABELS = {
+  CONFIRMED: 'Đã xác nhận',
+  PENDING: 'Chờ thanh toán',
+  CANCELLED: 'Đã hủy',
+  EXPIRED: 'Đã hết hạn'
+};
+
+const PAYMENT_STATUS_LABELS = {
+  PAID: 'ĐÃ THANH TOÁN',
+  UNPAID: 'CHƯA THANH TOÁN',
+  REFUNDED: 'ĐÃ HOÀN TIỀN',
+  FAILED: 'GIAO DỊCH LỖI'
+};
+
 function BookingDetailPage() {
   const navigate = useNavigate();
-  const [note, setNote] = useState('Customer requested window seat specifically for view...');
+  const { id } = useParams();
+
+  const { data: booking, loading: bookingLoading, error: bookingError, refetch: refetchBooking } = useApi(() => bookingService.getById(id), [id]);
+  const { data: flights, loading: flightsLoading } = useApi(() => flightService.search({}), []);
+
+  const [note, setNote] = useState('Khách hàng yêu cầu ghế ngồi sát cửa sổ để ngắm cảnh...');
   const [editingNote, setEditingNote] = useState(false);
   const [draftNote, setDraftNote] = useState(note);
   const [toasts, setToasts] = useState([]);
   const [confirm, setConfirm] = useState(null);
-  const [status, setStatus] = useState('Confirmed');
+
+  const flight = flights?.find(f => f.id === booking?.flightId);
 
   const addToast = useCallback((msg, type = 'success') => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message: msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    const toastId = Date.now();
+    setToasts(prev => [...prev, { id: toastId, message: msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== toastId)), 3500);
   }, []);
 
-  const removeToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+  const removeToast = (toastId) => setToasts(prev => prev.filter(t => t.id !== toastId));
 
   const handleCancel = () => {
+    if (!booking) return;
     setConfirm({
-      title: 'Cancel Booking',
-      message: 'Are you sure you want to cancel booking BK-1024? This will initiate a refund of 2.750.000 đ to the customer.',
-      confirmLabel: 'Cancel Booking',
+      title: 'Hủy đặt vé',
+      message: `Bạn có chắc chắn muốn hủy đặt vé với mã PNR ${booking.pnrCode}? Thao tác này sẽ cập nhật trạng thái đặt vé về Đã hủy.`,
+      confirmLabel: 'Hủy đặt vé',
       confirmClass: 'bg-red-500 hover:bg-red-600',
-      onConfirm: () => {
-        setStatus('Cancelled');
-        addToast('Booking BK-1024 has been cancelled successfully.', 'success');
-        setConfirm(null);
+      onConfirm: async () => {
+        try {
+          await bookingService.cancel(booking.bookingId);
+          addToast(`Đã hủy đặt vé PNR ${booking.pnrCode} thành công.`, 'success');
+          refetchBooking();
+        } catch (err) {
+          addToast(err.response?.data?.message || err.message || 'Lỗi khi hủy đặt vé', 'error');
+        } finally {
+          setConfirm(null);
+        }
+      }
+    });
+  };
+
+  const handleConfirmPayment = () => {
+    if (!booking) return;
+    setConfirm({
+      title: 'Xác nhận thanh toán',
+      message: `Bạn xác nhận đã nhận đủ số tiền ${booking.totalAmount.toLocaleString('vi-VN')} đ cho mã đặt vé ${booking.pnrCode}? Trạng thái vé sẽ chuyển sang ĐÃ THANH TOÁN.`,
+      confirmLabel: 'Xác nhận',
+      confirmClass: 'bg-emerald-600 hover:bg-emerald-700',
+      onConfirm: async () => {
+        try {
+          await bookingService.confirmPayment(booking.bookingId);
+          addToast(`Xác nhận thanh toán thành công cho PNR ${booking.pnrCode}!`, 'success');
+          refetchBooking();
+        } catch (err) {
+          addToast(err.response?.data?.message || err.message || 'Lỗi khi xác nhận thanh toán', 'error');
+        } finally {
+          setConfirm(null);
+        }
       }
     });
   };
 
   const handleSendEticket = () => {
-    addToast('E-ticket sent to vananh.nguyen@email.com', 'success');
+    const mainTicket = booking?.tickets?.[0];
+    const email = mainTicket ? `${mainTicket.passengerName.toLowerCase().replace(/\s+/g, '')}@email.com` : 'khachhang@email.com';
+    addToast(`Đã gửi vé điện tử (E-ticket) đến ${email}`, 'success');
   };
 
   const handlePrint = () => {
-    addToast('Receipt sent to printer.', 'success');
+    addToast('Đã gửi yêu cầu in hóa đơn đến máy in.', 'success');
   };
 
   const handleSaveNote = () => {
     setNote(draftNote);
     setEditingNote(false);
-    addToast('Internal note updated.', 'success');
+    addToast('Đã cập nhật ghi chú nội bộ.', 'success');
   };
+
+  const getPassengerInitials = (name) => {
+    if (!name) return 'HK';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (bookingLoading || flightsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-sky-500" />
+        <p className="text-sm text-slate-500 font-medium">Đang tải thông tin đặt vé từ database...</p>
+      </div>
+    );
+  }
+
+  if (bookingError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto my-12">
+        <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+        <h3 className="font-bold text-red-800 mb-1">Không thể tải thông tin đặt vé</h3>
+        <p className="text-sm text-red-600 mb-4">{bookingError}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate('/staff/booking')} className="px-4 py-2 border border-slate-200 text-sm font-semibold text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+            Quay lại
+          </button>
+          <button onClick={refetchBooking} className="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm font-semibold hover:bg-sky-600 transition-colors">
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="text-center py-20 text-slate-400 italic">
+        Không tìm thấy thông tin đặt vé phù hợp.
+      </div>
+    );
+  }
+
+  const primaryPassenger = booking.tickets?.[0];
+  const totalAmountVal = booking.totalAmount || 0;
+  const refundAmount = Math.max(0, totalAmountVal - 150000);
 
   return (
     <div className="space-y-5 max-w-5xl">
@@ -93,14 +210,11 @@ function BookingDetailPage() {
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400">
-        <button onClick={() => navigate('/staff/booking')} className="hover:text-sky-500 transition-colors font-medium">Bookings</button>
+        <button onClick={() => navigate('/staff/booking')} className="hover:text-sky-500 transition-colors font-medium">Danh sách đặt vé</button>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="font-semibold text-slate-700">BK-1024</span>
-        <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${status === 'Confirmed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
-            status === 'Cancelled' ? 'text-slate-500 bg-slate-100 border-slate-200' :
-              'text-amber-700 bg-amber-50 border-amber-200'
-          }`}>
-          {status}
+        <span className="font-semibold text-slate-700">{booking.pnrCode}</span>
+        <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLES[booking.status] || 'text-slate-500 bg-slate-50'}`}>
+          {STATUS_LABELS[booking.status] || booking.status}
         </span>
       </div>
 
@@ -110,51 +224,43 @@ function BookingDetailPage() {
           {/* Passenger */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center gap-3.5 mb-5">
-              <div className="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-base">NV</div>
+              <div className="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-base">
+                {getPassengerInitials(primaryPassenger?.passengerName)}
+              </div>
               <div>
-                <h2 className="text-base font-bold text-slate-800">Nguyen Van Anh</h2>
-                <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Platinum Member</span>
+                <h2 className="text-base font-bold text-slate-800">{primaryPassenger?.passengerName || 'Chưa rõ tên'}</h2>
+                <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  {primaryPassenger?.nationality || 'Thành viên'}
+                </span>
               </div>
             </div>
             <div className="space-y-2.5 text-sm text-slate-500">
-              <p className="flex items-center gap-2.5"><span>📞</span> +84 908 111 233</p>
-              <p className="flex items-center gap-2.5"><span>✉</span> vananh.nguyen@email.com</p>
-              <p className="flex items-center gap-2.5"><span>📍</span> District 1, Ho Chi Minh City</p>
+              <p className="flex items-center gap-2.5"><span>📞</span> {primaryPassenger?.documentNumber || 'Chưa cung cấp CCCD'}</p>
+              <p className="flex items-center gap-2.5"><span>✉</span> {primaryPassenger?.passengerName ? `${primaryPassenger.passengerName.toLowerCase().replace(/\s+/g, '')}@email.com` : 'Chưa cung cấp'}</p>
+              <p className="flex items-center gap-2.5"><span>📍</span> Quốc tịch: {primaryPassenger?.nationality || 'Không rõ'}</p>
             </div>
           </div>
 
           {/* Payment */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2 text-sm">
-              <Ticket className="w-4 h-4 text-sky-500" /> Payment & Voucher
+              <Ticket className="w-4 h-4 text-sky-500" /> Thông tin thanh toán
             </h3>
             <div className="mb-5">
-              <p className="text-xs text-slate-400 mb-1">Total Amount</p>
+              <p className="text-xs text-slate-400 mb-1">Tổng cộng</p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-slate-800">2.900.000 đ</span>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg flex items-center gap-1 border border-emerald-200">
-                  <CheckCircle2 className="w-3 h-3" /> PAID
+                <span className="text-2xl font-bold text-slate-800">{totalAmountVal.toLocaleString('vi-VN')} đ</span>
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border ${
+                  booking.paymentStatus === 'PAID' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                }`}>
+                  <CheckCircle2 className="w-3 h-3" /> {PAYMENT_STATUS_LABELS[booking.paymentStatus] || booking.paymentStatus}
                 </span>
               </div>
             </div>
-            <div className="bg-slate-50 rounded-xl p-3 mb-5 flex justify-between items-center border border-dashed border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="bg-violet-100 p-1.5 rounded-lg">
-                  <Ticket className="w-3.5 h-3.5 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-violet-600">FLY-2024-XJ9</p>
-                  <p className="text-[10px] text-slate-400">Seasonal Discount</p>
-                </div>
-              </div>
-              <span className="text-sm font-bold text-slate-700">-250.000 đ</span>
-            </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-slate-500"><span>Base Fare</span><span>2.750.000 đ</span></div>
-              <div className="flex justify-between text-slate-500"><span>Taxes & Fees</span><span>400.000 đ</span></div>
-              <div className="flex justify-between text-violet-600 font-medium pt-2 border-t border-slate-100">
-                <span>Voucher Applied</span><span>-250.000 đ</span>
-              </div>
+              <div className="flex justify-between text-slate-500"><span>Phương thức</span><span className="font-semibold">{booking.paymentMethod || 'Chưa chọn'}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Ngày đặt</span><span>{formatDateTime(booking.bookingDate)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Hết hạn</span><span>{formatDateTime(booking.expirationTime)}</span></div>
             </div>
           </div>
 
@@ -162,10 +268,10 @@ function BookingDetailPage() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-slate-700 text-sm flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-slate-400" /> Internal Note
+                <MessageSquare className="w-4 h-4 text-slate-400" /> Ghi chú nội bộ
               </h3>
               {!editingNote && (
-                <button onClick={() => { setDraftNote(note); setEditingNote(true); }} className="text-xs text-sky-500 hover:underline">Edit</button>
+                <button onClick={() => { setDraftNote(note); setEditingNote(true); }} className="text-xs text-sky-500 hover:underline">Sửa</button>
               )}
             </div>
             {editingNote ? (
@@ -177,8 +283,8 @@ function BookingDetailPage() {
                   className="w-full text-sm text-slate-600 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 resize-none"
                 />
                 <div className="flex gap-2">
-                  <button onClick={handleSaveNote} className="px-3 py-1.5 bg-sky-500 text-white rounded-lg text-xs font-semibold hover:bg-sky-600">Save</button>
-                  <button onClick={() => setEditingNote(false)} className="px-3 py-1.5 border border-slate-200 text-slate-500 rounded-lg text-xs hover:bg-slate-50">Cancel</button>
+                  <button onClick={handleSaveNote} className="px-3 py-1.5 bg-sky-500 text-white rounded-lg text-xs font-semibold hover:bg-sky-600">Lưu</button>
+                  <button onClick={() => setEditingNote(false)} className="px-3 py-1.5 border border-slate-200 text-slate-500 rounded-lg text-xs hover:bg-slate-50">Hủy</button>
                 </div>
               </div>
             ) : (
@@ -196,37 +302,43 @@ function BookingDetailPage() {
             </div>
             <div className="flex justify-between items-start mb-8 relative z-10">
               <div>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Flight Number</p>
-                <h2 className="text-3xl font-bold">VN123</h2>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Mã chuyến bay</p>
+                <h2 className="text-3xl font-bold">{flight?.flightCode || '...'}</h2>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Date & Time</p>
-                <p className="text-base font-semibold">26 Oct, 2024 • 08:30 AM</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Giờ khởi hành</p>
+                <p className="text-base font-semibold">{flight ? formatDateTime(flight.departureTime) : '—'}</p>
               </div>
             </div>
 
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
-                <h3 className="text-4xl font-bold">SGN</h3>
-                <p className="text-sm text-white/40 mt-1">Ho Chi Minh City</p>
+                <h3 className="text-4xl font-bold">{flight?.departureAirportCode || 'SGN'}</h3>
+                <p className="text-sm text-white/40 mt-1">{flight?.departureCity || 'Hồ Chí Minh'}</p>
               </div>
               <div className="flex-1 px-8 flex flex-col items-center">
-                <p className="text-xs text-white/40 mb-2">2h 15m</p>
+                <p className="text-xs text-white/40 mb-2">
+                  {flight ? `${Math.floor(flight.estimateDuration / 60)}h ${flight.estimateDuration % 60}m` : '—'}
+                </p>
                 <div className="w-full flex items-center gap-2">
                   <div className="h-px flex-1 bg-white/20" />
                   <Plane className="w-4 h-4 text-sky-400" />
                   <div className="h-px flex-1 bg-white/20" />
                 </div>
-                <p className="text-xs text-white/30 mt-2">Non-stop</p>
+                <p className="text-xs text-white/30 mt-2">Bay thẳng</p>
               </div>
               <div className="text-right">
-                <h3 className="text-4xl font-bold">HAN</h3>
-                <p className="text-sm text-white/40 mt-1">Ha Noi</p>
+                <h3 className="text-4xl font-bold">{flight?.arrivalAirportCode || 'HAN'}</h3>
+                <p className="text-sm text-white/40 mt-1">{flight?.arrivalCity || 'Hà Nội'}</p>
               </div>
             </div>
 
             <div className="flex gap-8 relative z-10 border-t border-white/10 pt-5">
-              {[['Seat', '12A'], ['Class', 'Business'], ['Terminal', 'T2']].map(([label, val]) => (
+              {[
+                ['Ghế đã chọn', booking.tickets?.map(t => t.seatNumber).filter(Boolean).join(', ') || 'Chưa xếp'],
+                ['Hãng bay', flight?.airlineName || 'Vietnam Airlines'],
+                ['Thời gian đến', flight ? formatDateTime(flight.arrivalTime) : '—']
+              ].map(([label, val]) => (
                 <div key={label}>
                   <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">{label}</p>
                   <p className="text-base font-bold">{val}</p>
@@ -235,23 +347,51 @@ function BookingDetailPage() {
             </div>
           </div>
 
+          {/* Tickets Detail List */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2 text-sm">
+              <Ticket className="w-4 h-4 text-sky-500" /> Chi tiết từng hành khách & Ghế ngồi ({booking.tickets?.length || 0})
+            </h3>
+            <div className="space-y-3">
+              {booking.tickets?.map((t, idx) => (
+                <div key={t.ticketId || idx} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between hover:bg-slate-100/50 transition-colors">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-800">{t.passengerName}</p>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 uppercase">
+                        {t.status || 'ACTIVE'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">CCCD/Hộ chiếu: {t.documentNumber} • Quốc tịch: {t.nationality}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-violet-600 bg-violet-50 border border-violet-200 px-3 py-1 rounded-lg">
+                      Ghế: {t.seatNumber || 'Chưa xếp'}
+                    </span>
+                    <p className="text-xs font-bold text-slate-700 mt-2">{t.price?.toLocaleString('vi-VN')} đ</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Cancellation Policy */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h3 className="font-semibold text-slate-700 mb-4 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-400" /> Cancellation & Refund Policy
+              <AlertCircle className="w-4 h-4 text-red-400" /> Điều khoản hoàn hủy vé
             </h3>
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-5 flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-emerald-800 text-sm">Eligible for Refund</h4>
-                <p className="text-xs text-emerald-700 mt-0.5">Business Flex fare allows cancellation up to 24 hours before departure.</p>
+                <h4 className="font-bold text-emerald-800 text-sm">Hỗ trợ hủy hoàn vé</h4>
+                <p className="text-xs text-emerald-700 mt-0.5">Vé này cho phép hoàn hủy trước giờ khởi hành tối thiểu 24 giờ. Phí xử lý áp dụng là 150.000 đ.</p>
               </div>
             </div>
             <div className="space-y-3.5 text-sm">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Fee Breakdown</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Chi tiết phí</p>
               {[
-                { label: 'Processing Fee', sub: 'Standard airline administration fee', val: '150.000 đ', valClass: 'text-slate-700' },
-                { label: 'Cancellation Penalty', sub: 'Waived for Platinum members', val: '0 đ', valClass: 'text-emerald-600' },
+                { label: 'Phí xử lý giao dịch', sub: 'Áp dụng theo quy định của hãng hàng không', val: '150.000 đ', valClass: 'text-slate-700' },
+                { label: 'Phí phạt hủy', sub: 'Được giảm trừ cho khách hàng thân thiết', val: '0 đ', valClass: 'text-emerald-600' },
               ].map(({ label, sub, val, valClass }) => (
                 <div key={label} className="flex justify-between items-start border-b border-slate-100 pb-3.5">
                   <div>
@@ -263,10 +403,10 @@ function BookingDetailPage() {
               ))}
               <div className="flex justify-between items-start pt-1">
                 <div>
-                  <p className="font-bold text-slate-800">Estimated Refund</p>
-                  <p className="text-xs text-slate-400">Credited to original payment method</p>
+                  <p className="font-bold text-slate-800">Số tiền dự kiến hoàn</p>
+                  <p className="text-xs text-slate-400">Hoàn lại phương thức thanh toán ban đầu</p>
                 </div>
-                <span className="text-lg font-bold text-sky-600">2.750.000 đ</span>
+                <span className="text-lg font-bold text-sky-600">{refundAmount.toLocaleString('vi-VN')} đ</span>
               </div>
             </div>
           </div>
@@ -274,30 +414,35 @@ function BookingDetailPage() {
           {/* Actions */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex gap-2">
-              {status !== 'Cancelled' && (
+              {booking.status !== 'CANCELLED' && (
                 <button
                   onClick={handleCancel}
                   className="px-5 py-2.5 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors"
                 >
-                  Cancel Booking
+                  Hủy đặt vé
                 </button>
               )}
-              <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
-                Modify Booking
-              </button>
+              {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' && (
+                <button
+                  onClick={handleConfirmPayment}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Xác nhận đã nhận tiền
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handlePrint}
                 className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2"
               >
-                <Printer className="w-4 h-4" /> Print
+                <Printer className="w-4 h-4" /> In hóa đơn
               </button>
               <button
                 onClick={handleSendEticket}
                 className="px-5 py-2.5 bg-sky-500 text-white rounded-lg text-sm font-semibold hover:bg-sky-600 transition-colors flex items-center gap-2"
               >
-                <Send className="w-4 h-4" /> Send E-Ticket
+                <Send className="w-4 h-4" /> Gửi E-Ticket
               </button>
             </div>
           </div>
@@ -305,18 +450,16 @@ function BookingDetailPage() {
           {/* Meta */}
           <div className="grid grid-cols-3 gap-4 pt-4 mt-1 border-t border-slate-100">
             <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Created By</p>
-              <p className="text-xs text-slate-700 font-medium flex items-center gap-1"><User className="w-3 h-3" /> Admin LeMinh</p>
-              <p className="text-[10px] text-slate-400">20 Oct, 14:22</p>
+              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Mã đặt vé</p>
+              <p className="text-xs text-sky-600 font-bold">#{booking.bookingId}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Last Updated</p>
-              <p className="text-xs text-slate-700 font-medium flex items-center gap-1"><Settings className="w-3 h-3" /> Auto-System</p>
-              <p className="text-[10px] text-slate-400">22 Oct, 09:10</p>
+              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Phương thức</p>
+              <p className="text-xs text-slate-700 font-medium">{booking.paymentMethod || 'Chưa thanh toán'}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Booking ID</p>
-              <p className="text-xs text-sky-600 font-bold">BK-1024</p>
+              <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Hạn thanh toán</p>
+              <p className="text-xs text-red-500 font-bold">{formatDateTime(booking.expirationTime)}</p>
             </div>
           </div>
         </div>

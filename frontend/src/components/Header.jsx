@@ -1,7 +1,7 @@
-import { Bell, HelpCircle, Search, ChevronRight, User, LogOut, X, Info } from 'lucide-react';
+import { Bell, HelpCircle, ChevronRight, User, LogOut, X, Info } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { STAFF_USER } from '../data/sharedData';
 import { useState, useRef, useEffect } from 'react';
+import { notificationService } from '../api/services/notificationService';
 
 const PAGE_LABELS = {
   dashboard: 'Bảng điều khiển',
@@ -13,12 +13,7 @@ const PAGE_LABELS = {
   regulations: 'Quy định',
 };
 
-const MOCK_NOTIFICATIONS = [
-  { id: 1, title: 'Chuyến bay VN202 bị delay', desc: 'Delay 45 phút do thời tiết xấu', time: '5 phút trước', unread: true },
-  { id: 2, title: 'Đặt vé mới #B1042', desc: 'Khách hàng Nguyễn Văn A vừa đặt vé', time: '12 phút trước', unread: true },
-  { id: 3, title: 'Cập nhật quy định mới', desc: 'Hành lý xách tay tối đa 10kg', time: '1 giờ trước', unread: false },
-  { id: 4, title: 'Báo cáo tháng 5 đã sẵn sàng', desc: 'Xem báo cáo doanh thu tháng 5', time: '3 giờ trước', unread: false },
-];
+const MOCK_NOTIFICATIONS = []; // No longer used
 
 function useClickOutside(ref, handler) {
   useEffect(() => {
@@ -38,8 +33,88 @@ function Header() {
   const [showNotif, setShowNotif] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-  const [searchVal, setSearchVal] = useState('');
+  const [notifications, setNotifications] = useState([]);
+
+
+  // Fetch live notifications
+  const loadNotifications = async () => {
+    try {
+      const notifs = await notificationService.getMy();
+      // Format backend notification properties if needed
+      setNotifications(notifs.map(n => ({
+        id: n.id,
+        title: n.title,
+        desc: n.content || n.message || '',
+        time: n.sentAt ? new Date(n.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Vừa xong',
+        unread: n.unread ?? (n.status !== 'READ')
+      })));
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    // Sync notifications across components/tabs when custom storage event fires
+    window.addEventListener('storage', loadNotifications);
+    return () => window.removeEventListener('storage', loadNotifications);
+  }, []);
+
+  const [profile, setProfile] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.role === 'STAFF') {
+        const stored = localStorage.getItem('local_staff_profile');
+        if (stored) return JSON.parse(stored);
+        return {
+          fullName: user.fullName || 'EasyFlight Staff',
+          email: user.email || 'staff@easyflight.vn',
+          role: 'STAFF',
+          department: 'Phục vụ mặt đất'
+        };
+      }
+      return {
+        fullName: user.email === 'admin@easyflight.vn' ? 'Nguyễn Văn Admin' : (user.email || 'Admin'),
+        email: user.email || '',
+        role: user.role || 'STAFF',
+        department: 'Ban Giám Đốc'
+      };
+    } catch {
+      return {
+        fullName: 'EasyFlight Staff',
+        email: 'staff@easyflight.vn',
+        role: 'STAFF',
+        department: 'Phục vụ mặt đất'
+      };
+    }
+  });
+
+  useEffect(() => {
+    const syncProfile = () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role === 'STAFF') {
+          const stored = localStorage.getItem('local_staff_profile');
+          if (stored) setProfile(JSON.parse(stored));
+        } else {
+          setProfile({
+            fullName: user.email === 'admin@easyflight.vn' ? 'Nguyễn Văn Admin' : (user.email || 'Admin'),
+            email: user.email || '',
+            role: user.role || 'ADMIN',
+            department: 'Ban Giám Đốc'
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    window.addEventListener('storage', syncProfile);
+    window.addEventListener('focus', syncProfile);
+    return () => {
+      window.removeEventListener('storage', syncProfile);
+      window.removeEventListener('focus', syncProfile);
+    };
+  }, []);
 
   const notifRef = useRef(null);
   const avatarRef = useRef(null);
@@ -51,7 +126,10 @@ function Header() {
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  const markAllRead = () => {
+    notificationService.markAllRead();
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -59,13 +137,16 @@ function Header() {
     navigate('/signin');
   };
 
-  const handleSearchSubmit = (e) => {
-    if (e.key === 'Enter' && searchVal.trim()) {
-      alert(`Tìm kiếm: "${searchVal}" (chức năng đang phát triển)`);
-    }
+
+
+  const getPassengerInitials = (name) => {
+    if (!name) return 'NV';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const initials = STAFF_USER.fullName?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
+  const initials = getPassengerInitials(profile.fullName);
 
   return (
     <header className="h-[72px] bg-white border-b border-[#E8E8F0] flex items-center justify-between px-6 shrink-0 relative z-30">
@@ -75,20 +156,6 @@ function Header() {
         <span className="font-semibold text-[#6C5CE7]">{currentPage}</span>
       </div>
 
-      {/* Center: Search */}
-      <div className="flex-1 flex justify-center max-w-xl mx-8">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
-          <input
-            type="text"
-            value={searchVal}
-            onChange={e => setSearchVal(e.target.value)}
-            onKeyDown={handleSearchSubmit}
-            placeholder="Tìm kiếm... (nhấn Enter)"
-            className="w-full pl-10 pr-4 py-2.5 bg-[#F5F6FA] border border-[#E8E8F0] rounded-full text-sm text-[#27273F] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/40 transition-all"
-          />
-        </div>
-      </div>
 
       {/* Right: icons + avatar */}
       <div className="flex items-center gap-2">
@@ -175,8 +242,8 @@ function Header() {
           {showAvatar && (
             <div className="absolute right-0 top-11 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-sm font-semibold text-slate-800">{STAFF_USER.fullName}</p>
-                <p className="text-xs text-slate-400 mt-0.5">Nhân viên</p>
+                <p className="text-sm font-semibold text-slate-800">{profile.fullName}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{profile.role === 'ADMIN' ? 'Quản trị viên' : `Nhân viên · ${profile.department || 'Vận hành'}`}</p>
               </div>
               <div className="p-1.5">
                 <button
