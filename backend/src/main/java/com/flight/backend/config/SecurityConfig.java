@@ -77,6 +77,32 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                             "/customers/**")
                     .hasRole("ADMIN")
 
+                    // ================= ROUTES =================
+
+                    // STAFF + ADMIN được xem
+                    .requestMatchers(HttpMethod.GET,
+                            "/routes",
+                            "/routes/**")
+                    .hasAnyRole("ADMIN", "STAFF")
+
+                    // chỉ ADMIN được tạo
+                    .requestMatchers(HttpMethod.POST,
+                            "/routes",
+                            "/routes/**")
+                    .hasRole("ADMIN")
+
+                    // ADMIN update
+                    .requestMatchers(HttpMethod.PUT,
+                            "/routes",
+                            "/routes/**")
+                    .hasRole("ADMIN")
+
+                    // ADMIN delete
+                    .requestMatchers(HttpMethod.DELETE,
+                            "/routes",
+                            "/routes/**")
+                    .hasRole("ADMIN")    
+
                         // ================= NOTIFICATION =================
                         .requestMatchers(HttpMethod.GET,"/notifications").hasRole("STAFF")
 
