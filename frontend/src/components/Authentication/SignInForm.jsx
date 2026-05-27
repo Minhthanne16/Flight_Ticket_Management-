@@ -16,8 +16,9 @@ function SignInForm() {
     const handleLogin = async (e) => {
         if (e) e.preventDefault();
         setIsLoading(true);
+        const cleanEmail = email.trim();
         try {
-            const response = await authService.login({ email, password });
+            const response = await authService.login({ email: cleanEmail, password });
             // Backend trả về { status: "success", message: "...", data: { email, role, accessToken } }
             if (response.status === 'success' && response.data) {
                 const { data } = response;
@@ -43,18 +44,23 @@ function SignInForm() {
             console.error('Login error:', error);
             if (!error.response) {
                 // Tự động fallback sang Mock login nếu không kết nối được server (offline)
+                const storedLogins = JSON.parse(localStorage.getItem('local_staff_logins') || '{}');
+                const adminPass = storedLogins['admin@easyflight.vn'] || 'admin123';
+                const staffPass = storedLogins['staff@easyflight.vn'] || 'staff123';
+                const customerPass = storedLogins['customer@gmail.com'] || '123';
+
                 const mockUsers = {
                     'admin@easyflight.vn': { password: 'admin123', role: 'ADMIN', token: 'mock-admin-token', fullName: 'Quản trị viên' },
                     'staff@easyflight.vn': { password: 'staff123', role: 'STAFF', token: 'mock-staff-token', fullName: 'Nhân viên EasyFlight' },
                     'customer@gmail.com': { password: '123', role: 'CUSTOMER', token: 'mock-customer-token', fullName: 'Khách hàng mẫu' }
                 };
 
-                const matchedUser = mockUsers[email];
+                const matchedUser = mockUsers[cleanEmail];
                 if (matchedUser && matchedUser.password === password) {
-                    console.log('Server offline. Falling back to local mock login for:', email);
+                    console.log('Server offline. Falling back to local mock login for:', cleanEmail);
                     localStorage.setItem('token', matchedUser.token);
                     localStorage.setItem('user', JSON.stringify({
-                        email: email,
+                        email: cleanEmail,
                         role: matchedUser.role,
                         fullName: matchedUser.fullName
                     }));

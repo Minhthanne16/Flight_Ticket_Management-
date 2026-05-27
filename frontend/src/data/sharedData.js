@@ -265,7 +265,7 @@ export const VOUCHERS = [
 
 // ─── Customer Support — Cancel Requests ─────────────────────────────────────
 export const CANCEL_REQUESTS = [
-    { id: '#EF-90821', customer: 'Trần Lam', email: 'tranlam@gmail.com', avatar: 'TL', flight: 'SGN → HAN', flightCode: 'VJ-123', flightDate: '24/10/2023', reason: 'Lịch trình cá nhân', requestDate: '20/10/2023', refundAmount: '2.450.000đ', status: 'Đang chờ' },
+    { id: '#EF-90821', customer: 'Phương Vy', email: 'phuongvie1110@gmail.com', avatar: 'PV', flight: 'SGN → HAN', flightCode: 'VJ-123', flightDate: '24/10/2023', reason: 'Lịch trình cá nhân', requestDate: '20/10/2023', refundAmount: '2.450.000đ', status: 'Đang chờ' },
     { id: '#EF-90742', customer: 'Nguyễn Huy', email: 'huy.ng@gmail.com', avatar: 'NH', flight: 'DAD → SGN', flightCode: 'VN-245', flightDate: '22/10/2023', reason: 'Lý do sức khỏe', requestDate: '19/10/2023', refundAmount: '1.120.000đ', status: 'Đã duyệt' },
     { id: '#EF-89541', customer: 'Phan Tú', email: 'tu.phan@gmail.com', avatar: 'PT', flight: 'HAN → CXR', flightCode: 'QH-442', flightDate: '15/10/2023', reason: 'Sai thông tin', requestDate: '12/10/2023', refundAmount: '0đ', status: 'Bị từ chối' },
     { id: '#EF-90111', customer: 'Lê Kim', email: 'lekim@gmail.com', avatar: 'LK', flight: 'SGN → PQC', flightCode: '', flightDate: '', reason: 'Hủy chuyến bay', requestDate: '21/10/2023', refundAmount: '3.200.000đ', status: 'Đang chờ' },
@@ -278,19 +278,4 @@ export const REFUND_REQUESTS = [
     { id: 'EF-98256', customer: 'Trần Minh C', paymentMethod: 'Chuyển khoản (BIDV)', paymentIcon: '🏦', amount: '5.800.000đ', refundStatus: 'Từ chối', processStatus: 'Lưu trữ' },
     { id: 'EF-98288', customer: 'Phạm Thu D', paymentMethod: 'Mastercard ending in 0092', paymentIcon: '💳', amount: '850.000đ', refundStatus: 'Chờ hoàn', processStatus: 'Đã phê duyệt' },
 ];
-
-// ─── Customer Support — Complaints ──────────────────────────────────────────
-export const COMPLAINTS = [
-    { id: '#CMP-9281', customer: 'Trần Hoàng Nam', email: 'nam.tran@gmail.com', avatar: 'TH', subject: 'Hành lý thất lạc chuyến VN-122', flightInfo: 'Flight: SGN-HAN', date: '12/10/2023 14:30', status: 'OPEN' },
-    { id: '#CMP-9275', customer: 'Lê Thị Mai', email: 'mai.le@gmail.com', avatar: 'LT', subject: 'Hoàn phí suất ăn không sử dụng', flightInfo: 'Booking: AXJ981', date: '12/10/2023 11:15', status: 'IN PROGRESS' },
-    { id: '#CMP-9268', customer: 'Phạm Văn Đức', email: 'duc.pham@gmail.com', avatar: 'PV', subject: 'Thay đổi ghế ngồi không báo trước', flightInfo: 'Flight: QH-452', date: '11/10/2023 09:45', status: 'RESOLVED' },
-    { id: '#CMP-9250', customer: 'Nguyễn Kim Chi', email: 'chi.ng@gmail.com', avatar: 'NK', subject: 'Trễ chuyến bay do lỗi check-in', flightInfo: 'Ticket: TA210982', date: '10/10/2023 16:20', status: 'CLOSED' },
-];
-
-// ─── Customer Support — System Errors ───────────────────────────────────────
-export const SYSTEM_ERRORS = [
-    { id: 'EF-982341', type: 'Thanh toán thất bại', typeIcon: '💳', description: 'API Gateway timeout while processing 3C', time: '14:20:05', timeLabel: 'Hôm nay', severity: 'CRITICAL', status: 'Chờ xử lý' },
-    { id: 'EF-982339', type: 'Lỗi trùng lặp', typeIcon: '🔄', description: 'Duplicate seat assignment detected for F', time: '13:45:12', timeLabel: 'Hôm nay', severity: 'HIGH', status: 'Đang xử lý' },
-    { id: 'EF-982335', type: 'Lỗi đồng bộ', typeIcon: '🔗', description: 'PNR sync error with Sabre GDS for interna', time: '11:10:30', timeLabel: 'Hôm nay', severity: 'MEDIUM', status: 'Đã xử lý' },
-    { id: 'EF-982320', type: 'Mất kết nối', typeIcon: '📡', description: 'Loss of connectivity to seat-map microse', time: '09:15:00', timeLabel: 'Hôm nay', severity: 'CRITICAL', status: 'Chờ xử lý' },
-];
+

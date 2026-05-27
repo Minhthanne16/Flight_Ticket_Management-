@@ -1,423 +1,119 @@
-import { useState } from 'react';
-import {
-  BookOpen, Zap, Shield, Settings2, Clock, DollarSign, Percent,
-  RefreshCw, AlertTriangle, ToggleLeft, ToggleRight, Plus,
-  CheckCircle2, XCircle, Wifi, CloudLightning, Fuel, Globe,
-  Bell, MessageSquare, Lock, ChevronRight, Info, Plane, Scale,
-  FileWarning, Save, Eye,
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Eye, Info, ShieldAlert, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { useApi } from '../../hooks/useApi';
+import { regulationService } from '../../api/services/regulationService';
+import { REGULATIONS as INIT_REGS } from '../../data/adminMockData';
 
-// ─── Role helper ─────────────────────────────────────────────────────────────
-function getUserRole() {
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return user?.role || 'STAFF';
-  } catch {
-    return 'STAFF';
+const GROUP_COLORS = { 
+  'Chuyến bay': 'bg-violet-50 text-violet-700 border-violet-200', 
+  'Đặt vé': 'bg-blue-50 text-blue-700 border-blue-200', 
+  'Thanh toán': 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+};
+
+export default function RegulationsPage() {
+  const { data: dbRegs, loading, error } = useApi(regulationService.getAll, []);
+
+  const regs = dbRegs && dbRegs.length > 0
+    ? dbRegs.map(r => ({
+        id: r.id,
+        label: r.regulationName,
+        key: r.settingKey,
+        value: r.settingValue,
+        description: r.description || `Đơn vị tính: ${r.unit || '—'}`,
+        group: r.settingKey.includes('AIRPORT') || r.settingKey.includes('FLIGHT') || r.settingKey.includes('STOP')
+          ? 'Chuyến bay'
+          : r.settingKey.includes('BOOKING') || r.settingKey.includes('TICKET') || r.settingKey.includes('SEAT')
+            ? 'Đặt vé'
+            : 'Thanh toán'
+      }))
+    : INIT_REGS;
+
+  const groups = [...new Set(regs.map(r => r.group))];
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-violet-500" />
+        <p className="text-sm text-slate-500 font-medium">Đang tải cấu hình hệ thống...</p>
+      </div>
+    );
   }
-}
-
-// ─── Reusable Toggle ────────────────────────────────────────────────────────
-function Toggle({ enabled, onChange, disabled }) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!enabled)}
-      disabled={disabled}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${enabled ? 'bg-[#6C5CE7]' : 'bg-[#E8E8F0]'}`}
-    >
-      <span
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200 ${enabled ? 'left-6' : 'left-1'}`}
-      />
-    </button>
-  );
-}
-
-// ─── Reusable Input Field ────────────────────────────────────────────────────
-function InputField({ label, value, onChange, suffix, helper, icon: Icon, readOnly }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-[#6E7491] uppercase tracking-wider">{label}</label>
-      <div className="relative">
-        {Icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2">
-            <Icon className="w-4 h-4 text-[#9CA3AF]" />
-          </div>
-        )}
-        <input
-          type="text"
-          value={value}
-          onChange={e => !readOnly && onChange(e.target.value)}
-          readOnly={readOnly}
-          className={`w-full ${Icon ? 'pl-9' : 'pl-3'} ${suffix ? 'pr-14' : 'pr-3'} py-2.5 border border-[#E8E8F0] rounded-xl text-sm font-semibold text-[#27273F] ${readOnly ? 'bg-[#FAFAFE] cursor-not-allowed' : 'bg-white'} focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/50 transition-all`}
-        />
-        {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#9CA3AF]">{suffix}</span>
-        )}
-      </div>
-      {helper && <p className="text-[11px] text-[#9CA3AF]">{helper}</p>}
-    </div>
-  );
-}
-
-// ─── Toggle Row ──────────────────────────────────────────────────────────────
-function ToggleRow({ icon: Icon, iconBg, iconColor, label, description, enabled, onChange, disabled }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-4 border-b border-[#F0F0F5] last:border-0">
-      <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-          <Icon className={`w-4 h-4 ${iconColor}`} />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-[#27273F]">{label}</p>
-          <p className="text-xs text-[#9CA3AF] mt-0.5 max-w-xs">{description}</p>
-        </div>
-      </div>
-      <Toggle enabled={enabled} onChange={onChange} disabled={disabled} />
-    </div>
-  );
-}
-
-// ─── Card ────────────────────────────────────────────────────────────────────
-function Card({ children, className = '' }) {
-  return (
-    <div className={`bg-white rounded-2xl border border-[#E8E8F0] shadow-sm p-6 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-// ─── Card Title ──────────────────────────────────────────────────────────────
-function CardTitle({ icon: Icon, iconBg, iconColor, title, description, action }) {
-  return (
-    <div className="flex items-start justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
-          <Icon className={`w-5 h-5 ${iconColor}`} />
-        </div>
-        <div>
-          <h3 className="text-base font-bold text-[#27273F]">{title}</h3>
-          {description && <p className="text-xs text-[#9CA3AF] mt-0.5">{description}</p>}
-        </div>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-// ─── Integration Status Row ──────────────────────────────────────────────────
-const integrations = [];
-
-function IntegrationRow({ icon: Icon, name, sub, status }) {
-  const isActive = status === 'active';
-  return (
-    <div className="flex items-center justify-between py-3.5 border-b border-[#F0F0F5] last:border-0">
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? 'bg-emerald-50' : 'bg-red-50'}`}>
-          <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-500' : 'text-red-400'}`} />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-[#27273F]">{name}</p>
-          <p className="text-[11px] text-[#9CA3AF]">{sub}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {isActive ? (
-          <>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-emerald-600">Hoạt động</span>
-          </>
-        ) : (
-          <>
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-xs font-semibold text-red-500">Lỗi</span>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── MAIN PAGE ───────────────────────────────────────────────────────────────
-function RegulationsPage() {
-  const role = getUserRole();
-  const isViewOnly = role === 'STAFF';
-
-  // Booking Policy state
-  const [holdTime, setHoldTime] = useState('24');
-  const [lateFee, setLateFee] = useState('150');
-  const [overbooking, setOverbooking] = useState('5');
-
-  // Operational toggles
-  const [preflightValidation, setPreflightValidation] = useState(true);
-  const [notamScanning, setNotamScanning] = useState(true);
-  const [weightBalance, setWeightBalance] = useState(false);
-  const [groundStop, setGroundStop] = useState('45');
-
-  // System preferences
-  const [emailSummaries, setEmailSummaries] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(true);
-  const [twoFA, setTwoFA] = useState(false);
-
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
 
   return (
-    <div className="space-y-6 pb-10">
-
+    <div className="space-y-6 pb-8">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#27273F]">Quy định</h1>
-          <p className="text-sm text-[#6E7491] mt-1">
-            Quản lý các quy định về đặt vé, hoàn tiền và khai thác chuyến bay.
-          </p>
+          <h1 className="text-2xl font-bold text-slate-800">Cấu hình hệ thống</h1>
+          <p className="text-slate-400 text-sm mt-1">Xem các quy định và thông số vận hành của hệ thống</p>
         </div>
-        <div className="flex items-center gap-3">
-          {isViewOnly && (
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F0EFFA] border border-[#D4D0F8] rounded-xl">
-              <Eye className="w-4 h-4 text-[#6C5CE7]" />
-              <span className="text-xs font-semibold text-[#6C5CE7]">Chỉ xem</span>
-            </div>
-          )}
-          {!isViewOnly && (
-            <button
-              onClick={handleSave}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm ${saved
-                  ? 'bg-emerald-500 text-white shadow-emerald-200'
-                  : 'bg-[#6C5CE7] hover:bg-[#5A4BD1] text-white shadow-[#6C5CE7]/20'
-                }`}
-            >
-              {saved ? (
-                <><CheckCircle2 className="w-4 h-4" /> Đã lưu!</>
-              ) : (
-                <><Save className="w-4 h-4" /> Lưu thay đổi</>
-              )}
-            </button>
-          )}
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold">
+          <Lock className="w-4 h-4" /> Chế độ chỉ xem
         </div>
       </div>
 
-      {/* Row 1: Booking Policy + System Integrations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Info banner */}
+      <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+        <div className="text-sm text-blue-700 leading-relaxed">
+          <p className="font-semibold mb-0.5">Quyền truy cập hạn chế (Chỉ xem)</p>
+          <p className="text-xs text-blue-600">
+            Tài khoản của bạn là tài khoản <strong className="text-blue-800">Nhân viên (Staff)</strong>. Bạn chỉ có quyền xem cấu hình vận hành hiện tại và không thể chỉnh sửa. Nếu cần thay đổi, vui lòng liên hệ Quản trị viên (Admin).
+          </p>
+        </div>
+      </div>
 
-        {/* Booking Policies — 2/3 width */}
-        <Card className="lg:col-span-2">
-          <CardTitle
-            icon={BookOpen}
-            iconBg="bg-[#E9E8FC]"
-            iconColor="text-[#6C5CE7]"
-            title="Chính sách đặt vé"
-            description="Xác định quy tắc xuất vé, thời gian giữ chỗ và phí hủy"
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-            <InputField
-              label="Thời gian giữ chỗ tối đa"
-              value={holdTime}
-              onChange={setHoldTime}
-              suffix="giờ"
-              icon={Clock}
-              helper="Thời gian tối đa trước khi vé chưa thanh toán tự động hủy"
-              readOnly={isViewOnly}
-            />
-            <InputField
-              label="Phí hủy muộn"
-              value={lateFee}
-              onChange={setLateFee}
-              suffix="USD"
-              icon={DollarSign}
-              helper="Áp dụng khi hủy trong vòng 24h trước khi khởi hành"
-              readOnly={isViewOnly}
-            />
-            <InputField
-              label="Ngưỡng bán quá vé"
-              value={overbooking}
-              onChange={setOverbooking}
-              suffix="%"
-              icon={Percent}
-              helper="Tỷ lệ phần trăm cho phép tự động bán quá số ghế mỗi chuyến"
-              readOnly={isViewOnly}
-            />
-          </div>
-
-          {/* Refund Rules */}
-          <div className="bg-[#FAFAFE] rounded-xl border border-[#E8E8F0] p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <RefreshCw className="w-4 h-4 text-[#6C5CE7]" />
-              <span className="text-sm font-bold text-[#27273F]">Quy tắc hoàn tiền</span>
+      {/* Groups */}
+      <div className="space-y-5">
+        {groups.map(group => (
+          <div key={group} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full border ${GROUP_COLORS[group] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                {group}
+              </span>
+              <span className="text-xs text-slate-400">
+                {regs.filter(r => r.group === group).length} thiết lập vận hành
+              </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl border border-[#E8E8F0] p-3.5">
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Thời gian hoàn tiền</p>
-                <p className="text-sm font-bold text-[#27273F]">7 – 14 ngày làm việc</p>
-                <p className="text-[11px] text-[#9CA3AF] mt-1">Thời gian xử lý sau khi yêu cầu hủy được phê duyệt</p>
-              </div>
-              <div className="bg-white rounded-xl border border-[#E8E8F0] p-3.5">
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Tỷ lệ hoàn tiền</p>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-2xl font-black text-emerald-600">80%</p>
-                  <p className="text-xs text-[#6E7491]">nếu hủy &gt;48h trước chuyến bay</p>
+            
+            <div className="divide-y divide-slate-50">
+              {regs.filter(r => r.group === group).map(reg => (
+                <div key={reg.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50/30 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-700">{reg.label}</p>
+                    <p className="text-xs text-slate-400 mt-1">{reg.description}</p>
+                    <p className="text-[10px] text-slate-300 mt-1 font-mono uppercase tracking-wider bg-slate-100 w-fit px-1.5 py-0.5 rounded">
+                      {reg.key}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                    <input
+                      type={reg.type === 'NUMBER' ? 'number' : 'text'}
+                      value={reg.value}
+                      disabled
+                      readOnly
+                      className="w-28 text-center border border-slate-200 bg-slate-50 text-slate-500 rounded-xl px-3 py-2 text-sm font-bold outline-none cursor-not-allowed select-none"
+                    />
+                  </div>
                 </div>
-                <p className="text-[11px] text-[#9CA3AF] mt-1">Không bao gồm thuế và phí dịch vụ</p>
-              </div>
+              ))}
             </div>
           </div>
-        </Card>
-
-        {/* System Integrations — 1/3 width */}
-        <Card>
-          <CardTitle
-            icon={Wifi}
-            iconBg="bg-emerald-50"
-            iconColor="text-emerald-500"
-            title="Tích hợp hệ thống"
-            description="Các dịch vụ bên thứ ba đã kết nối"
-          />
-
-          <div className="divide-y divide-[#F0F0F5]">
-            {integrations.map(item => (
-              <IntegrationRow key={item.name} {...item} />
-            ))}
-          </div>
-
-          {!isViewOnly && (
-            <button className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-[#E8E8F0] rounded-xl text-sm font-semibold text-[#6C5CE7] hover:border-[#6C5CE7]/40 hover:bg-[#F0EFFA] transition-all">
-              <Plus className="w-4 h-4" />
-              Thêm kết nối mới
-            </button>
-          )}
-        </Card>
+        ))}
       </div>
 
-      {/* Row 2: Operational Regulations + System Preferences */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Operational Regulations — 2/3 width */}
-        <Card className="lg:col-span-2">
-          <CardTitle
-            icon={Plane}
-            iconBg="bg-sky-50"
-            iconColor="text-sky-500"
-            title="Quy định khai thác chuyến bay"
-            description="Kiểm tra an toàn và quy tắc xác thực trước khi khởi hành"
-          />
-
-          <div className="space-y-0">
-            <ToggleRow
-              icon={Shield}
-              iconBg="bg-[#E9E8FC]"
-              iconColor="text-[#6C5CE7]"
-              label="Xác thực an toàn trước chuyến bay"
-              description="Bắt buộc hoàn thành danh sách kiểm tra an toàn trước khi cấp phép khởi hành"
-              enabled={preflightValidation}
-              onChange={setPreflightValidation}
-              disabled={isViewOnly}
-            />
-            <ToggleRow
-              icon={FileWarning}
-              iconBg="bg-amber-50"
-              iconColor="text-amber-500"
-              label="Quét NOTAM tự động"
-              description="Tự động quét và đánh dấu các NOTAM liên quan cho mỗi chặng bay theo lịch trình"
-              enabled={notamScanning}
-              onChange={setNotamScanning}
-              disabled={isViewOnly}
-            />
-            <ToggleRow
-              icon={Scale}
-              iconBg="bg-emerald-50"
-              iconColor="text-emerald-500"
-              label="Xác thực nghiêm ngặt Trọng tải & Cân bằng"
-              description="Từ chối cho hành khách lên máy bay nếu tính toán W&B của máy bay vượt quá giới hạn chứng nhận"
-              enabled={weightBalance}
-              onChange={setWeightBalance}
-              disabled={isViewOnly}
-            />
-          </div>
-
-          {/* Ground Stop Duration */}
-          <div className="mt-5 pt-5 border-t border-[#F0F0F5]">
-            <div className="max-w-xs">
-              <InputField
-                label="Thời gian dừng trên mặt đất tối thiểu"
-                value={groundStop}
-                onChange={setGroundStop}
-                suffix="phút"
-                icon={Clock}
-                helper="Thời gian dừng bắt buộc tối thiểu giữa các chuyến bay liên tiếp của cùng một máy bay"
-                readOnly={isViewOnly}
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* System Preferences — 1/3 width */}
-        <Card>
-          <CardTitle
-            icon={Settings2}
-            iconBg="bg-slate-100"
-            iconColor="text-slate-500"
-            title="Tùy chọn hệ thống"
-            description="Cài đặt thông báo và bảo mật"
-          />
-
-          <div className="space-y-0">
-            <ToggleRow
-              icon={Bell}
-              iconBg="bg-[#E9E8FC]"
-              iconColor="text-[#6C5CE7]"
-              label="Tóm tắt qua Email"
-              description="Tóm tắt hàng ngày về thay đổi quy định và cảnh báo hệ thống"
-              enabled={emailSummaries}
-              onChange={setEmailSummaries}
-              disabled={isViewOnly}
-            />
-            <ToggleRow
-              icon={MessageSquare}
-              iconBg="bg-emerald-50"
-              iconColor="text-emerald-500"
-              label="Cảnh báo SMS khẩn cấp"
-              description="Gửi SMS ngay lập tức cho các lỗi hệ thống có mức độ nghiêm trọng KHẨN CẤP"
-              enabled={smsAlerts}
-              onChange={setSmsAlerts}
-              disabled={isViewOnly}
-            />
-            <ToggleRow
-              icon={Lock}
-              iconBg="bg-amber-50"
-              iconColor="text-amber-500"
-              label="Bắt buộc 2FA"
-              description="Yêu cầu xác thực hai yếu tố cho tất cả các hành động của quản trị viên"
-              enabled={twoFA}
-              onChange={setTwoFA}
-              disabled={isViewOnly}
-            />
-          </div>
-        </Card>
-      </div>
-
-      {/* Warning Banner */}
-      <div className="flex items-start gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4">
-        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-          <AlertTriangle className="w-5 h-5 text-amber-600" />
+      {/* Audit Log / Note */}
+      <div className="flex items-start gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+          <ShieldAlert className="w-4 h-4 text-amber-600" />
         </div>
         <div>
-          <p className="text-sm font-bold text-amber-800">Yêu cầu phê duyệt</p>
-          <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-            Thay đổi các quy định này yêu cầu <span className="font-bold">Phê duyệt của Ban điều hành Cấp 3</span>. Tất cả các sửa đổi đều được ghi lại để theo dõi tuân thủ và kiểm toán của Cục Hàng không.
+          <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Tuân thủ & Bảo mật</p>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            Các tham số cấu hình trên đây quy định trực tiếp hoạt động thương mại và khai thác bay. Mọi hành động chỉnh sửa của Quản trị viên đều được ghi log chi tiết và đồng bộ hóa tự động theo tiêu chuẩn an toàn hàng không.
           </p>
         </div>
-        <button className="ml-auto shrink-0 flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-900 transition-colors">
-          Tìm hiểu thêm <ChevronRight className="w-3.5 h-3.5" />
-        </button>
       </div>
-
     </div>
   );
 }
-
-export default RegulationsPage;
