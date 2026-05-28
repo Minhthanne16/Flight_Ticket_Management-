@@ -43,7 +43,10 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             .sessionManagement(session -> 
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                    //PUBLIC ENDPOINTS
                     .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/admin/airports/**").permitAll()
+
                     .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")  
                     .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
                     .requestMatchers("/admin/**").hasRole("ADMIN")

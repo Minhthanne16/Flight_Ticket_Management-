@@ -10,10 +10,12 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
     const pickerRef = useRef(null);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/airports')
+        fetch('http://localhost:5000/admin/airports')
             .then(res => res.json())
-            .then(data => setAirports(data))
-            .catch(err => console.error("Lỗi lấy dữ liệu sân bay:", err));
+            .then(data => {
+            console.log(data);
+            setAirports(data.data);
+        })
     }, []);
 
     useEffect(() => {
@@ -27,9 +29,9 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
     }, []);
 
     const filteredAirports = airports.filter(ap =>
-        ap.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ap.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ap.airport.toLowerCase().includes(searchTerm.toLowerCase())
+        ap.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ap.airportCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ap.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleSelectAirport = (airport) => {
@@ -57,13 +59,13 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
 
                     {selectedAirport && (
                         <span className="display-code" style={{ color: '#6B7280', marginLeft: '5px' }}>
-                            ({selectedAirport.code})
+                            ({selectedAirport.airportCode})
                         </span>
                     )}
                 </div>
 
                 <small className="airport-subtext" style={{ color: '#6B7280', opacity: 0.7 }}>
-                    {selectedAirport?.airport || "Search for airport..."}
+                    {selectedAirport?.name || "Search for airport..."}
                 </small>
             </div>
 
@@ -81,18 +83,17 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
                         />
                     </div>
                     <div className="airport-list">
-                        <p className="list-title">POPULAR CITIES</p>
                         {filteredAirports.length > 0 ? (
                             filteredAirports.map(ap => (
-                                <div key={ap.id} className="airport-item" onClick={() => handleSelectAirport(ap)}>
+                                <div key={ap.airportId} className="airport-item" onClick={() => handleSelectAirport(ap)}>
                                     <div className="item-left">
                                         <div className="icon-circle">✈</div>
                                         <div className="text-details">
                                             <div className="city-row">
                                                 <span className="city-name">{ap.city}</span>
-                                                <span className="badge-code">{ap.code}</span>
+                                                <span className="badge-code">{ap.airportCode}</span>
                                             </div>
-                                            <span className="full-airport">{ap.airport}</span>
+                                            <span className="full-airport">{ap.name}</span>
                                         </div>
                                     </div>
                                     <div className="item-right">
