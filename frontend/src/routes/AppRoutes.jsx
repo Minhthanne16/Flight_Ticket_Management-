@@ -17,6 +17,7 @@ import RegulationsPage from '../pages/Staff/RegulationsPage';
 import Homepage from '../pages/Customer/Homepage';
 import SignIn from '../pages/Customer/SignIn';
 import SignUp from '../pages/Customer/SignUp';
+import SearchResults from '../components/Customer/SearchResults';
 
 // --- Admin Pages ---
 import AdminDashboard from '../pages/Admin/Dashboard';
@@ -36,17 +37,37 @@ function AppRoutes() {
         <Route path="/signup" element={<SignUp />} />
 
         {/* Customer Routes (Protected) */}
-        <Route
-          path="/customer/*"
-          element={
-            <ProtectedRoute allowedRoles={['CUSTOMER']}>
-              <Routes>
-                <Route path="home" element={<Homepage />} />
-                <Route path="*" element={<Navigate to="home" replace />} />
-              </Routes>
-            </ProtectedRoute>
-          }
+       <Route
+    path="/customer/home"
+    element={
+        <ProtectedRoute
+            allowedRoles={['CUSTOMER']}
+        >
+            <Homepage/>
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/customer/flight-results"
+    element={
+        <ProtectedRoute
+            allowedRoles={['CUSTOMER']}
+        >
+            <SearchResults/>
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="*"
+    element={
+        <Navigate
+            to="/customer/home"
+            replace
         />
+    }
+/>
 
         {/* Staff Routes (Protected) */}
         <Route

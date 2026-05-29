@@ -46,7 +46,8 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                     //PUBLIC ENDPOINTS
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/admin/airports/**").permitAll()
-
+                    .requestMatchers(HttpMethod.GET, "/flights", "/flights/**").permitAll()
+                    
                     .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")  
                     .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
                     .requestMatchers("/admin/**").hasRole("ADMIN")
