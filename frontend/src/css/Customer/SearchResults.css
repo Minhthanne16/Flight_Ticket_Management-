@@ -320,3 +320,160 @@
     margin-right: 5px;
     color: #8f9a9f;
 }
+
+/* =========================================
+   SEARCH HEADER WIDGET (CHỌN NGÀY Ở ĐẦU)
+========================================= */
+.search-header-widget {
+    background-color: #0194f3; /* Màu xanh nền */
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Nền mây / máy bay mờ phía sau nếu muốn giống hình */
+.search-header-widget::before {
+    content: '✈';
+    position: absolute;
+    right: 30px;
+    top: -20px;
+    font-size: 150px;
+    color: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+/* Thanh trắng hiển thị chặng bay */
+.search-pill {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.pill-content .pill-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a2b49;
+    margin-bottom: 5px;
+}
+
+.pill-content .pill-title i {
+    font-size: 14px;
+    color: #687176;
+    margin: 0 5px;
+}
+
+.pill-content .pill-subtitle {
+    font-size: 14px;
+    color: #687176;
+    font-weight: 500;
+}
+
+.pill-search-btn {
+    background: none;
+    border: none;
+    color: #0194f3;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* =========================================
+   Thanh chọn ngày (Carousel)
+========================================= */
+.date-selector-bar {
+    display: flex;
+    align-items: stretch;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.date-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 5px;
+    color: white;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 5px;
+}
+
+.date-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Khi ngày đó được chọn */
+.date-item.active {
+    background: #007ce8; /* Màu xanh đậm hơn một chút làm nền */
+    font-weight: 600;
+}
+
+.date-label {
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: inherit;
+}
+
+.date-price {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* =========================================
+   Nút Lịch (Calendar) ngoài cùng
+========================================= */
+.calendar-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    color: white;
+    padding: 0 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    min-width: 80px; /* Định hình độ rộng cố định */
+}
+
+.calendar-btn:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.calendar-btn i {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.calendar-btn span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* =========================================
+   Input Date (Bị ẩn hoàn toàn để JS xử lý)
+========================================= */
+.hidden-date-picker {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    bottom: 0;
+    pointer-events: none; /* Xuyên thấu, không cản trở thao tác click của nút */
+    border: none;
+    padding: 0;
+    margin: 0;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import '../../css/Customer/SearchResults.css';
@@ -13,16 +13,11 @@ const fetchAirports = async () => {
   return result.data || result; 
 };
 
-
 const fetchFlights = async (fromId, toId, departDate) => {
   const query = new URLSearchParams();
   if (fromId) query.append('from', fromId);
   if (toId) query.append('to', toId);
   
-  // 1. TẠM TẮT GỬI NGÀY XUỐNG BACKEND
-  // Frontend sẽ không ép backend lọc ngày nữa, để backend trả về tất cả chuyến bay từ SGN đi HAN
-  // if (departDate) query.append('departDate', departDate); 
-
   const response = await fetch(`http://localhost:5000/flights/search?${query.toString()}`);
   if (!response.ok) {
     console.error(`Lỗi HTTP: ${response.status} - ${response.statusText}`);
@@ -36,11 +31,8 @@ const fetchFlights = async (fromId, toId, departDate) => {
   
   const allFlights = result.data || [];
 
-  // 2. LỌC DỮ LIỆU TRỰC TIẾP TRÊN FRONTEND (JAVASCRIPT)
   if (departDate) {
     return allFlights.filter(flight => {
-      // flight.departureTime từ DB trả ra thường có dạng "2026-06-18T06:30:00" hoặc "2026-06-18 06:30:00"
-      // Chúng ta chỉ cần cắt 10 ký tự đầu tiên (YYYY-MM-DD) để so sánh với departDate
       const flightDateOnly = flight.departureTime.substring(0, 10);
       return flightDateOnly === departDate;
     });
@@ -48,37 +40,58 @@ const fetchFlights = async (fromId, toId, departDate) => {
   
   return allFlights;
 };
+
+// --- HÀM TIỆN ÍCH XỬ LÝ NGÀY THÁNG ---
+const generateDateRange = (startDateStr, numDays = 5) => {
+  const dates = [];
+  const startDate = startDateStr ? new Date(startDateStr) : new Date();
+  
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+};
+
+const formatDisplayDate = (date) => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+};
+
+const formatUrlDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+// ------------------------------------
+
 const SearchResults = () => {
   const [showDetails, setShowDetails] = useState(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // 1. Lấy mã Code dạng chữ (SGN, HAN) từ URL params
+  // Khởi tạo ref cho input chọn ngày
+  const dateInputRef = useRef(null);
+
   const fromCode = searchParams.get('from'); 
   const toCode = searchParams.get('to');
   const departDate = searchParams.get('departDate');
 
-  // 2. Gọi API lấy danh sách sân bay bằng TanStack Query
-  const { 
-    data: airports = [], 
-    isLoading: isLoadingAirports, 
-    isError: isErrorAirports 
-  } = useQuery({
+  // Khởi tạo ngày gốc cho mảng 5 ngày
+  const [baseDate, setBaseDate] = useState(departDate || formatUrlDate(new Date()));
+
+  const { data: airports = [], isLoading: isLoadingAirports, isError: isErrorAirports } = useQuery({
     queryKey: ['airports'],
     queryFn: fetchAirports,
     staleTime: 5 * 60 * 1000, 
   });
 
-  // 3. MAP ĐỘNG: Tìm ID từ danh sách sân bay vừa tải về
   const fromId = airports.find(a => a.airportCode === fromCode)?.id;
   const toId = airports.find(a => a.airportCode === toCode)?.id;
 
-  // 4. Gọi API lấy dữ liệu chuyến bay
-  const { 
-    data: flights = [], 
-    isLoading: isLoadingFlights, 
-    isError: isErrorFlights, 
-    error 
-  } = useQuery({
+  const { data: flights = [], isLoading: isLoadingFlights, isError: isErrorFlights, error } = useQuery({
     queryKey: ['flights', fromId, toId, departDate], 
     queryFn: () => fetchFlights(fromId, toId, departDate),
     enabled: !!fromId && !!toId, 
@@ -99,7 +112,32 @@ const SearchResults = () => {
     return new Intl.NumberFormat('vi-VN').format(price);
   };
 
-  // 5. Xử lý các trạng thái hiển thị (Loading / Error) tổng hợp
+  // Hàm khi bấm vào 1 trong 5 ngày trên thanh
+  const handleDateChange = (newDateStr) => {
+    if (!newDateStr) return;
+    searchParams.set('departDate', newDateStr);
+    setSearchParams(searchParams);
+  };
+
+  // Hàm dành riêng cho nút Calendar (Đẩy ngày được chọn lên đầu)
+  const handleCalendarPick = (newDateStr) => {
+    if (!newDateStr) return;
+    setBaseDate(newDateStr); 
+    searchParams.set('departDate', newDateStr); 
+    setSearchParams(searchParams);
+  };
+
+  // Hàm kích hoạt mở Calendar
+  const handleOpenCalendar = () => {
+    if (dateInputRef.current) {
+      try {
+        dateInputRef.current.showPicker();
+      } catch (error) {
+        dateInputRef.current.focus();
+      }
+    }
+  };
+
   if (isLoadingAirports || isLoadingFlights) {
     return <div className="loading-state">Đang tìm kiếm chuyến bay...</div>;
   }
@@ -112,11 +150,58 @@ const SearchResults = () => {
     return <div className="error-state">{error.message}</div>;
   }
 
+  // Sinh mảng 5 ngày
+  const dateList = generateDateRange(baseDate, 5);
+
   return (
     <div className="flight-results-container">
+      <div className="search-header-widget">
+        <div className="search-pill">
+          <div className="pill-content">
+             <div className="pill-title">{fromCode} <i className="fa-solid fa-arrow-right"></i> {toCode}</div>
+             <div className="pill-subtitle">
+                {departDate ? formatDisplayDate(new Date(departDate)) : ''} | 1 passenger(s) | Economy
+             </div>
+          </div>
+          <button className="pill-search-btn">
+            <i className="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+
+        <div className="date-selector-bar">
+          {dateList.map((dateObj) => {
+            const dateString = formatUrlDate(dateObj);
+            const isActive = dateString === departDate;
+            
+            return (
+              <div 
+                key={dateString} 
+                className={`date-item ${isActive ? 'active' : ''}`}
+                onClick={() => handleDateChange(dateString)}
+              >
+                <div className="date-label">{formatDisplayDate(dateObj)}</div>
+                <div className="date-price">Tìm giá</div> 
+              </div>
+            );
+          })}
+          
+          {/* Vùng Calendar đã được sửa để click mở đúng */}
+          <div className="calendar-btn" onClick={handleOpenCalendar}>
+            <i className="fa-regular fa-calendar"></i>
+            <span>Calendar</span>
+            <input 
+              type="date" 
+              ref={dateInputRef}
+              className="hidden-date-picker" 
+              value={departDate || ''}
+              onChange={(e) => handleCalendarPick(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
       <h3 className="results-title">All flights</h3>
       
-      {/* SỬA LỖI 1: Thay !isLoading bằng !isLoadingFlights */}
       {flights.length === 0 && !isLoadingFlights && (
         <div className="no-flights">
           <p>Không tìm thấy chuyến bay nào phù hợp từ {fromCode} đi {toCode} vào ngày {departDate}.</p>
@@ -124,7 +209,6 @@ const SearchResults = () => {
       )}
 
       {flights.map((flight) => {
-        // SỬA LỖI 2: Tạo các biến bóc tách an toàn dựa theo cấu trúc JPA Entity
         const currentAirlineName = flight.airplane?.airline?.airlineName || 'Bamboo Airways';
         const currentAirlineLogo = flight.airplane?.airline?.logo || '/default-airline.png';
         const depCode = flight.route?.departureAirport?.airportCode || fromCode;
@@ -134,7 +218,6 @@ const SearchResults = () => {
         return (
           <div key={flight.id} className="flight-card-wrapper">
             <div className="flight-card">
-              {/* Hàng 1: Thông tin chính */}
               <div className="main-info">
                 <div className="airline-info">
                   <img src={currentAirlineLogo} alt="logo" className="airline-logo" />
@@ -164,7 +247,6 @@ const SearchResults = () => {
                 </div>
               </div>
 
-              {/* Hàng 2: Tiện ích & Ưu đãi */}
               <div className="extra-info">
                  <div className="amenities">
                     <span><i className="fa-solid fa-briefcase"></i> 23kg</span>
@@ -177,7 +259,6 @@ const SearchResults = () => {
                  </div>
               </div>
 
-              {/* Nút bấm xem chi tiết */}
               <div 
                   className={`details-toggle ${showDetails === flight.id ? 'active' : ''}`} 
                   onClick={() => toggleDetails(flight.id)}
@@ -186,7 +267,6 @@ const SearchResults = () => {
               </div>
             </div>
 
-            {/* PHẦN CHI TIẾT (FLIGHT DETAILS) */}
             {showDetails === flight.id && (
               <div className="flight-details-panel">
                  <div className="details-content">
