@@ -1,11 +1,31 @@
-/* CONTAINER & CARD BẢN CHUNG */
-.flight-results-container {
-    position: relative;
-    padding: 10px;
-    margin-right: 15px;
+/* =========================================
+   LAYOUT CHIA 2 CỘT (FILTER L & KẾT QUẢ R)
+========================================= */
+.search-page-layout {
+    display: flex;
+    gap: 24px; /* Khoảng cách giữa Filter và Kết quả */
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 16px;
+    align-items: flex-start; /* Giúp sidebar không bị kéo giãn chiều cao */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+.filter-sidebar {
+    width: 30%;
+    flex-shrink: 0;
+}
+
+/* CONTAINER BÊN PHẢI */
+.flight-results-container {
+    width: 70%;
+    flex-grow: 1;
+    position: relative;
+}
+
+/* =========================================
+   CÁC COMPONENT BÊN TRONG DANH SÁCH
+========================================= */
 .results-title {
     font-size: 20px;
     margin-bottom: 15px;
@@ -293,7 +313,6 @@
 }
 
 .segment-info {
-    /* Không dùng box trắng để giống y hệt hình mẫu, chỉ xếp layout chữ */
     padding-left: 10px;
 }
 
@@ -334,7 +353,6 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Nền mây / máy bay mờ phía sau nếu muốn giống hình */
 .search-header-widget::before {
     content: '✈';
     position: absolute;
@@ -346,7 +364,6 @@
     pointer-events: none;
 }
 
-/* Thanh trắng hiển thị chặng bay */
 .search-pill {
     background: white;
     border-radius: 12px;
@@ -413,9 +430,8 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Khi ngày đó được chọn */
 .date-item.active {
-    background: #007ce8; /* Màu xanh đậm hơn một chút làm nền */
+    background: #007ce8;
     font-weight: 600;
 }
 
@@ -446,7 +462,7 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s ease;
-    min-width: 80px; /* Định hình độ rộng cố định */
+    min-width: 80px; 
 }
 
 .calendar-btn:hover {
@@ -472,7 +488,7 @@
     height: 0;
     opacity: 0;
     bottom: 0;
-    pointer-events: none; /* Xuyên thấu, không cản trở thao tác click của nút */
+    pointer-events: none; 
     border: none;
     padding: 0;
     margin: 0;
