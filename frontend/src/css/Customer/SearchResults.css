@@ -206,7 +206,7 @@
 .details-toggle {
     width: fit-content;
     padding-bottom: 5px;
-    color: #0194f3;
+    color: #5856D6;
     font-weight: 600;
     font-size: 14px;
     margin-top: 20px;
@@ -216,11 +216,11 @@
 }
 
 .details-toggle:hover {
-    border-bottom: 2px solid #0194f3;
+    border-bottom: 2px solid #5856D6;
 }
 
 .details-toggle.active {
-    border-bottom: 2px solid #0194f3;
+    border-bottom: 2px solid #5856D6;
 }
 
 /* FLIGHT DETAILS PANEL (TIMELINE) */
@@ -266,7 +266,7 @@
 .circle-outline {
     width: 14px;
     height: 14px;
-    border: 2px solid #0194f3;
+    border: 2px solid #5856D6;
     border-radius: 50%;
     background: #f7f9fa;
     z-index: 2;
@@ -275,7 +275,7 @@
 .circle-fill {
     width: 14px;
     height: 14px;
-    background: #0194f3;
+    background: #5856D6;
     border-radius: 50%;
     z-index: 2;
 }
@@ -344,7 +344,7 @@
    SEARCH HEADER WIDGET (CHỌN NGÀY Ở ĐẦU)
 ========================================= */
 .search-header-widget {
-    background-color: #0194f3; /* Màu xanh nền */
+    background-color: #5856D6; 
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 20px;
@@ -398,7 +398,7 @@
 .pill-search-btn {
     background: none;
     border: none;
-    color: #0194f3;
+    color: #5856D6;
     font-size: 20px;
     cursor: pointer;
     padding: 5px;
@@ -431,7 +431,7 @@
 }
 
 .date-item.active {
-    background: #007ce8;
+    background: #5856D6;
     font-weight: 600;
 }
 
