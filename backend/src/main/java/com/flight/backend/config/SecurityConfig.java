@@ -24,121 +24,127 @@ import com.flight.backend.security.jwt.JwtFilter;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
+        private final JwtFilter jwtFilter;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
+        public SecurityConfig(JwtFilter jwtFilter) {
+                this.jwtFilter = jwtFilter;
+        }
 
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-   @Bean
-SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> 
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")  
-                    .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
-                    .requestMatchers("/admin/**").hasRole("ADMIN")
+        @Bean
+        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/auth/**").permitAll()
+                                                .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")
+                                                .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
+                                                .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                    // ================= CONFIG =================
-                    .requestMatchers(HttpMethod.GET, "/configs", "/configs/**").hasAnyRole("ADMIN", "STAFF")
+                                                // ================= CONFIG =================
+                                                .requestMatchers(HttpMethod.GET, "/configs", "/configs/**")
+                                                .hasAnyRole("ADMIN", "STAFF")
 
-                    .requestMatchers(HttpMethod.POST, "/configs", "/configs/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/configs", "/configs/**")
+                                                .hasRole("ADMIN")
 
-                    .requestMatchers(HttpMethod.PUT, "/configs", "/configs/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/configs", "/configs/**")
+                                                .hasRole("ADMIN")
 
-                    .requestMatchers(HttpMethod.DELETE, "/configs", "/configs/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/configs", "/configs/**")
+                                                .hasRole("ADMIN")
 
-                    // ================= STAFF =================
-                    .requestMatchers("/staffs","/staffs/**").hasRole("ADMIN")
+                                                // ================= STAFF =================
+                                                .requestMatchers("/staffs", "/staffs/**").hasRole("ADMIN")
 
-                  // ================= CUSTOMER =================
-                    .requestMatchers(HttpMethod.GET,
-                            "/customers/**")
-                    .hasAnyRole("ADMIN", "STAFF")
+                                                // ================= CUSTOMER =================
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/customers/**")
+                                                .hasAnyRole("ADMIN", "STAFF")
 
-                    .requestMatchers(HttpMethod.POST,
-                            "/customers")
-                    .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/customers")
+                                                .hasRole("ADMIN")
 
-                    .requestMatchers(HttpMethod.PUT,
-                            "/customers/**")
-                    .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/customers/**")
+                                                .hasRole("ADMIN")
 
-                    .requestMatchers(HttpMethod.DELETE,
-                            "/customers/**")
-                    .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE,
+                                                                "/customers/**")
+                                                .hasRole("ADMIN")
 
-                    // ================= ROUTES =================
+                                                // ================= ROUTES =================
 
-                    // STAFF + ADMIN được xem
-                    .requestMatchers(HttpMethod.GET,
-                            "/routes",
-                            "/routes/**")
-                    .hasAnyRole("ADMIN", "STAFF")
+                                                // STAFF + ADMIN được xem
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/routes",
+                                                                "/routes/**")
+                                                .hasAnyRole("ADMIN", "STAFF")
 
-                    // chỉ ADMIN được tạo
-                    .requestMatchers(HttpMethod.POST,
-                            "/routes",
-                            "/routes/**")
-                    .hasRole("ADMIN")
+                                                // chỉ ADMIN được tạo
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/routes",
+                                                                "/routes/**")
+                                                .hasRole("ADMIN")
 
-                    // ADMIN update
-                    .requestMatchers(HttpMethod.PUT,
-                            "/routes",
-                            "/routes/**")
-                    .hasRole("ADMIN")
+                                                // ADMIN update
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/routes",
+                                                                "/routes/**")
+                                                .hasRole("ADMIN")
 
-                    // ADMIN delete
-                    .requestMatchers(HttpMethod.DELETE,
-                            "/routes",
-                            "/routes/**")
-                    .hasRole("ADMIN")    
+                                                // ADMIN delete
+                                                .requestMatchers(HttpMethod.DELETE,
+                                                                "/routes",
+                                                                "/routes/**")
+                                                .hasRole("ADMIN")
 
-                        // ================= NOTIFICATION =================
-                        .requestMatchers(HttpMethod.GET,"/notifications").hasRole("STAFF")
+                                                // ================= NOTIFICATION =================
+                                                .requestMatchers(HttpMethod.GET, "/notifications").hasRole("STAFF")
 
-                        .requestMatchers(HttpMethod.GET, "/notifications/my").hasAnyRole("CUSTOMER", "STAFF")
+                                                .requestMatchers(HttpMethod.GET, "/notifications/my")
+                                                .hasAnyRole("CUSTOMER", "STAFF")
 
-                        .requestMatchers(HttpMethod.POST,"/notifications").hasRole("STAFF")
+                                                .requestMatchers(HttpMethod.POST, "/notifications").hasRole("STAFF")
 
-                        .requestMatchers(HttpMethod.PUT,"/notifications/**").hasRole("STAFF")
+                                                .requestMatchers(HttpMethod.PUT, "/notifications/**").hasRole("STAFF")
 
-                    .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
-                    .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**").hasAnyRole("ADMIN", "STAFF")
-                    .anyRequest().authenticated())
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                                                .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
+                                                .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**")
+                                                .hasAnyRole("ADMIN", "STAFF")
+                                                .anyRequest().authenticated())
+                                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
-}
+                return http.build();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    
-    configuration.addAllowedOriginPattern("*");
-    
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
-    
-    configuration.setExposedHeaders(Arrays.asList("Authorization"));
-    
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-}
+        @Bean
+        CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+
+                configuration.addAllowedOriginPattern("*");
+
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+
+                configuration.setExposedHeaders(Arrays.asList("Authorization"));
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 }
