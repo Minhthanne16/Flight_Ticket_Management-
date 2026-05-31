@@ -43,14 +43,34 @@ function TicketInformation() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Tạo payload để sau này bạn dùng gửi xuống Backend
     const bookingPayload = {
       flightId: flight.id,
       cabinClass: cabinClass,
       passengers: passengers
     };
     console.log("Dữ liệu gửi xuống Backend:", bookingPayload);
-  };
 
+    // TẠO FAKE DATA ĐỂ HIỂN THỊ TRANG SUCCESS (Tạm bỏ qua bước gọi API thanh toán)
+    // 1. Tạo mã đặt chỗ (PNR) ngẫu nhiên 6 ký tự
+    const reservationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    // 2. Lấy giờ hiện tại
+    const now = new Date();
+    const bookingTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+    console.log("Cấu trúc chuyến bay:", flight);
+    // Chuyển hướng sang trang Success và mang theo dữ liệu
+    navigate('/customer/booking-success', {
+      state: {
+        flight,
+        passengers,
+        totalPrice,
+        reservationCode,
+        bookingTime
+      }
+    });
+  };
   if (!flight) return <div>Không tìm thấy thông tin chuyến bay. Vui lòng quay lại.</div>;
 
   return (
@@ -174,7 +194,7 @@ function TicketInformation() {
               </div>
             ))}
 
-            <button type="submit" className="btn-continue">Continue to Payment</button>
+            <button type="submit" className="btn-continue" >Continue to Payment</button>
           </form>
         </div>
 
@@ -206,6 +226,7 @@ function TicketInformation() {
 
       </div>
     </div>
+    
   );
 }
 

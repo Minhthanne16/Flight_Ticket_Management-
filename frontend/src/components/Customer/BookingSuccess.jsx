@@ -1,0 +1,113 @@
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import '../../css/Customer/BookingSuccess.css'; 
+
+function BookingSuccess() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Nhận dữ liệu từ trang TicketInformation truyền sang
+  const { flight, passengers, totalPrice, reservationCode, bookingTime } = location.state || {};
+
+  // Nếu không có dữ liệu (do f5 hoặc vào trực tiếp link), đá về trang chủ
+  if (!flight || !passengers) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <h2>Không tìm thấy thông tin đặt chỗ.</h2>
+        <button className="btn-home-fallback" onClick={() => navigate('/customer/home')}>Về trang chủ</button>
+      </div>
+    );
+  }
+
+  // Lấy tên người đặt (người đầu tiên trong danh sách)
+  const primaryPassengerName = passengers[0]?.fullName || 'QUÝ KHÁCH';
+  const airlineName = flight?.airlineName || 'hãng hàng không';
+
+  return (
+    <div className="booking-success-container">
+      
+      {/* 1. LỜI CHÀO & XÁC NHẬN */}
+      <div className="success-greeting">
+        <p>Xin chào <strong>{primaryPassengerName}</strong></p>
+        <p className="sub-text">Dear <strong>{primaryPassengerName}</strong></p>
+        
+        <p className="mt-15">Hệ thống xác nhận bạn đã đặt vé máy bay <strong>{airlineName}</strong> thành công vào lúc <strong>{bookingTime}</strong></p>
+        <p className="sub-text">We would like to confirm that your <strong>{airlineName}</strong> ticket has been reserved at <strong>{bookingTime}</strong></p>
+      </div>
+
+      {/* 2. KHUNG MÃ ĐẶT CHỖ (Màu hồng nhạt) */}
+      <div className="reservation-code-box">
+        <h4>MÃ ĐẶT CHỖ <span className="sub-text font-normal">RESERVATION CODE</span></h4>
+        <h1 className="pnr-code">{reservationCode}</h1>
+        <p className="instruction">Đưa mã này cho nhân viên soát vé</p>
+        <p className="sub-text">Show this code to the check-in officer</p>
+      </div>
+
+      {/* 3. THÔNG TIN HÀNH KHÁCH */}
+      <div className="passenger-info-section">
+        <div className="section-header">
+          <h4>THÔNG TIN HÀNH KHÁCH</h4>
+          <p className="sub-text">PASSENGER INFORMATION</p>
+        </div>
+
+        <div className="passenger-list-wrapper">
+          {passengers.map((passenger, index) => (
+            <div key={index} className="passenger-item-block">
+              {/* Dòng tên hành khách bôi xám */}
+              <div className="info-row row-highlight">
+                <div className="row-label">Hành khách<br/><span className="sub-text">Passenger</span></div>
+                <div className="row-value font-bold">{passenger.fullName}</div>
+              </div>
+              
+              <div className="info-row">
+                <div className="row-label">Loại giấy tờ<br/><span className="sub-text">Document type</span></div>
+                <div className="row-value">CCCD / Passport</div>
+              </div>
+              
+              <div className="info-row">
+                <div className="row-label">Số giấy tờ<br/><span className="sub-text">Document number</span></div>
+                <div className="row-value">{passenger.documentNumber}</div>
+              </div>
+              
+              <div className="info-row">
+                <div className="row-label">Ghế<br/><span className="sub-text">Seat</span></div>
+                <div className="row-value">Chưa chọn</div>
+              </div>
+              
+              <div className="info-row">
+                <div className="row-label">Mã vé<br/><span className="sub-text">Ticket code</span></div>
+                <div className="row-value">{reservationCode}0{index + 1}</div>
+              </div>
+              
+              <div className="info-row">
+                <div className="row-label">Dịch vụ bổ sung<br/><span className="sub-text">Ancillary</span></div>
+                <div className="row-value"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. THANH TOÁN */}
+      <div className="payment-section">
+        <div className="section-header-inline">
+          <h4>THANH TOÁN <span className="sub-text font-normal">PAYMENT</span></h4>
+        </div>
+        <div className="payment-box">
+          <p className="font-bold">TỔNG TIỀN <span className="sub-text font-normal">TOTAL AMOUNT</span></p>
+          <h2 className="total-amount-text">{new Intl.NumberFormat('vi-VN').format(totalPrice)}đ</h2>
+        </div>
+      </div>
+
+      {/* NÚT VỀ TRANG CHỦ */}
+      <div className="action-buttons">
+        <button className="btn-back-home" onClick={() => navigate('/customer/home')}>
+          Quay lại trang chủ
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
+export default BookingSuccess;

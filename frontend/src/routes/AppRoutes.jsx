@@ -19,6 +19,8 @@ import SignIn from '../pages/Customer/SignIn';
 import SignUp from '../pages/Customer/SignUp';
 import SearchResults from '../components/Customer/SearchResults';
 import TicketInformation from '../components/Customer/TicketInformation';
+import Payment from '../components/Customer/Payment';
+import BookingSuccess from '../components/Customer/BookingSuccess';
 
 // --- Admin Pages ---
 import AdminDashboard from '../pages/Admin/Dashboard';
@@ -45,6 +47,7 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['CUSTOMER']}>
           <Homepage />
           </ProtectedRoute>
+          
       }
     />
 
@@ -56,6 +59,14 @@ function AppRoutes() {
       </ProtectedRoute>
     }
   />
+  <Route
+  path="/customer/booking-success"
+  element={
+      <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <BookingSuccess />
+      </ProtectedRoute>
+    }
+/>
   <Route
   path="/customer/booking-details"
   element={
