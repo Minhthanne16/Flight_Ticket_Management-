@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Tag, CheckCircle2, XCircle, Eye, ChevronLeft, ChevronRight, Search, Loader2, AlertCircle } from 'lucide-react';
+import { Tag, CheckCircle2, XCircle, Eye, ChevronLeft, ChevronRight, Search, Loader2, AlertCircle, X, Calendar, Hash, Percent, DollarSign, BarChart3, Clock } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { voucherService } from '../../api/services/voucherService';
 
@@ -56,10 +56,22 @@ function PromotionPage() {
   const [search, setSearch] = useState(querySearch);
   const [statusFilter, setStatusFilter] = useState('All');
   const [page, setPage] = useState(1);
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
   }, [searchParams]);
+
+  // Auto-refresh: poll every 30s + refetch when tab regains focus
+  useEffect(() => {
+    const interval = setInterval(() => { refetch(); }, 30000);
+    const onFocus = () => { refetch(); };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refetch]);
 
   const list = vouchers || [];
 
@@ -201,7 +213,10 @@ function PromotionPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all">
+                      <button
+                        onClick={() => setSelectedVoucher(v)}
+                        className="p-2 text-[#9CA3AF] hover:text-[#6C5CE7] hover:bg-[#E9E8FC] rounded-lg transition-all"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </td>
@@ -237,6 +252,187 @@ function PromotionPage() {
           </div>
         </div>
       </div>
+
+      {/* Voucher Detail Modal */}
+      {selectedVoucher && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          onClick={() => setSelectedVoucher(null)}
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            style={{ animation: 'voucherFadeIn 0.2s ease-out' }}
+          />
+          {/* Modal */}
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl border border-[#E8E8F0] w-[480px] max-w-[92vw] max-h-[90vh] overflow-y-auto"
+            style={{ animation: 'voucherModalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-[#6C5CE7] to-[#7E6FF2] px-6 py-5 rounded-t-2xl">
+              <button
+                onClick={() => setSelectedVoucher(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Tag className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white/70 text-xs font-medium">Mã Voucher</p>
+                  <p className="text-white text-lg font-bold tracking-wide">{selectedVoucher.voucherCode}</p>
+                </div>
+              </div>
+              <p className="text-white/80 text-sm">{selectedVoucher.name}</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              {/* Status Badge */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Trạng thái</span>
+                <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+                  (statusMap[selectedVoucher.status] || { cls: 'text-slate-500 bg-slate-100' }).cls
+                }`}>
+                  {selectedVoucher.status === 'ACTIVE' && <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />}
+                  {selectedVoucher.status === 'EXPIRED' && <XCircle className="w-3.5 h-3.5 mr-1.5" />}
+                  {(statusMap[selectedVoucher.status] || { label: selectedVoucher.status }).label}
+                </span>
+              </div>
+
+              <hr className="border-[#F0F0F5]" />
+
+              {/* Discount Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#F8F7FF] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Percent className="w-4 h-4 text-[#6C5CE7]" />
+                    <span className="text-xs font-bold text-[#9CA3AF] uppercase">Loại giảm</span>
+                  </div>
+                  <p className="text-sm font-bold text-[#27273F]">
+                    {selectedVoucher.discountType === 'PERCENTAGE' ? 'Phần trăm (%)' : 'Số tiền cố định (đ)'}
+                  </p>
+                </div>
+                <div className="bg-[#F0FDF4] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                    <span className="text-xs font-bold text-[#9CA3AF] uppercase">Giá trị giảm</span>
+                  </div>
+                  <p className="text-sm font-bold text-emerald-600">{formatDiscount(selectedVoucher)}</p>
+                </div>
+              </div>
+
+              {/* Amount Limits */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border border-[#E8E8F0] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart3 className="w-4 h-4 text-[#6E7491]" />
+                    <span className="text-xs font-bold text-[#9CA3AF] uppercase">Đơn tối thiểu</span>
+                  </div>
+                  <p className="text-sm font-semibold text-[#27273F]">
+                    {selectedVoucher.minBookingAmount
+                      ? `${Number(selectedVoucher.minBookingAmount).toLocaleString('vi-VN')} đ`
+                      : 'Không giới hạn'}
+                  </p>
+                </div>
+                <div className="border border-[#E8E8F0] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-[#6E7491]" />
+                    <span className="text-xs font-bold text-[#9CA3AF] uppercase">Giảm tối đa</span>
+                  </div>
+                  <p className="text-sm font-semibold text-[#27273F]">
+                    {selectedVoucher.maxDiscountAmount
+                      ? `${Number(selectedVoucher.maxDiscountAmount).toLocaleString('vi-VN')} đ`
+                      : 'Không giới hạn'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div className="bg-[#FAFAFE] rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-4 h-4 text-[#6C5CE7]" />
+                  <span className="text-xs font-bold text-[#9CA3AF] uppercase">Thời gian hiệu lực</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 text-center">
+                    <p className="text-xs text-[#9CA3AF] mb-1">Bắt đầu</p>
+                    <p className="text-sm font-semibold text-[#27273F]">{formatDate(selectedVoucher.startTime)}</p>
+                  </div>
+                  <div className="w-8 h-[2px] bg-[#E8E8F0] rounded-full" />
+                  <div className="flex-1 text-center">
+                    <p className="text-xs text-[#9CA3AF] mb-1">Kết thúc</p>
+                    <p className="text-sm font-semibold text-[#27273F]">{formatDate(selectedVoucher.endTime)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Usage */}
+              <div className="bg-[#FAFAFE] rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Hash className="w-4 h-4 text-[#6C5CE7]" />
+                  <span className="text-xs font-bold text-[#9CA3AF] uppercase">Sử dụng</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-[#6E7491]">Số lượng đã dùng</span>
+                  <span className="text-sm font-bold text-[#27273F]">
+                    {selectedVoucher.usedCount?.toLocaleString() ?? 0}
+                    {selectedVoucher.usageLimit ? ` / ${selectedVoucher.usageLimit.toLocaleString()}` : ''}
+                  </span>
+                </div>
+                {selectedVoucher.usageLimit && (
+                  <div>
+                    <div className="w-full h-2.5 bg-[#E8E8F0] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          Math.round((selectedVoucher.usedCount / selectedVoucher.usageLimit) * 100) >= 90
+                            ? 'bg-red-400'
+                            : Math.round((selectedVoucher.usedCount / selectedVoucher.usageLimit) * 100) >= 70
+                              ? 'bg-amber-400'
+                              : 'bg-[#6C5CE7]'
+                        }`}
+                        style={{ width: `${Math.min(Math.round((selectedVoucher.usedCount / selectedVoucher.usageLimit) * 100), 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-[#9CA3AF] mt-1.5 text-right">
+                      Còn lại: {(selectedVoucher.usageLimit - (selectedVoucher.usedCount || 0)).toLocaleString()} lượt
+                    </p>
+                  </div>
+                )}
+                {!selectedVoucher.usageLimit && (
+                  <p className="text-xs text-[#9CA3AF]">Không giới hạn số lượt sử dụng</p>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5">
+              <button
+                onClick={() => setSelectedVoucher(null)}
+                className="w-full px-4 py-2.5 rounded-xl border border-[#E8E8F0] text-sm font-semibold text-[#6E7491] hover:bg-[#F0EFFA] transition-all duration-200"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal animations */}
+      <style>{`
+        @keyframes voucherFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes voucherModalSlideIn {
+          from { opacity: 0; transform: scale(0.85) translateY(20px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

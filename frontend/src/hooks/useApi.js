@@ -1,32 +1,59 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
- * Generic API hook
+ * Generic API hook with auto-refresh
  * @param {Function} apiFn - axios service function to call
  * @param {any[]} deps - extra dependencies that trigger re-fetch
+ * @param {object} options - { pollingInterval (ms, default 30000), refetchOnFocus (default true) }
  * @returns {{ data, loading, error, refetch }}
  */
-export function useApi(apiFn, deps = []) {
+export function useApi(apiFn, deps = [], options = {}) {
+  const { pollingInterval = 30000, refetchOnFocus = true } = options;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasFetched = useRef(false);
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetch = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null); }
     try {
       const res = await apiFn();
       // Handle both raw arrays and ApiResponse wrappers { data: [...] }
       setData(res.data?.data ?? res.data);
+      if (!silent) setError(null);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Lỗi kết nối máy chủ');
+      if (!silent) setError(err.response?.data?.message || err.message || 'Lỗi kết nối máy chủ');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      hasFetched.current = true;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  // Initial fetch
+  useEffect(() => { fetch(false); }, [fetch]);
 
-  return { data, loading, error, refetch: fetch };
+  // Auto-refresh: polling + refetch on window focus
+  useEffect(() => {
+    if (!hasFetched.current) return;
+
+    const silentRefetch = () => fetch(true);
+
+    // Poll every pollingInterval ms
+    const interval = pollingInterval > 0
+      ? setInterval(silentRefetch, pollingInterval)
+      : null;
+
+    // Refetch when tab regains focus
+    if (refetchOnFocus) {
+      window.addEventListener('focus', silentRefetch);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (refetchOnFocus) window.removeEventListener('focus', silentRefetch);
+    };
+  }, [fetch, pollingInterval, refetchOnFocus]);
+
+  return { data, loading, error, refetch: () => fetch(false) };
 }

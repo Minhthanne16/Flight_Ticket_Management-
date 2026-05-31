@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, FileDown, ArrowLeft, Loader2, CheckC
 import { bookingService } from '../../api/services/bookingService';
 import { supportService } from '../../api/services/supportService';
 import { flightService } from '../../api/services/flightService';
+import { notificationService } from '../../api/services/notificationService';
 
 
 const TABS = [
@@ -1080,8 +1081,11 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [smsText, setSmsText] = useState('');
-  const [sendingState, setSendingState] = useState(''); // '', 'sms', 'email', 'done'
+  const [sendingState, setSendingState] = useState(''); // '', 'sms', 'email', 'in_app', 'done'
   const [progress, setProgress] = useState(0);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [sendSms, setSendSms] = useState(false);
+  const [sendInApp, setSendInApp] = useState(true);
 
   useEffect(() => {
     if (isOpen && flights && flights.length > 0) {
@@ -1152,19 +1156,39 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
   if (!isOpen || !request) return null;
 
   const handleSend = async () => {
-    setSendingState('sms');
-    setProgress(30);
-    await new Promise(r => setTimeout(r, 800));
+    if (!sendEmail && !sendSms && !sendInApp) {
+      alert("Vui lòng chọn ít nhất một kênh gửi thông báo!");
+      return;
+    }
 
-    setSendingState('email');
-    setProgress(70);
-    await new Promise(r => setTimeout(r, 1000));
+    if (sendSms) {
+      setSendingState('sms');
+      setProgress(20);
+      await new Promise(r => setTimeout(r, 600));
+    }
+
+    if (sendEmail) {
+      setSendingState('email');
+      setProgress(55);
+      await new Promise(r => setTimeout(r, 800));
+    }
+
+    if (sendInApp) {
+      setSendingState('in_app');
+      setProgress(85);
+      await new Promise(r => setTimeout(r, 600));
+    }
 
     setSendingState('done');
     setProgress(100);
     await new Promise(r => setTimeout(r, 600));
 
-    onConfirm(emailSubject, emailBody, smsText, selectedFlightId);
+    const channels = [];
+    if (sendEmail) channels.push('EMAIL');
+    if (sendSms) channels.push('SMS');
+    if (sendInApp) channels.push('IN_APP');
+
+    onConfirm(emailSubject, emailBody, sendSms ? smsText : null, selectedFlightId, channels);
   };
 
   const isApprove = action === 'Đã duyệt';
@@ -1298,6 +1322,44 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
               })()}
             </div>
           )}
+
+          {/* Chọn kênh gửi thông báo */}
+          <div className="mb-4 bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
+            <label className="text-[10px] font-bold text-slate-500 block mb-2 uppercase tracking-wide">
+              Chọn các kênh phát thông báo
+            </label>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={sendEmail} 
+                  onChange={e => setSendEmail(e.target.checked)} 
+                  className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-xs font-semibold text-slate-700">Email</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={sendInApp} 
+                  onChange={e => setSendInApp(e.target.checked)} 
+                  className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-xs font-semibold text-slate-700">Thông báo App khách hàng</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={sendSms} 
+                  onChange={e => setSendSms(e.target.checked)} 
+                  className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-xs font-semibold text-slate-700">Mobile SMS</span>
+              </label>
+            </div>
+          </div>
 
           <div className="flex-1 flex flex-col space-y-3 min-h-[250px]">
             <div className="flex items-center gap-1.5 text-xs font-bold text-[#6E7491] uppercase tracking-wider">
@@ -1486,7 +1548,7 @@ function CustomerSupportPage() {
     });
   };
 
-  const handleConfirmDispatch = async (emailSub, emailBody, smsText, selectedFlightId) => {
+  const handleConfirmDispatch = async (emailSub, emailBody, smsText, selectedFlightId, channels = ['EMAIL', 'IN_APP']) => {
     const { type, action, request } = dispatchModal;
     if (!request) return;
 
@@ -1512,12 +1574,44 @@ function CustomerSupportPage() {
               newFlightRoute: selectedFlight ? `${selectedFlight.departureAirportCode} → ${selectedFlight.arrivalAirportCode}` : 'N/A'
             });
           }
-          
-          addToast(`Đã duyệt yêu cầu #${id} và gửi thông báo qua Email & SMS!`, 'success');
         } else {
           await supportService.rejectRequest(id);
-          addToast(`Đã từ chối yêu cầu #${id} và gửi thông báo qua Email & SMS!`, 'success');
         }
+
+        // Call notificationService.create for each selected channel
+        const promises = channels.map(chan => {
+          let title = '';
+          let content = '';
+          if (chan === 'EMAIL') {
+            title = emailSub;
+            content = emailBody;
+          } else if (chan === 'SMS') {
+            title = `EF Alert PNR ${request.pnrCode || request.id}`;
+            content = smsText || emailBody.slice(0, 160);
+          } else { // IN_APP
+            title = isApprove 
+              ? `Yêu cầu ${type === 'cancel' ? 'hủy' : 'đổi'} vé đã được duyệt` 
+              : `Yêu cầu ${type === 'cancel' ? 'hủy' : 'đổi'} vé bị từ chối`;
+            content = `Yêu cầu của quý khách đối với vé ${request.pnrCode || request.id} đã được ${isApprove ? 'chấp thuận' : 'từ chối'}. Vui lòng kiểm tra email chi tiết.`;
+          }
+
+          return notificationService.create({
+            title,
+            content,
+            userId: request.raw?.createdBy?.id || 1,
+            type: 'BOOKING_STATUS',
+            channel: chan
+          }).catch(err => console.error("Lỗi gửi thông báo cho kênh", chan, err));
+        });
+
+        await Promise.all(promises);
+
+        const channelLabels = channels.map(c => c === 'EMAIL' ? 'Email' : (c === 'SMS' ? 'SMS' : 'App')).join(' & ');
+        const successMsg = isApprove
+          ? `Đã duyệt yêu cầu #${id} và gửi thông báo qua ${channelLabels}!`
+          : `Đã từ chối yêu cầu #${id} và gửi thông báo qua ${channelLabels}!`;
+
+        addToast(successMsg, 'success');
       }
       await fetchData();
     } catch (err) {

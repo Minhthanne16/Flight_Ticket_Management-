@@ -1,4 +1,4 @@
-import { Bell, HelpCircle, ChevronRight, User, LogOut, X, Info } from 'lucide-react';
+import { Bell, HelpCircle, ChevronRight, User, LogOut, X, Info, AlertTriangle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { notificationService } from '../api/services/notificationService';
@@ -33,6 +33,7 @@ function Header() {
   const [showNotif, setShowNotif] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
 
@@ -254,7 +255,7 @@ function Header() {
                   Thông tin cá nhân
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => { setShowLogoutModal(true); setShowAvatar(false); }}
                   className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
@@ -266,6 +267,60 @@ function Header() {
         </div>
 
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            style={{ animation: 'headerFadeIn 0.2s ease-out' }}
+          />
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl border border-[#E8E8F0] p-6 w-[380px] max-w-[90vw]"
+            style={{ animation: 'headerModalSlideIn 0.25s ease-out' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-7 h-7 text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-[#27273F] mb-2">Xác nhận đăng xuất</h3>
+              <p className="text-sm text-[#6E7491] mb-6">
+                Bạn có chắc chắn muốn đăng xuất không?<br />
+                Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
+              </p>
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[#E8E8F0] text-sm font-semibold text-[#6E7491] hover:bg-[#F0EFFA] transition-all duration-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold hover:from-red-600 hover:to-red-700 shadow-md shadow-red-500/20 transition-all duration-200"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes headerFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes headerModalSlideIn {
+          from { opacity: 0; transform: scale(0.9) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </header>
   );
 }
