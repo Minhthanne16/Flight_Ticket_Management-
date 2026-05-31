@@ -50,11 +50,5 @@ public class FlightController {
         List<com.flight.backend.dto.flight.FlightSearchResponse> responses = flightService.searchFlights(from, to, departDate, airlineId, minPrice, maxPrice);
         return ApiResponse.success(responses, "Tìm kiếm chuyến bay thành công");
     }
-    @GetMapping("/ping")
-public String ping() {
-
-    System.out.println("PING HIT");
-
-    return "OK";
-}
+ 
 }

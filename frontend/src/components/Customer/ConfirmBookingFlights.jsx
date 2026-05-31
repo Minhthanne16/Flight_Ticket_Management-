@@ -1,7 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../css/Customer/SearchResults.css';
 
-// Mang các hàm tiện ích định dạng trực tiếp vào đây để component tự xử lý độc lập
 const formatTime = (dateString) => {
   if (!dateString) return '--:--';
   const date = new Date(dateString);
@@ -20,18 +20,31 @@ const formatDisplayDate = (date) => {
 };
 
 function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
-  // Nếu không có chuyến bay nào được chọn thì không hiển thị gì cả
   if (!flight) return null;
-
+  const navigate = useNavigate();
   const passengerCount = parseInt(filters.passengers, 10) || 1;
   const totalPrice = flight.basePrice * passengerCount;
+  const handleSelectClass = (cabinClass, priceMultiplier) => {
+  const finalPrice = flight.basePrice * priceMultiplier * passengerCount;
 
+  navigate('/customer/booking-details', {
+    state: {
+      flight,
+      filters,
+      fromCode,
+      toCode,
+      cabinClass,
+      totalPrice: finalPrice,
+      passengerCount
+    }
+  });
+
+  onClose();
+};
   return (
     <div className="ticket-modal-overlay" onClick={onClose}>
-      {/* Ngăn không cho sự kiện click bên trong làm đóng cửa sổ */}
       <div className="ticket-modal-content" onClick={(e) => e.stopPropagation()}>
         
-        {/* Header Modal */}
         <div className="modal-header">
           <h3><i className="fa-solid fa-plane-departure"></i> Select ticket type</h3>
           <button className="close-btn" onClick={onClose}>
@@ -39,38 +52,52 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
           </button>
         </div>
 
-        {/* Nội dung chi tiết */}
         <div className="modal-body">
-          {/* Tóm tắt thông tin chuyến bay */}
-          <div className="selected-flight-summary">
-            <div className="summary-header">
-               <strong>Departure</strong> {fromCode} <i className="fa-solid fa-arrow-right"></i> {toCode}
-               <span className="summary-date">
-                 {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''}
-               </span>
-            </div>
-            <div className="summary-details">
-               <img src={flight.airplane?.airline?.logo || '/default-airline.png'} alt="logo" className="modal-airline-logo" />
-               <div className="summary-time">
-                  <strong>{formatTime(flight.departureTime)}</strong>
-                  <span>{fromCode}</span>
-               </div>
-               <div className="summary-duration">
-                  <span>{flight.estimateDuration} min</span>
-                  <div className="line-path"></div>
-                  <span>Direct</span>
-               </div>
-               <div className="summary-time">
-                  <strong>{formatTime(flight.arrivalTime)}</strong>
-                  <span>{toCode}</span>
-               </div>
-            </div>
-          </div>
+  <div className="selected-flight-summary">
+    {/* Phần Header */}
+    <div className="summary-header">
+      <div className="header-left">
+        <strong>Departure</strong> 
+      </div>
+      <span className="summary-date">
+        {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''}
+      </span>
+    </div>
 
-          {/* Grid lựa chọn các hạng vé */}
+    {/* Phần Details (Sẽ áp dụng lưới Grid 4 cột) */}
+    <div className="summary-details">
+  <div className="summary-logo">
+    <img src={flight.airplane?.airline?.logo || '/default-airline.png'} alt="logo" className="modal-airline-logo" />
+  </div>
+
+  <div className="summary-time">
+    <strong>{formatTime(flight.departureTime)}</strong>
+    {/* Thêm class mới để tạo khung xám bo góc */}
+    <span className="airport-code-box">{fromCode}</span>
+  </div>
+
+  {/* Trục đường bay theo style mới */}
+  <div className="summary-route">
+    <div className="route-duration">
+      {Math.floor(flight.estimateDuration / 60)}h {flight.estimateDuration % 60}m
+    </div>
+    <div className="route-line-container">
+      <div className="route-line"></div>
+      <div className="route-type">Direct</div>
+    </div>
+  </div>
+
+  <div className="summary-time">
+    <strong>{formatTime(flight.arrivalTime)}</strong>
+    <span className="airport-code-box">{toCode}</span>
+  </div>
+</div>
+  </div>
+
+
+         
           <div className="ticket-options-grid">
             
-            {/* Gói vé cơ bản */}
             <div className="ticket-option-card">
               <h4>{filters.cabinClass === 'business' ? 'Business Class' : 'Economy Class'}</h4>
               <h2 className="modal-price">
@@ -83,7 +110,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
                 <li className="disabled-text"><i className="fa-solid fa-ban"></i> Reschedule not available</li>
                 <li className="disabled-text"><i className="fa-solid fa-ban"></i> Non-refundable</li>
               </ul>
-              <button className="btn-select-final">Select</button>
+              <button className="btn-select-final" onClick={() => handleSelectClass('ECONOMY', 1)}>Select</button>
             </div>
 
             <div className="ticket-option-card recommended">
@@ -98,7 +125,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
                 <li className="success-text"><i className="fa-solid fa-check"></i> Free Reschedule</li>
                 <li className="success-text"><i className="fa-solid fa-check"></i> Refundable</li>
               </ul>
-              <button className="btn-select-final">Select</button>
+              <button className="btn-select-final" onClick={() => handleSelectClass('BUSINESS', 1.5)}>Select</button>
             </div>
 
           </div>

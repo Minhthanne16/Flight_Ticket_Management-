@@ -18,6 +18,7 @@ import Homepage from '../pages/Customer/Homepage';
 import SignIn from '../pages/Customer/SignIn';
 import SignUp from '../pages/Customer/SignUp';
 import SearchResults from '../components/Customer/SearchResults';
+import TicketInformation from '../components/Customer/TicketInformation';
 
 // --- Admin Pages ---
 import AdminDashboard from '../pages/Admin/Dashboard';
@@ -37,36 +38,31 @@ function AppRoutes() {
         <Route path="/signup" element={<SignUp />} />
 
         {/* Customer Routes (Protected) */}
-       <Route
-    path="/customer/home"
-    element={
-        <ProtectedRoute
-            allowedRoles={['CUSTOMER']}
-        >
-            <Homepage/>
-        </ProtectedRoute>
-    }
-/>
+        {/* Customer */}
+        <Route
+            path="/customer/home"
+          element={
+          <ProtectedRoute allowedRoles={['CUSTOMER']}>
+          <Homepage />
+          </ProtectedRoute>
+      }
+    />
 
-<Route
+  <Route
     path="/customer/flight-results"
     element={
-        <ProtectedRoute
-            allowedRoles={['CUSTOMER']}
-        >
-            <SearchResults/>
-        </ProtectedRoute>
+      <ProtectedRoute allowedRoles={['CUSTOMER']}>
+        <SearchResults />
+      </ProtectedRoute>
     }
-/>
-
-<Route
-    path="*"
-    element={
-        <Navigate
-            to="/customer/home"
-            replace
-        />
-    }
+  />
+  <Route
+  path="/customer/booking-details"
+  element={
+    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+      <TicketInformation />
+    </ProtectedRoute>
+  }
 />
 
         {/* Staff Routes (Protected) */}
@@ -110,6 +106,10 @@ function AppRoutes() {
           <Route path="profile" element={<Navigate to="/admin/staff" replace />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>
+        <Route
+    path="*"
+    element={<Navigate to="/customer/home" replace />}
+  />
       </Routes>
     </Router>
   );
