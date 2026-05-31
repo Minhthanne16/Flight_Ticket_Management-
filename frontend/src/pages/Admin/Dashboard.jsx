@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Ticket, PlaneTakeoff, Users, ArrowUpRight, ArrowDownRight, Eye, ChevronRight } from 'lucide-react';
 import { ADMIN_STATS, REVENUE_CHART, ADMIN_BOOKINGS, ADMIN_FLIGHTS } from '../../data/adminMockData';
 
@@ -33,24 +33,52 @@ function StatCard({ label, value, sub, growth, icon: Icon, color }) {
 }
 
 function RevenueChart() {
+  const [show, setShow] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const max = Math.max(...REVENUE_CHART.map(d => d.revenue));
+  
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-5">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-base font-bold text-slate-800">Doanh thu 7 ngày qua</h2>
           <p className="text-xs text-slate-400 mt-0.5">Tổng: {fmtShort(REVENUE_CHART.reduce((s, d) => s + d.revenue, 0))} đồng</p>
         </div>
         <span className="text-xs bg-violet-50 text-violet-600 font-semibold px-2.5 py-1 rounded-full border border-violet-100">Tuần này</span>
       </div>
-      <div className="flex items-end gap-3 h-44">
-        {REVENUE_CHART.map((d) => {
+      <div className="flex items-end gap-4 flex-1 pb-2 min-h-[12rem]">
+        {REVENUE_CHART.map((d, i) => {
           const pct = (d.revenue / max) * 100;
           return (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5 group">
-              <span className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity font-medium">{fmtShort(d.revenue)}</span>
-              <div className="w-full relative rounded-t-lg overflow-hidden" style={{ height: `${Math.max(pct, 4)}%`, background: 'linear-gradient(to top, #7C5CFC, #A78BFA)', transition: 'all 0.3s' }} />
-              <span className="text-[11px] font-semibold text-slate-500">{d.day}</span>
+            <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group relative h-full justify-end">
+              
+              {/* Tooltip on hover */}
+              <div className="absolute -top-14 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center bg-slate-800 text-white text-[10px] py-1.5 px-2.5 rounded-lg z-20 whitespace-nowrap pointer-events-none shadow-lg transform group-hover:-translate-y-1">
+                <span className="font-bold text-[11px] mb-0.5">{fmtShort(d.revenue)}</span>
+                <span className="text-slate-300">{d.tickets} vé</span>
+                <div className="absolute -bottom-1 w-2 h-2 bg-slate-800 rotate-45"></div>
+              </div>
+
+              {/* Bar */}
+              <div 
+                className="w-full relative rounded-t-xl overflow-hidden transition-all duration-1000 ease-out cursor-pointer group-hover:brightness-110 shadow-sm" 
+                style={{ 
+                  height: show ? `${Math.max(pct, 2)}%` : '0%', 
+                  background: 'linear-gradient(to top, #6366f1, #a855f7)', 
+                  transitionDelay: `${i * 75}ms`
+                }} 
+              >
+                {/* Shine effect overlay */}
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              
+              {/* Label */}
+              <span className="text-[11px] font-semibold text-slate-500 mt-1">{d.day}</span>
             </div>
           );
         })}

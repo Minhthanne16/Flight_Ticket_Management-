@@ -26,12 +26,23 @@ import AirportManage from '../pages/Admin/AirportManage';
 import UserManage from '../pages/Admin/UserManage';
 import RegulationManage from '../pages/Admin/RegulationManage';
 
+const RootRoute = () => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (user?.role === 'STAFF') {
+    return <Navigate to="/staff/dashboard" replace />;
+  }
+  return <Homepage />;
+};
+
 function AppRoutes() {
   return (
     <Router>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Homepage />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
 

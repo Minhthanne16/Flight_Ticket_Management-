@@ -98,19 +98,17 @@
 }
 
 .signin-brand__logo-box {
-    width: 240px;
-    height: 50px;
-    overflow: hidden;
+    width: 280px;
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .signin-brand__logo {
-    height: 100px;
-    width: auto;
-    transform: scale(2.5);
-    transform-origin: center;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
 }
 
 .signin-brand__name {
