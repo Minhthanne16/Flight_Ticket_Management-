@@ -6,43 +6,43 @@ const destinations = [
         id: 1,
         name: 'Vịnh Hạ Long',
         location: 'Quảng Ninh',
-        // Unsplash: Ha Long Bay, Vietnam - limestone karsts, emerald water
-        image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&auto=format&fit=crop&q=80'
+        // Wikipedia: Ha Long Bay
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Ha_Long_Bay_in_2019.jpg/1280px-Ha_Long_Bay_in_2019.jpg'
     },
     {
         id: 2,
         name: 'Phố Cổ Hội An',
         location: 'Quảng Nam',
-        // Unsplash: Hoi An ancient town lanterns at night
-        image: 'https://images.unsplash.com/photo-1557750255-c76072a7aad1?w=800&auto=format&fit=crop&q=80'
+        // Wikimedia Commons: Hoi An ancient town
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/HoiAn_VietNam.jpg/1280px-HoiAn_VietNam.jpg'
     },
     {
         id: 3,
         name: 'Cầu Vàng',
         location: 'Đà Nẵng',
-        // Unsplash: Golden Bridge Ba Na Hills - giant stone hands
-        image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&auto=format&fit=crop&q=80'
+        // Wikipedia: Golden Bridge Ba Na Hills
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/1280px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg'
     },
     {
         id: 4,
         name: 'Chợ Bến Thành',
         location: 'Hồ Chí Minh',
-        // Unsplash: Ho Chi Minh City / Ben Thanh area at night
-        image: 'https://images.unsplash.com/photo-1583417267826-aebc4d1542e1?w=800&auto=format&fit=crop&q=80'
+        // Wikipedia: Ben Thanh Market
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Ben_Thanh%2C_Ciudad_Ho_Chi_Minh%2C_Vietnam%2C_2013-08-14%2C_DD_01.JPG/1280px-Ben_Thanh%2C_Ciudad_Ho_Chi_Minh%2C_Vietnam%2C_2013-08-14%2C_DD_01.JPG'
     },
     {
         id: 5,
         name: 'Tràng An',
         location: 'Ninh Bình',
-        // Unsplash: Trang An – limestone cliffs, boat on river
-        image: 'https://images.unsplash.com/photo-1570366583862-f91883984fde?w=800&auto=format&fit=crop&q=80'
+        // Wikipedia: Trang An landscape complex
+        image: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Muaxuantamcoc.jpg'
     },
     {
         id: 6,
         name: 'Sapa',
         location: 'Lào Cai',
-        // Unsplash: Sapa rice terraces, misty mountains
-        image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop&q=80'
+        // Wikipedia: Sa Pa
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Thacbac3.jpg/1280px-Thacbac3.jpg'
     }
 ];
 
