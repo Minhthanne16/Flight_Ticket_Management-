@@ -129,3 +129,49 @@
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* =========================================
+   PASSENGER COUNTER
+========================================= */
+.passenger-counter {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.counter-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ccd1d5;
+    background: white;
+    color: #687176;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Nút được phép bấm (ví dụ dấu cộng) */
+.counter-btn.active-btn,
+.counter-btn:not(:disabled):hover {
+    border-color: #0194f3;
+    color: #0194f3;
+    background: #f0f8ff;
+}
+
+/* Nút bị vô hiệu hóa (khi số lượng = 1) */
+.counter-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.counter-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2b49;
+    min-width: 20px;
+    text-align: center;
+}

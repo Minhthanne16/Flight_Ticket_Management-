@@ -6,32 +6,38 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 function Filter() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Đọc giá trị hiện tại từ URL
+  // KHAI BÁO CÁC BIẾN RÕ RÀNG ĐỂ HTML Ở DƯỚI GỌI ĐƯỢC
   const currentTransit = searchParams.get('transit') || '';
   const currentTime = searchParams.get('time') || '';
-  const currentClass = searchParams.get('class') || 'first'; 
+  const currentClass = searchParams.get('cabinClass') || 'economy'; 
+  const currentPassengers = parseInt(searchParams.get('passengers'), 10) || 1; 
 
-  // Hàm thay đổi URL
+  // Hàm thay đổi URL cho các thẻ phổ thông
   const updateUrlParam = (key, value) => {
-    // 1. Tạo một bản sao của URL hiện tại để không làm mất các param khác (như from, to, departDate)
     const newParams = new URLSearchParams(searchParams);
-
-    // 2. Logic thêm/xóa
     if (newParams.get(key) === value) {
-      newParams.delete(key); // Click lại -> Bỏ chọn
+      newParams.delete(key); 
     } else {
-      newParams.set(key, value); // Click mới -> Chọn (và ghi đè cái cũ)
+      newParams.set(key, value); 
     }
-
-    // 3. Đẩy params mới lên thanh địa chỉ của trình duyệt
     setSearchParams(newParams);
   };
 
+  // Hàm thay đổi URL riêng cho đếm hành khách
+  const updatePassengers = (newCount) => {
+    if (newCount < 1) return; 
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('passengers', newCount);
+    setSearchParams(newParams);
+  };
+
+  // Hàm Reset
   const handleReset = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('transit');
     newParams.delete('time');
-    newParams.delete('class');
+    newParams.delete('cabinClass');
+    newParams.delete('passengers'); 
     setSearchParams(newParams);
   };
 
@@ -45,6 +51,30 @@ function Filter() {
         <button className="reset-btn" onClick={handleReset}>Reset</button>
       </div>
 
+      {/* Section Hành Khách (Passengers) */}
+      <div className="filter-section">
+        <div className="section-header">
+          <p className="title">Passengers</p>
+          <i className="fa-solid fa-chevron-up"></i>
+        </div>
+        <div className="passenger-counter">
+          <button 
+            className="counter-btn"
+            onClick={() => updatePassengers(currentPassengers - 1)}
+            disabled={currentPassengers <= 1} 
+          >
+            <i className="fa-solid fa-minus"></i>
+          </button>
+          <span className="counter-value">{currentPassengers}</span>
+          <button 
+            className="counter-btn active-btn"
+            onClick={() => updatePassengers(currentPassengers + 1)}
+          >
+            <i className="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
       {/* No. of Transit */}
       <div className="filter-section">
         <div className="section-header">
@@ -52,7 +82,6 @@ function Filter() {
           <i className="fa-solid fa-chevron-up"></i>
         </div>
         <div className="checkbox-group">
-          {/* LƯU Ý: Đã bỏ defaultChecked, chỉ dùng checked theo state URL */}
           <label className="checkbox-item">
             <input 
               type="checkbox" 
@@ -112,17 +141,17 @@ function Filter() {
         </div>
         <div className="class-group">
           <button 
-            className={`class-btn ${currentClass === 'first' ? 'active' : ''}`}
-            onClick={() => updateUrlParam('class', 'first')}
+            className={`class-btn ${currentClass === 'economy' ? 'active' : ''}`}
+            onClick={() => updateUrlParam('cabinClass', 'economy')}
           >
             Economy Class
           </button>
 
           <button 
-            className={`class-btn ${currentClass === 'second' ? 'active' : ''}`}
-            onClick={() => updateUrlParam('class', 'second')}
+            className={`class-btn ${currentClass === 'business' ? 'active' : ''}`}
+            onClick={() => updateUrlParam('cabinClass', 'business')}
           >
-            Business Class 
+            Business Class
           </button>
         </div>
       </div>

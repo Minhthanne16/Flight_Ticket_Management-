@@ -3,13 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import '../../css/Customer/SearchResults.css';
 
-// Import các Component giao diện
 import Navbar from '../Homepage/Navbar'; 
 import Footer from '../Homepage/Footer';
 import Banner from '../Homepage/Banner';
 import Filter from './Filter'; 
+// THÊM DÒNG IMPORT NÀY ĐỂ TRÁNH LỖI NOT DEFINED
+import ConfirmBookingFlights from './ConfirmBookingFlights'; 
 
-// --- HÀM FETCH API ---
 const fetchAirports = async () => {
   const response = await fetch('http://localhost:5000/admin/airports'); 
   if (!response.ok) {
@@ -19,7 +19,6 @@ const fetchAirports = async () => {
   return result.data || result; 
 };
 
-// Hàm fetchFlights đã được nâng cấp để nhận object filters
 const fetchFlights = async (fromId, toId, filters) => {
   const query = new URLSearchParams();
   if (fromId) query.append('from', fromId);
@@ -37,7 +36,6 @@ const fetchFlights = async (fromId, toId, filters) => {
 
   let allFlights = result.data || [];
 
-  // 1. Lọc theo Ngày bay
   if (filters.departDate) {
     allFlights = allFlights.filter(flight => {
       const flightDateOnly = flight.departureTime.substring(0, 10);
@@ -45,7 +43,6 @@ const fetchFlights = async (fromId, toId, filters) => {
     });
   }
 
-  // 2. Lọc theo Số điểm dừng (Transit)
   if (filters.transit) {
     allFlights = allFlights.filter(flight => {
       const stops = flight.flightStops?.length || 0;
@@ -56,10 +53,8 @@ const fetchFlights = async (fromId, toId, filters) => {
     });
   }
 
-  // 3. Lọc theo Giờ khởi hành
   if (filters.time) {
     allFlights = allFlights.filter(flight => {
-      // Lấy giờ (0-23) từ chuỗi departureTime
       const hour = new Date(flight.departureTime).getHours();
       if (filters.time === 't1') return hour >= 0 && hour < 6;
       if (filters.time === 't2') return hour >= 6 && hour < 12;
@@ -69,12 +64,9 @@ const fetchFlights = async (fromId, toId, filters) => {
     });
   }
 
-  // (Nếu sau này bạn làm tính năng giá vé theo Class thì thêm logic ở đây)
-
   return allFlights;
 };
 
-// --- HÀM TIỆN ÍCH XỬ LÝ NGÀY THÁNG ---
 const generateDateRange = (startDateStr, numDays = 5) => {
   const dates = [];
   const startDate = startDateStr ? new Date(startDateStr) : new Date();
@@ -99,29 +91,26 @@ const formatUrlDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-// ------------------------------------
 
 const SearchResults = () => {
   const [showDetails, setShowDetails] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // Ref dùng để mở popup chọn ngày
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const dateInputRef = useRef(null);
 
   const fromCode = searchParams.get('from'); 
   const toCode = searchParams.get('to');
   
-  // Gom nhóm toàn bộ URL Params liên quan đến bộ lọc
   const filters = {
     departDate: searchParams.get('departDate'),
     transit: searchParams.get('transit'),
     time: searchParams.get('time'),
-    class: searchParams.get('class') || 'first'
+    cabinClass: searchParams.get('cabinClass') || 'economy', 
+    passengers: searchParams.get('passengers') || '1'
   };
 
   const [baseDate, setBaseDate] = useState(filters.departDate || formatUrlDate(new Date()));
 
-  // Lấy dữ liệu sân bay
   const { data: airports = [], isLoading: isLoadingAirports, isError: isErrorAirports } = useQuery({
     queryKey: ['airports'],
     queryFn: fetchAirports,
@@ -131,14 +120,12 @@ const SearchResults = () => {
   const fromId = airports.find(a => a.airportCode === fromCode)?.id;
   const toId = airports.find(a => a.airportCode === toCode)?.id;
 
-  // Lấy dữ liệu chuyến bay (Re-fetch khi fromId, toId hoặc filters thay đổi)
   const { data: flights = [], isLoading: isLoadingFlights, isError: isErrorFlights, error } = useQuery({
     queryKey: ['flights', fromId, toId, filters], 
     queryFn: () => fetchFlights(fromId, toId, filters),
     enabled: !!fromId && !!toId, 
   });
 
-  // --- CÁC HÀM XỬ LÝ GIAO DIỆN ---
   const toggleDetails = (id) => {
     setShowDetails(showDetails === id ? null : id);
   };
@@ -154,17 +141,22 @@ const SearchResults = () => {
     return new Intl.NumberFormat('vi-VN').format(price);
   };
 
-  const handleDateChange = (newDateStr) => {
+  // Cập nhật searchParams chuẩn xác hơn
+  const updateDateInUrl = (newDateStr) => {
     if (!newDateStr) return;
-    searchParams.set('departDate', newDateStr);
-    setSearchParams(searchParams);
+    setSearchParams(prev => {
+      prev.set('departDate', newDateStr);
+      return prev;
+    });
+  };
+
+  const handleDateChange = (newDateStr) => {
+    updateDateInUrl(newDateStr);
   };
 
   const handleCalendarPick = (newDateStr) => {
-    if (!newDateStr) return;
     setBaseDate(newDateStr); 
-    searchParams.set('departDate', newDateStr); 
-    setSearchParams(searchParams);
+    updateDateInUrl(newDateStr);
   };
 
   const handleOpenCalendar = () => {
@@ -177,7 +169,6 @@ const SearchResults = () => {
     }
   };
 
-  // --- TRẠNG THÁI LOADING / LỖI ---
   if (isLoadingAirports) {
     return <div className="loading-state">Đang thiết lập dữ liệu chuyến bay...</div>;
   }
@@ -197,24 +188,25 @@ const SearchResults = () => {
       <Navbar />
       <Banner />
 
-      {/* KHUNG LAYOUT CHÍNH CHIA 2 CỘT */}
       <div className="search-page-layout">
         
-        {/* CỘT TRÁI: FILTER */}
         <div className="filter-sidebar">
           <Filter />
         </div>
 
-        {/* CỘT PHẢI: KẾT QUẢ TÌM KIẾM */}
         <div className="flight-results-container">
           
-          {/* WIDGET TÌM KIẾM Ở TRÊN */}
           <div className="search-header-widget">
             <div className="search-pill">
               <div className="pill-content">
                  <div className="pill-title">{fromCode} <i className="fa-solid fa-arrow-right"></i> {toCode}</div>
+                 
                  <div className="pill-subtitle">
-                    {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''} | 1 passenger(s) | Economy
+                    {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''} | 
+                    {' '}<strong style={{color: '#ff5e1f'}}>{filters.passengers}</strong> passenger(s) | 
+                    {' '}<span style={{textTransform: 'capitalize'}}>
+                       {filters.cabinClass === 'economy' ? 'Economy' : 'Business Class'}
+                    </span>
                  </div>
               </div>
               <button className="pill-search-btn">
@@ -253,7 +245,6 @@ const SearchResults = () => {
             </div>
           </div>
 
-          {/* DANH SÁCH CHUYẾN BAY */}
           <h3 className="results-title">All flights</h3>
           
           {isLoadingFlights ? (
@@ -269,6 +260,9 @@ const SearchResults = () => {
               const depCode = flight.route?.departureAirport?.airportCode || fromCode;
               const arrCode = flight.route?.arrivalAirport?.airportCode || toCode;
               const airplaneModelName = flight.airplane?.model?.modelName || 'Airbus A320';
+
+              const passengerCount = parseInt(filters.passengers, 10) || 1;
+              const totalPrice = flight.basePrice * passengerCount;
 
               return (
                 <div key={flight.id} className="flight-card-wrapper">
@@ -296,9 +290,14 @@ const SearchResults = () => {
                       </div>
 
                       <div className="price-info">
-                        <p className="save-tag"><i className="fa-solid fa-percent"></i> Tiết kiệm 10%</p>
-                        <h3 className="price-text">{formatPrice(flight.basePrice)} VND<span>/pax</span></h3>
-                        <button className="btn-choose">Choose</button>
+                         <p className="save-tag"><i className="fa-solid fa-percent"></i> Tiết kiệm 10%</p>
+                         
+                         <h3 className="price-text">
+                            {formatPrice(totalPrice)} VND
+                            <span>{passengerCount > 1 ? ` / ${passengerCount} pax` : '/pax'}</span>
+                         </h3>
+                         
+                         <button className="btn-choose" onClick={() => setSelectedTicket(flight)}>Choose</button>
                       </div>
                     </div>
 
@@ -377,7 +376,17 @@ const SearchResults = () => {
           )}
         </div>
       </div>
-
+      
+      {selectedTicket && (
+        <ConfirmBookingFlights
+          flight={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          fromCode={fromCode}
+          toCode={toCode}
+          filters={filters}
+        />
+      )}
+      
       <Footer />
     </>
   );
