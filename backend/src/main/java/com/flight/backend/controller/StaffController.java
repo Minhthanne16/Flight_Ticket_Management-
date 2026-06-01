@@ -3,6 +3,9 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.staff.StaffRequest;
 import com.flight.backend.dto.staff.StaffResponse;
 import com.flight.backend.service.StaffService;
+
+import jakarta.validation.Valid;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +20,7 @@ public class StaffController {
 
     @PostMapping
     public ResponseEntity<StaffResponse> create(
-            @RequestBody StaffRequest request
+          @Valid  @RequestBody StaffRequest request
     ) {
         return ResponseEntity.ok(staffService.create(request));
     }
@@ -44,7 +47,7 @@ public class StaffController {
     @PutMapping("/{id}")
     public ResponseEntity<StaffResponse> update(
             @PathVariable Long id,
-            @RequestBody StaffRequest request
+           @Valid @RequestBody StaffRequest request
     ) {
         return ResponseEntity.ok(staffService.update(id, request));
     }

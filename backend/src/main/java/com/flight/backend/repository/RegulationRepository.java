@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RegulationRepository extends JpaRepository<Regulation, Long> {
 
     Optional<Regulation> findBySettingKey(String settingKey);
+    boolean existsBySettingKey(String settingKey);
 }

@@ -5,7 +5,7 @@ import com.flight.backend.dto.flight.CreateFlightRequest;
 import com.flight.backend.dto.flight.FlightResponse;
 import com.flight.backend.entity.Flight;
 import com.flight.backend.service.FlightService;
-
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +22,7 @@ public class FlightController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<FlightResponse>> create(@RequestBody CreateFlightRequest request) {
+    public ResponseEntity<ApiResponse<FlightResponse>> create( @Valid @RequestBody CreateFlightRequest request) {
         FlightResponse res = this.flightService.createFlight(request);
         return ApiResponse.success(res, "Tạo mới chuyến bay thành công.");
     }

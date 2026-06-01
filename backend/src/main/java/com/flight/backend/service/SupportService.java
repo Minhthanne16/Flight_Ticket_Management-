@@ -30,16 +30,32 @@ public class SupportService {
     private final SupportMapper supportMapper;
 
     @Transactional
-    public SupportResponse createRequest(CreateSupportRequest req, Long currentUserId) {
-        // 1. Kiểm tra xem vé có tồn tại trong hệ thống không
-        Ticket ticket = ticketRepository.findById(req.getTicketId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin vé phù hợp!"));
+    public SupportResponse createRequest(
+            CreateSupportRequest req,
+            Long currentUserId) {
 
-        // 2. Kiểm tra xem User đang đăng nhập có tồn tại không
-        User customer = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("Tài khoản người dùng không tồn tại!"));
+        Ticket ticket = ticketRepository.findById(
+                req.getTicketId())
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy thông tin vé phù hợp"));
 
-        // 3. Tạo mới thực thể Support từ dữ liệu DTO gửi lên
+        User customer = userRepository.findById(
+                currentUserId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Tài khoản người dùng không tồn tại"));
+
+        if (supportRepository
+                .existsByTicket_IdAndSupportTypeAndStatus(
+                        ticket.getId(),
+                        req.getSupportType(),
+                        RequestStatus.PENDING)) {
+
+            throw new RuntimeException(
+                    "Yêu cầu đang được xử lý");
+        }
+
         Support support = Support.builder()
                 .ticket(ticket)
                 .supportType(req.getSupportType())
@@ -47,39 +63,68 @@ public class SupportService {
                 .reason(req.getReason())
                 .createdBy(customer)
                 .createdAt(LocalDateTime.now())
-                .approvedBy(null) // Lúc mới tạo chưa có nhân viên xử lý
+                .approvedBy(null)
+                .approvedAt(null)
+                .feeAmount(null)
                 .build();
 
-        // 4. Lưu trực tiếp xuống Database thông qua Repository
-        Support saved = supportRepository.save(support);
+        Support saved =
+                supportRepository.save(support);
+
         return supportMapper.toResponse(saved);
     }
 
-    public List<SupportResponse> getAllChangeTicketRequests() {
-        List<Support> requests = supportRepository.findBySupportTypeOrderByCreatedAtDesc(SupportType.CHANGE);
-        return requests.stream().map(supportMapper::toResponse).toList();
+    public List<SupportResponse>
+    getAllChangeTicketRequests() {
+
+        return supportRepository
+                .findBySupportTypeOrderByCreatedAtDesc(
+                        SupportType.CHANGE)
+                .stream()
+                .map(supportMapper::toResponse)
+                .toList();
     }
 
-    public List<SupportResponse> getAllRefundTicketRequests() {
-        List<Support> requests = supportRepository.findBySupportTypeOrderByCreatedAtDesc(SupportType.REFUND);
-        return requests.stream().map(supportMapper::toResponse).toList();
+    public List<SupportResponse>
+    getAllRefundTicketRequests() {
+
+        return supportRepository
+                .findBySupportTypeOrderByCreatedAtDesc(
+                        SupportType.REFUND)
+                .stream()
+                .map(supportMapper::toResponse)
+                .toList();
     }
 
     @Transactional
-    public SupportResponse approveRequest(Long id, Long staffId) {
+    public SupportResponse approveRequest(
+            Long id,
+            Long staffId) {
+
         Support support = supportRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu"));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy yêu cầu"));
+
+        if (support.getStatus()
+                != RequestStatus.PENDING) {
+
+            throw new RuntimeException(
+                    "Yêu cầu đã được xử lý");
+        }
 
         User staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Nhân viên không tồn tại"));
 
         support.setStatus(RequestStatus.APPROVED);
         support.setApprovedBy(staff);
         support.setApprovedAt(LocalDateTime.now());
 
-        // Tự động tính tiền hoàn bằng code nếu muốn, không cần FE truyền lên
-        // support.setFeeAmount(support.getTicket().getPrice() * 0.9);
+        Support updated =
+                supportRepository.save(support);
 
-        return supportMapper.toResponse(supportRepository.save(support));
+        return supportMapper.toResponse(updated);
     }
 }

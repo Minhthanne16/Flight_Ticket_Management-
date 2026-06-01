@@ -19,6 +19,13 @@ public class RegulationService {
 
         Regulation regulation = new Regulation();
 
+                if (regulationRepository.existsBySettingKey(
+        request.getSettingKey())) {
+
+    throw new RuntimeException(
+            "Setting key already exists");
+}
+
         regulation.setRegulationName(request.getRegulationName());
         regulation.setSettingKey(request.getSettingKey());
         regulation.setSettingValue(request.getSettingValue());
@@ -50,8 +57,18 @@ public class RegulationService {
 
     public RegulationResponse update(Long id, RegulationRequest request) {
 
+        
         Regulation regulation = regulationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy quy định"));
+                if (!regulation.getSettingKey().equals(
+        request.getSettingKey())
+        &&
+        regulationRepository.existsBySettingKey(
+                request.getSettingKey())) {
+
+    throw new RuntimeException(
+            "Setting key already exists");
+}
 
         regulation.setRegulationName(request.getRegulationName());
         regulation.setSettingKey(request.getSettingKey());

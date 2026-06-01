@@ -3,6 +3,9 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.regulation.RegulationRequest;
 import com.flight.backend.dto.regulation.RegulationResponse;
 import com.flight.backend.service.RegulationService;
+
+import jakarta.validation.Valid;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +20,7 @@ public class RegulationController {
 
     @PostMapping
     public ResponseEntity<RegulationResponse> create(
-            @RequestBody RegulationRequest request
+           @Valid @RequestBody RegulationRequest request
     ) {
         return ResponseEntity.ok(regulationService.create(request));
     }
@@ -37,7 +40,7 @@ public class RegulationController {
     @PutMapping("/{id}")
     public ResponseEntity<RegulationResponse> update(
             @PathVariable Long id,
-            @RequestBody RegulationRequest request
+           @Valid @RequestBody RegulationRequest request
     ) {
         return ResponseEntity.ok(regulationService.update(id, request));
     }

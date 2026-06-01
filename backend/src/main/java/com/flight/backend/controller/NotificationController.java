@@ -3,6 +3,9 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.notification.NotificationRequest;
 import com.flight.backend.dto.notification.NotificationResponse;
 import com.flight.backend.service.NotificationService;
+
+import jakarta.validation.Valid;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +22,7 @@ public class NotificationController {
     // STAFF tạo notification
     @PostMapping
     public ResponseEntity<NotificationResponse> createNotification(
-            @RequestBody NotificationRequest request
+           @Valid @RequestBody NotificationRequest request
     ) {
 
         return ResponseEntity.ok(
