@@ -33,4 +33,11 @@ public class AirportController {
         List<AirportResponse> airportList = this.airportService.getAll();
         return ApiResponse.success(airportList, "Lấy danh sách các sân bay thành công");
     }
+     @GetMapping
+    public ResponseEntity<ApiResponse<List<AirportResponse>>> getAll() {
+        return ApiResponse.success(
+            airportService.getAll(),
+            "Lấy danh sách sân bay"
+        );
+    }
 }

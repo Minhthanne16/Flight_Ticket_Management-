@@ -43,11 +43,15 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
+                                        
                                                 .requestMatchers("/auth/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET,"/admin/airports","/admin/airports/**").permitAll()
+                                                
                                                 .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")
                                                 .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
                                                 .requestMatchers("/admin/**").hasRole("ADMIN")
-
+                                                
+                                                
                                                 // ================= CONFIG =================
                                                 .requestMatchers(HttpMethod.GET, "/configs", "/configs/**")
                                                 .hasAnyRole("ADMIN", "STAFF")
@@ -65,6 +69,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/staffs", "/staffs/**").hasRole("ADMIN")
 
                                                 // ================= CUSTOMER =================
+                                                .requestMatchers(HttpMethod.GET,"/flights/search","/flights/search/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/customers/**")
                                                 .hasAnyRole("ADMIN", "STAFF")
@@ -120,6 +125,10 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
                                                 .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**")
                                                 .hasAnyRole("ADMIN", "STAFF")
+
+                                                
+
+
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
