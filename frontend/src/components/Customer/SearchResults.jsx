@@ -255,8 +255,8 @@ const SearchResults = () => {
             </div>
           ) : (
             flights.map((flight) => {
-              const currentAirlineName = flight.airplane?.airline?.airlineName || 'Bamboo Airways';
-              const currentAirlineLogo = flight.airplane?.airline?.logo || '/default-airline.png';
+              const currentAirlineName = flight.airlineName || 'Bamboo Airways';
+              const currentAirlineLogo = flight.airlineLogo || '/default-airline.png';
               const depCode = flight.route?.departureAirport?.airportCode || fromCode;
               const arrCode = flight.route?.arrivalAirport?.airportCode || toCode;
               const airplaneModelName = flight.airplane?.model?.modelName || 'Airbus A320';
