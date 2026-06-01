@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { flightService } from '../../api/services/flightService';
-import { reportService } from '../../api/services/reportService';
 import { notificationService } from '../../api/services/notificationService';
 import { ADMIN_STAFF, ADMIN_FLIGHTS } from '../../data/adminMockData';
 
@@ -158,10 +157,6 @@ function StaffDashboard() {
     () => flightService.search({}),
     []
   );
-  const { data: revenue, loading: revenueLoading } = useApi(
-    () => reportService.getRevenue(currentMonth, currentYear),
-    []
-  );
 
   const addToast = (msg) => {
     const id = Date.now();
@@ -187,7 +182,15 @@ function StaffDashboard() {
     status: f.status,
   }));
 
-  const allFlights = (flights && flights.length > 0) ? flights : MOCK_FLIGHTS;
+  const allFlights = useMemo(() => {
+    const rawList = (flights && flights.length > 0) ? flights : MOCK_FLIGHTS;
+    try {
+      const statuses = JSON.parse(localStorage.getItem('local_flight_statuses') || '{}');
+      return rawList.map(f => ({ ...f, status: statuses[f.id] || f.status }));
+    } catch {
+      return rawList;
+    }
+  }, [flights, MOCK_FLIGHTS]);
 
   const displayFlights = statusFilter === 'ALL'
     ? allFlights
@@ -198,9 +201,7 @@ function StaffDashboard() {
   const activeFlights = allFlights.filter(f => ['BOARDING', 'SCHEDULED', 'DEPARTED'].includes(f.status)).length;
   const arrivedFlights = allFlights.filter(f => f.status === 'COMPLETED').length;
 
-  const revenueDisplay = revenue
-    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue.revenue)
-    : '—';
+
 
   return (
     <div className="space-y-5">
@@ -230,12 +231,7 @@ function StaffDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={TrendingUp} iconColor="bg-violet-50" iconIconColor="text-violet-500"
-          label={`Doanh thu tháng ${currentMonth}`} value={revenueDisplay}
-          loading={revenueLoading}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           icon={Plane} iconColor="bg-indigo-50" iconIconColor="text-indigo-500"
           label="Chuyến bay hôm nay" value={allFlights.length}
@@ -392,21 +388,6 @@ function StaffDashboard() {
             </div>
           </div>
 
-          {/* Revenue summary */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-4 h-4 text-slate-400" />
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Doanh thu tháng {currentMonth}/{currentYear}
-              </h3>
-            </div>
-            {revenueLoading ? (
-              <div className="h-8 bg-slate-100 rounded animate-pulse mb-1" />
-            ) : (
-              <div className="text-2xl font-bold text-slate-800 mb-1">{revenueDisplay}</div>
-            )}
-            <p className="text-xs text-slate-400">Tổng doanh thu từ đặt vé</p>
-          </div>
 
           {/* Flight count summary */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">

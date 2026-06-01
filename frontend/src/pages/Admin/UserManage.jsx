@@ -82,7 +82,10 @@ function StaffModal({ initial, onSave, onClose }) {
 }
 
 export default function UserManage() {
-  const [staff, setStaff] = useState(ADMIN_STAFF);
+  const [staff, setStaff] = useState(() => {
+    const local = localStorage.getItem('local_staff_list');
+    return local ? JSON.parse(local) : ADMIN_STAFF;
+  });
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [modal, setModal] = useState(null);
@@ -96,18 +99,23 @@ export default function UserManage() {
   });
 
   const saveStaff = (form) => {
+    let updated;
     if (modal.data) {
-      setStaff(prev => prev.map(s => s.id === modal.data.id ? { ...s, ...form } : s));
+      updated = staff.map(s => s.id === modal.data.id ? { ...s, ...form } : s);
       showToast('Đã cập nhật thông tin nhân viên!');
     } else {
       const newId = `ST${String(staff.length + 1).padStart(3, '0')}`;
-      setStaff(prev => [...prev, { ...form, id: newId, joinDate: new Date().toISOString().split('T')[0], lastLogin: 'Chưa đăng nhập' }]);
+      updated = [...staff, { ...form, id: newId, joinDate: new Date().toISOString().split('T')[0], lastLogin: 'Chưa đăng nhập' }];
       showToast('Đã thêm nhân viên mới!');
     }
+    setStaff(updated);
+    localStorage.setItem('local_staff_list', JSON.stringify(updated));
     setModal(null);
   };
   const deactivate = (id) => {
-    setStaff(prev => prev.map(s => s.id === id ? { ...s, status: 'INACTIVE' } : s));
+    const updated = staff.map(s => s.id === id ? { ...s, status: 'INACTIVE' } : s);
+    setStaff(updated);
+    localStorage.setItem('local_staff_list', JSON.stringify(updated));
     showToast('Đã vô hiệu hóa tài khoản nhân viên.');
   };
 
@@ -159,46 +167,46 @@ export default function UserManage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap min-w-[800px]">
             <thead className="bg-slate-50 border-b border-slate-100">
-            <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              <th className="px-5 py-3">Nhân viên</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Phòng ban</th><th className="px-5 py-3">Ngày vào làm</th><th className="px-5 py-3">Đăng nhập gần nhất</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {filtered.map(s => (
-              <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
-                <td className="px-5 py-3.5 max-w-[200px]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">{s.fullName.charAt(0)}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{s.fullName}</p>
-                      <p className="text-xs text-slate-400 truncate">{s.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${ROLE_STYLE[s.role]}`}>{ROLE_LABEL[s.role]}</span>
-                </td>
-                <td className="px-5 py-3.5 text-sm text-slate-600">{s.department}</td>
-                <td className="px-5 py-3.5 text-sm text-slate-600">{new Date(s.joinDate).toLocaleDateString('vi-VN')}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-400">{s.lastLogin}</td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${s.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                    {s.status === 'ACTIVE' ? 'Đang làm việc' : 'Nghỉ việc'}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
-                    <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors" title="Sửa"><Edit2 className="w-3.5 h-3.5" /></button>
-                    {s.status === 'ACTIVE' && (
-                      <button onClick={() => deactivate(s.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors" title="Vô hiệu hóa"><Trash2 className="w-3.5 h-3.5" /></button>
-                    )}
-                  </div>
-                </td>
+              <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3">Nhân viên</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Phòng ban</th><th className="px-5 py-3">Ngày vào làm</th><th className="px-5 py-3">Đăng nhập gần nhất</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filtered.map(s => (
+                <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="px-5 py-3.5 max-w-[200px]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">{s.fullName.charAt(0)}</div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-700 truncate">{s.fullName}</p>
+                        <p className="text-xs text-slate-400 truncate">{s.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${ROLE_STYLE[s.role]}`}>{ROLE_LABEL[s.role]}</span>
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{s.department}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{new Date(s.joinDate).toLocaleDateString('vi-VN')}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-400">{s.lastLogin}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${s.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                      {s.status === 'ACTIVE' ? 'Đang làm việc' : 'Nghỉ việc'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors" title="Sửa"><Edit2 className="w-3.5 h-3.5" /></button>
+                      {s.status === 'ACTIVE' && (
+                        <button onClick={() => deactivate(s.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors" title="Vô hiệu hóa"><Trash2 className="w-3.5 h-3.5" /></button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

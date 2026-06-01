@@ -27,6 +27,136 @@ function formatAmount(amount) {
   return `${Number(amount).toLocaleString('vi-VN')} đ`;
 }
 
+const formatDateFilename = (date = new Date()) => {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${day}-${month}-${year}_${hours}h${minutes}`;
+};
+
+const downloadExcel = (title, headers, data, filename) => {
+  let staffName = 'Nhân viên EasyFlight';
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const stored = localStorage.getItem('local_staff_profile');
+    if (stored) {
+      const profile = JSON.parse(stored);
+      if (profile.email === user.email && profile.fullName) staffName = profile.fullName;
+    } else {
+      staffName = user.fullName || user.name || user.email || 'Nhân viên EasyFlight';
+    }
+  } catch {}
+
+  let sheetName = 'EasyFlight';
+  try {
+    let base = 'Bao cao';
+    const upTitle = title.toUpperCase();
+    if (upTitle.includes('HỦY VÉ')) base = 'Huy ve';
+    else if (upTitle.includes('ĐỔI VÉ')) base = 'Doi ve';
+    else if (upTitle.includes('KHIẾU NẠI')) base = 'Khieu nai';
+    else if (upTitle.includes('SỰ CỐ')) base = 'Su co';
+    else if (upTitle.includes('ĐẶT VÉ') || upTitle.includes('BOOKINGS')) base = 'Bookings';
+    else if (upTitle.includes('TUYẾN BAY') || upTitle.includes('ROUTES')) base = 'Tuyen bay';
+    else if (upTitle.includes('LỊCH BAY') || upTitle.includes('FLIGHTS')) base = 'Lich bay';
+    
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    sheetName = `${base} ${day}-${month}`.slice(0, 31);
+  } catch {}
+
+  const localTime = new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+  const meta = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>${sheetName}</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .title { font-size: 16pt; font-weight: bold; color: #4F46E5; text-align: center; height: 45px; vertical-align: middle; }
+        .subtitle { font-size: 10pt; color: #475569; text-align: center; height: 25px; vertical-align: middle; }
+        .header { background-color: #4F46E5; color: #FFFFFF; font-weight: bold; text-align: center; height: 32px; border: 0.5pt solid #C7D2FE; vertical-align: middle; }
+        .row-even { background-color: #F8FAFC; height: 26px; }
+        .row-odd { background-color: #FFFFFF; height: 26px; }
+        .cell { border: 0.5pt solid #E2E8F0; font-size: 10pt; vertical-align: middle; padding: 4px; }
+        .text { mso-number-format:"\\\\@"; text-align: left; }
+        .number { mso-number-format:"#,##0"; text-align: right; }
+        .center { text-align: center; }
+        .badge-pending { color: #D97706; background-color: #FEF3C7; font-weight: bold; text-align: center; }
+        .badge-approved { color: #059669; background-color: #D1FAE5; font-weight: bold; text-align: center; }
+        .badge-rejected { color: #DC2626; background-color: #FEE2E2; font-weight: bold; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <table>
+        <tr><td colspan="${headers.length}" class="title">${title}</td></tr>
+        <tr><td colspan="${headers.length}" class="subtitle">Hệ thống EasyFlight • Ngày xuất: ${localTime} • Người xuất: ${staffName}</td></tr>
+        <tr><td colspan="${headers.length}" style="height: 15px;"></td></tr>
+        <tr>
+          ${headers.map(h => `<td class="header">${h}</td>`).join('')}
+        </tr>
+        ${data.map((row, index) => {
+          const rowClass = index % 2 === 0 ? 'row-even' : 'row-odd';
+          return `
+            <tr class="${rowClass}">
+              ${row.map(cell => {
+                let cellClass = 'cell text';
+                let val = cell ?? '';
+                
+                if (typeof val === 'number' || (typeof val === 'string' && val.endsWith(' đ') && !isNaN(parseFloat(val.replace(/\./g, '').replace(' đ', ''))))) {
+                  cellClass = 'cell number';
+                } 
+                else if (val === 'Đang chờ' || val === 'OPEN' || val === 'Chờ xử lý' || val === 'Đang xử lý' || val === 'Pending' || val === 'UNPAID' || val === 'PENDING' || val === 'Scheduled' || val === 'SCHEDULED' || val === 'Boarding' || val === 'BOARDING') {
+                  cellClass = 'cell badge-pending';
+                } else if (val === 'Đã duyệt' || val === 'RESOLVED' || val === 'Đã xử lý' || val === 'Đã phê duyệt' || val === 'Confirmed' || val === 'PAID' || val === 'CONFIRMED' || val === 'Hoạt động' || val === 'ACTIVE') {
+                  cellClass = 'cell badge-approved';
+                } else if (val === 'Bị từ chối' || val === 'CLOSED' || val === 'CRITICAL' || val === 'Cancelled' || val === 'Expired' || val === 'REFUNDED' || val === 'CANCELLED' || val === 'EXPIRED' || val === 'Ngừng hoạt động' || val === 'Ngừng') {
+                  cellClass = 'cell badge-rejected';
+                } 
+                else if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(val) || val.includes(':') || /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                  cellClass = 'cell center';
+                } else if (val.startsWith('#') || val.startsWith('PNR-') || val.startsWith('FLIGHT-')) {
+                  cellClass = 'cell center';
+                }
+                
+                return `<td class="${cellClass}">${val}</td>`;
+              }).join('')}
+            </tr>
+          `;
+        }).join('')}
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([meta], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 function Toast({ toasts, onRemove }) {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
@@ -59,10 +189,11 @@ function BookingPage() {
 
   const bookings = (data && data.length > 0) ? data : (() => {
     const storedPayments = JSON.parse(localStorage.getItem('mock_payments') || '{}');
+    const localStates = JSON.parse(localStorage.getItem('local_bookings_state') || '{}');
     return ADMIN_BOOKINGS.map(b => {
       const mockPaymentStatus = storedPayments[b.id] || b.paymentStatus;
       const mockBookingStatus = mockPaymentStatus === 'PAID' ? 'CONFIRMED' : b.status;
-      return {
+      const mapped = {
         bookingId: b.id,
         pnrCode: b.pnr,
         passengerName: b.passenger,
@@ -80,6 +211,11 @@ function BookingPage() {
         paymentMethod: b.paymentMethod,
         bookedAt: b.bookedAt,
       };
+      const localState = localStates[mapped.bookingId];
+      if (localState) {
+        return { ...mapped, ...localState };
+      }
+      return mapped;
     });
   })();
 
@@ -127,23 +263,13 @@ function BookingPage() {
         `#${b.bookingId}`,
         b.pnrCode || '—',
         `FLIGHT-${b.flightId}`,
-        b.totalAmount || 0,
+        b.totalAmount ? `${Number(b.totalAmount).toLocaleString('vi-VN')} đ` : '0 đ',
         b.paymentMethod || '—',
         b.paymentStatus || '—',
         b.status || '—'
       ]);
 
-      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Bao_cao_booking_EasyFlight_${Date.now()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
+      downloadExcel('DANH SÁCH ĐẶT VÉ (BOOKINGS)', headers, rows, `Danh_Sach_Booking_${formatDateFilename(new Date())}.xls`);
       addToast('Xuất báo cáo thành công!', 'success');
     } catch (err) {
       addToast('Gặp lỗi khi xuất báo cáo.', 'error');
@@ -252,12 +378,6 @@ function BookingPage() {
                         className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
                         <Eye className="w-4 h-4" />
                       </button>
-                      {b.status !== 'CANCELLED' && (
-                        <button onClick={() => handleCancel(b.bookingId)}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Huỷ booking">
-                          <XCircle className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>

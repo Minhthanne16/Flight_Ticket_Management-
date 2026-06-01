@@ -140,6 +140,136 @@ function NotifyModal({ flight, onClose, onSent }) {
   );
 }
 
+const formatDateFilename = (date = new Date()) => {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${day}-${month}-${year}_${hours}h${minutes}`;
+};
+
+const downloadExcel = (title, headers, data, filename) => {
+  let staffName = 'Nhân viên EasyFlight';
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const stored = localStorage.getItem('local_staff_profile');
+    if (stored) {
+      const profile = JSON.parse(stored);
+      if (profile.email === user.email && profile.fullName) staffName = profile.fullName;
+    } else {
+      staffName = user.fullName || user.name || user.email || 'Nhân viên EasyFlight';
+    }
+  } catch {}
+
+  let sheetName = 'EasyFlight';
+  try {
+    let base = 'Bao cao';
+    const upTitle = title.toUpperCase();
+    if (upTitle.includes('HỦY VÉ')) base = 'Huy ve';
+    else if (upTitle.includes('ĐỔI VÉ')) base = 'Doi ve';
+    else if (upTitle.includes('KHIẾU NẠI')) base = 'Khieu nai';
+    else if (upTitle.includes('SỰ CỐ')) base = 'Su co';
+    else if (upTitle.includes('ĐẶT VÉ') || upTitle.includes('BOOKINGS')) base = 'Bookings';
+    else if (upTitle.includes('TUYẾN BAY') || upTitle.includes('ROUTES')) base = 'Tuyen bay';
+    else if (upTitle.includes('LỊCH BAY') || upTitle.includes('FLIGHTS')) base = 'Lich bay';
+    
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    sheetName = `${base} ${day}-${month}`.slice(0, 31);
+  } catch {}
+
+  const localTime = new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+  const meta = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>${sheetName}</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .title { font-size: 16pt; font-weight: bold; color: #4F46E5; text-align: center; height: 45px; vertical-align: middle; }
+        .subtitle { font-size: 10pt; color: #475569; text-align: center; height: 25px; vertical-align: middle; }
+        .header { background-color: #4F46E5; color: #FFFFFF; font-weight: bold; text-align: center; height: 32px; border: 0.5pt solid #C7D2FE; vertical-align: middle; }
+        .row-even { background-color: #F8FAFC; height: 26px; }
+        .row-odd { background-color: #FFFFFF; height: 26px; }
+        .cell { border: 0.5pt solid #E2E8F0; font-size: 10pt; vertical-align: middle; padding: 4px; }
+        .text { mso-number-format:"\\\\@"; text-align: left; }
+        .number { mso-number-format:"#,##0"; text-align: right; }
+        .center { text-align: center; }
+        .badge-pending { color: #D97706; background-color: #FEF3C7; font-weight: bold; text-align: center; }
+        .badge-approved { color: #059669; background-color: #D1FAE5; font-weight: bold; text-align: center; }
+        .badge-rejected { color: #DC2626; background-color: #FEE2E2; font-weight: bold; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <table>
+        <tr><td colspan="${headers.length}" class="title">${title}</td></tr>
+        <tr><td colspan="${headers.length}" class="subtitle">Hệ thống EasyFlight • Ngày xuất: ${localTime} • Người xuất: ${staffName}</td></tr>
+        <tr><td colspan="${headers.length}" style="height: 15px;"></td></tr>
+        <tr>
+          ${headers.map(h => `<td class="header">${h}</td>`).join('')}
+        </tr>
+        ${data.map((row, index) => {
+          const rowClass = index % 2 === 0 ? 'row-even' : 'row-odd';
+          return `
+            <tr class="${rowClass}">
+              ${row.map(cell => {
+                let cellClass = 'cell text';
+                let val = cell ?? '';
+                
+                if (typeof val === 'number' || (typeof val === 'string' && val.endsWith(' đ') && !isNaN(parseFloat(val.replace(/\./g, '').replace(' đ', ''))))) {
+                  cellClass = 'cell number';
+                } 
+                else if (val === 'Đang chờ' || val === 'OPEN' || val === 'Chờ xử lý' || val === 'Đang xử lý' || val === 'Pending' || val === 'UNPAID' || val === 'PENDING' || val === 'Scheduled' || val === 'SCHEDULED' || val === 'Boarding' || val === 'BOARDING') {
+                  cellClass = 'cell badge-pending';
+                } else if (val === 'Đã duyệt' || val === 'RESOLVED' || val === 'Đã xử lý' || val === 'Đã phê duyệt' || val === 'Confirmed' || val === 'PAID' || val === 'CONFIRMED' || val === 'Hoạt động' || val === 'ACTIVE') {
+                  cellClass = 'cell badge-approved';
+                } else if (val === 'Bị từ chối' || val === 'CLOSED' || val === 'CRITICAL' || val === 'Cancelled' || val === 'Expired' || val === 'REFUNDED' || val === 'CANCELLED' || val === 'EXPIRED' || val === 'Ngừng hoạt động' || val === 'Ngừng') {
+                  cellClass = 'cell badge-rejected';
+                } 
+                else if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(val) || val.includes(':') || /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                  cellClass = 'cell center';
+                } else if (val.startsWith('#') || val.startsWith('PNR-') || val.startsWith('FLIGHT-') || val.includes(' → ')) {
+                  cellClass = 'cell center';
+                }
+                
+                return `<td class="${cellClass}">${val}</td>`;
+              }).join('')}
+            </tr>
+          `;
+        }).join('')}
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([meta], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 function FlightSchedulePage() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('flights');
@@ -152,6 +282,7 @@ function FlightSchedulePage() {
   const [routePage, setRoutePage] = useState(1);
   const [toasts, setToasts] = useState([]);
   const [notifyModal, setNotifyModal] = useState(null);
+  const [localUpdateTrigger, setLocalUpdateTrigger] = useState(0);
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
@@ -165,19 +296,27 @@ function FlightSchedulePage() {
     () => routeService.getAll(), []
   );
 
-  const flights = (rawFlights && rawFlights.length > 0) ? rawFlights : ADMIN_FLIGHTS.map(f => ({
-    id: f.id,
-    flightCode: f.id,
-    airlineName: f.airline,
-    departureAirportCode: f.from,
-    arrivalAirportCode: f.to,
-    departureTime: `${f.date}T${f.dep}:00`,
-    arrivalTime: `${f.date}T${f.arr}:00`,
-    status: f.status,
-    basePrice: f.basePrice,
-    totalSeats: f.totalSeats,
-    bookedSeats: f.bookedSeats,
-  }));
+  const flights = useMemo(() => {
+    const rawList = (rawFlights && rawFlights.length > 0) ? rawFlights : ADMIN_FLIGHTS.map(f => ({
+      id: f.id,
+      flightCode: f.id,
+      airlineName: f.airline,
+      departureAirportCode: f.from,
+      arrivalAirportCode: f.to,
+      departureTime: `${f.date}T${f.dep}:00`,
+      arrivalTime: `${f.date}T${f.arr}:00`,
+      status: f.status,
+      basePrice: f.basePrice,
+      totalSeats: f.totalSeats,
+      bookedSeats: f.bookedSeats,
+    }));
+    try {
+      const statuses = JSON.parse(localStorage.getItem('local_flight_statuses') || '{}');
+      return rawList.map(f => ({ ...f, status: statuses[f.id] || f.status }));
+    } catch {
+      return rawList;
+    }
+  }, [rawFlights, localUpdateTrigger]);
 
   const routes = (rawRoutes && rawRoutes.length > 0) ? rawRoutes : MOCK_ROUTES.map(r => ({
     id: r.id,
@@ -229,27 +368,16 @@ function FlightSchedulePage() {
       return;
     }
 
-    let csvContent = "\ufeff"; // UTF-8 BOM
-    csvContent += "ID Tuyến bay,Mã tuyến bay,Sân bay đi,Sân bay đến,Trạng thái\n";
+    const headers = ['ID Tuyến bay', 'Mã tuyến bay', 'Sân bay đi', 'Sân bay đến', 'Trạng thái'];
+    const rows = filteredRoutes.map(r => [
+      `#${r.id}`,
+      r.routeCode || '—',
+      r.departureAirport || '—',
+      r.arrivalAirport || '—',
+      r.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động'
+    ]);
 
-    filteredRoutes.forEach(r => {
-      const statusLabel = r.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động';
-      const row = `"${r.id}","${r.routeCode}","${r.departureAirport}","${r.arrivalAirport}","${statusLabel}"`;
-      csvContent += row + "\n";
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-
-    const dateStr = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
-    link.setAttribute("download", `Bao_cao_tuyen_bay_${dateStr}.csv`);
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    downloadExcel('DANH SÁCH TUYẾN BAY (ROUTES)', headers, rows, `Danh_Sach_Tuyen_Bay_${formatDateFilename(new Date())}.xls`);
     addToast("Đã xuất báo cáo tuyến bay thành công!");
   };
 
@@ -280,31 +408,24 @@ function FlightSchedulePage() {
       return;
     }
 
-    let csvContent = "\ufeff"; // UTF-8 BOM
-    csvContent += "Mã chuyến bay,Hãng hàng không,Tuyến bay,Giờ khởi hành,Giờ đến,Trạng thái\n";
-
-    filtered.forEach(f => {
+    const headers = ['Mã chuyến bay', 'Hãng hàng không', 'Tuyến bay', 'Giờ khởi hành', 'Giờ đến', 'Trạng thái'];
+    const rows = filtered.map(f => {
       const route = f.departureAirportCode && f.arrivalAirportCode
-        ? `${f.departureAirportCode} -> ${f.arrivalAirportCode}` : '—';
-      const depTime = f.departureTime ? new Date(f.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
-      const arrTime = f.arrivalTime ? new Date(f.arrivalTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
+        ? `${f.departureAirportCode} → ${f.arrivalAirportCode}` : '—';
+      const depTime = f.departureTime ? new Date(f.departureTime).toLocaleString('vi-VN') : '—';
+      const arrTime = f.arrivalTime ? new Date(f.arrivalTime).toLocaleString('vi-VN') : '—';
       const statusLabel = STATUS_LABELS[f.status] || f.status || '—';
-      const row = `"${f.flightCode || ''}","${f.airlineName || 'EasyFlight'}","${route}","${depTime}","${arrTime}","${statusLabel}"`;
-      csvContent += row + "\n";
+      return [
+        f.flightCode || '—',
+        f.airlineName || 'EasyFlight',
+        route,
+        depTime,
+        arrTime,
+        statusLabel
+      ];
     });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-
-    const dateStr = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
-    link.setAttribute("download", `Bao_cao_lich_bay_${dateStr}.csv`);
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    downloadExcel('DANH SÁCH LỊCH BAY (FLIGHTS)', headers, rows, `Danh_Sach_Lich_Bay_${formatDateFilename(new Date())}.xls`);
     addToast("Đã xuất báo cáo lịch bay thành công!");
   };
 
@@ -461,6 +582,7 @@ function FlightSchedulePage() {
                                 try {
                                   await flightService.updateStatus(f.id, newStatus);
                                   addToast(`Cập nhật trạng thái chuyến ${f.flightCode} thành ${STATUS_LABELS[newStatus]} thành công!`);
+                                  setLocalUpdateTrigger(prev => prev + 1);
                                   refetch();
                                 } catch (err) {
                                   addToast(err.message || 'Lỗi khi cập nhật trạng thái', 'error');
