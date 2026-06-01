@@ -40,36 +40,60 @@ function TicketInformation() {
     return [...prev, index];
   });
 };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Tạo payload để sau này bạn dùng gửi xuống Backend
+const handleSubmit = (e) => {
+    e.preventDefault(); // Cực kỳ quan trọng: Ngăn trình duyệt tự động reload trang
+    handleContinueToPayment(); // Gọi hàm API tạo vé của bạn
+  };
+  const handleContinueToPayment = async () => {
     const bookingPayload = {
+      userId: 4, 
       flightId: flight.id,
-      cabinClass: cabinClass,
-      passengers: passengers
+      ticketClassId: filters.cabinClass === 'economy' ? 1 : 2, 
+      passengers: passengers.map(p => ({
+         fullName: p.fullName,
+         gender: p.gender,
+         dateOfBirth: p.dateOfBirth, 
+         
+         // Sửa chữ idCard thành documentNumber cho khớp với Backend
+         documentNumber: p.documentNumber, 
+         
+         // Bổ sung thêm các trường bạn đã nhập ở form nhưng quên gửi
+         nationality: p.nationality,
+         email: p.email
+      }))
     };
-    console.log("Dữ liệu gửi xuống Backend:", bookingPayload);
 
-    // TẠO FAKE DATA ĐỂ HIỂN THỊ TRANG SUCCESS (Tạm bỏ qua bước gọi API thanh toán)
-    // 1. Tạo mã đặt chỗ (PNR) ngẫu nhiên 6 ký tự
-    const reservationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    // 2. Lấy giờ hiện tại
-    const now = new Date();
-    const bookingTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-    console.log("Cấu trúc chuyến bay:", flight);
-    // Chuyển hướng sang trang Success và mang theo dữ liệu
-    navigate('/customer/booking-success', {
-      state: {
-        flight,
-        passengers,
-        totalPrice,
-        reservationCode,
-        bookingTime
+    try {
+
+      // 2. GỌI API KÈM TOKEN TRONG HEADER
+      const response = await fetch('http://localhost:5000/bookings', { 
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload)
+      });
+
+      const result = await response.json();
+
+      if (result.code === 200 || response.ok) {
+        const createdBooking = result.data; 
+        navigate('/customer/booking-success', {
+          state: {
+            flight: flight,
+            passengers: passengers,
+            totalPrice: createdBooking.totalAmount,
+            reservationCode: createdBooking.pnrCode, 
+            bookingTime: new Date().toLocaleString('vi-VN')
+          }
+        });
+      } else {
+        alert("Lỗi tạo vé: " + result.message);
       }
-    });
+    } catch (error) {
+      console.error("Lỗi gọi API:", error);
+      alert("Không thể kết nối đến máy chủ.");
+    }
   };
   if (!flight) return <div>Không tìm thấy thông tin chuyến bay. Vui lòng quay lại.</div>;
 

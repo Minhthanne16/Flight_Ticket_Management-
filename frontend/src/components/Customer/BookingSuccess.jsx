@@ -5,7 +5,53 @@ import '../../css/Customer/BookingSuccess.css';
 function BookingSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
+  const handleContinueToPayment = async () => {
+    // 1. Chuẩn bị dữ liệu theo đúng chuẩn CreateBookingRequest của Backend
+    const bookingPayload = {
+      userId: 1, // Thay bằng ID của user đang đăng nhập (hoặc lấy từ Context/Redux)
+      flightId: flight.id,
+      // Chuyển đổi hạng vé từ string sang ID (Ví dụ: 1 là Economy, 2 là Business)
+      ticketClassId: filters.cabinClass === 'economy' ? 1 : 2, 
+      passengers: passengers.map(p => ({
+         fullName: p.fullName,
+         gender: p.gender,
+         dateOfBirth: p.dateOfBirth, // Đảm bảo format ngày chuẩn YYYY-MM-DD
+         idCard: p.documentNumber
+         // Thêm các trường khác nếu CreatePassengerRequest của bạn yêu cầu
+      }))
+    };
 
+    try {
+      // 2. Gọi API POST tạo Booking
+      const response = await fetch('http://localhost:5000/bookings', { // Thay port đúng với Spring Boot của bạn
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingPayload)
+      });
+
+      const result = await response.json();
+
+      if (result.code === 200 || response.ok) {
+        const createdBooking = result.data; // BookingResponse từ Backend
+
+        // 3. Chuyển sang trang BookingSuccess (hoặc trang Payment) và truyền ngầm dữ liệu
+        navigate('/customer/booking-success', {
+          state: {
+            flight: flight,
+            passengers: passengers,
+            totalPrice: createdBooking.totalAmount,
+            reservationCode: createdBooking.pnrCode, // Lấy mã PNR từ DB trả về
+            bookingTime: new Date().toLocaleString('vi-VN')
+          }
+        });
+      } else {
+        alert("Lỗi tạo vé: " + result.message);
+      }
+    } catch (error) {
+      console.error("Lỗi gọi API:", error);
+      alert("Không thể kết nối đến máy chủ.");
+    }
+};
   // Nhận dữ liệu từ trang TicketInformation truyền sang
   const { flight, passengers, totalPrice, reservationCode, bookingTime } = location.state || {};
 
