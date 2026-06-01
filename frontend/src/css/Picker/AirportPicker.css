@@ -17,13 +17,80 @@
     position: absolute;
     top: calc(100% + 12px);
     left: 0;
-    width: 420px;
-    max-width: 100%;
+
+    width: 520px;
+
     background: white;
     border-radius: 18px;
     box-shadow: 0 18px 40px rgba(0,0,0,0.14);
-    z-index: 999;
+
+    z-index: 10000;
+    transform: translateZ(999px);
     overflow: hidden;
+}
+.airport-item {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    cursor: pointer;
+    transition: .2s;
+}
+.item-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex: 1;
+}
+.text-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.city-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.city-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #111827;
+}
+.badge-code {
+    background: #EEF2FF;
+    color: #4F46E5;
+    font-size: 12px;
+    font-weight: 700;
+
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.full-airport {
+    font-size: 14px;
+    color: #6B7280;
+}
+.country-txt {
+    font-size: 14px;
+    color: #6B7280;
+    white-space: nowrap;
+}
+.icon-circle {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 50%;
+
+    background: #EEF2FF;
+    color: #4F46E5;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 16px;
 }
 
 /* SEARCH INPUT */

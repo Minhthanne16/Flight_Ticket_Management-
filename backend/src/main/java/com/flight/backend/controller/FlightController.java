@@ -42,12 +42,13 @@ public class FlightController {
     public ResponseEntity<ApiResponse<List<com.flight.backend.dto.flight.FlightSearchResponse>>> search(
             @RequestParam(required = false) Long from,
             @RequestParam(required = false) Long to,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate departDate,
             @RequestParam(required = false) Long airlineId,
             @RequestParam(required = false) Long minPrice,
             @RequestParam(required = false) Long maxPrice) {
         
-        List<com.flight.backend.dto.flight.FlightSearchResponse> responses = flightService.searchFlights(from, to, date, airlineId, minPrice, maxPrice);
+        List<com.flight.backend.dto.flight.FlightSearchResponse> responses = flightService.searchFlights(from, to, departDate, airlineId, minPrice, maxPrice);
         return ApiResponse.success(responses, "Tìm kiếm chuyến bay thành công");
     }
+ 
 }

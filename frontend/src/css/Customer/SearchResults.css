@@ -1,0 +1,786 @@
+/* =========================================
+   LAYOUT CHIA 2 CỘT (FILTER L & KẾT QUẢ R)
+========================================= */
+.search-page-layout {
+    display: flex;
+    gap: 24px; /* Khoảng cách giữa Filter và Kết quả */
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 16px;
+    align-items: flex-start; /* Giúp sidebar không bị kéo giãn chiều cao */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.filter-sidebar {
+    width: 30%;
+    flex-shrink: 0;
+}
+
+/* CONTAINER BÊN PHẢI */
+.flight-results-container {
+    width: 70%;
+    flex-grow: 1;
+    position: relative;
+}
+
+/* =========================================
+   CÁC COMPONENT BÊN TRONG DANH SÁCH
+========================================= */
+.results-title {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #1a2b49;
+    font-weight: 600;
+}
+
+.flight-card-wrapper {
+    background: white;
+    border: 1px solid #e6ebf1;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.flight-card-wrapper:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.flight-card {
+    padding: 20px;
+}
+
+/* HÀNG 1: THÔNG TIN CHÍNH */
+.main-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.airline-info {
+    display: flex;
+    align-items: center;
+    width: 25%; /* Cố định width để phần giờ bay ở giữa luôn cân đối */
+}
+
+.airline-logo {
+    width: 35px;
+    height: auto;
+    margin-right: 12px;
+}
+
+.airline-name {
+    font-weight: 600;
+    color: #1a2b49;
+}
+
+.time-info {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex: 1;
+    justify-content: center;
+}
+
+.time-block {
+    text-align: center;
+}
+
+.time-block strong { 
+    font-size: 20px; 
+    display: block; 
+    color: #1a2b49;
+}
+
+.time-block strong sup {
+    font-size: 12px;
+    color: #e53935;
+    margin-left: 2px;
+}
+
+.time-block span {
+    color: #687176;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.duration-block {
+    text-align: center;
+    color: #687176;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.line-path {
+    height: 1px;
+    background: #ccd1d5;
+    position: relative;
+    margin: 8px 0;
+}
+
+.line-path::after {
+    content: '✈';
+    position: absolute;
+    right: -5px;
+    top: -11px;
+    color: #ccd1d5;
+    font-size: 16px;
+}
+
+.price-info {
+    text-align: right;
+    border-left: 1px solid #e6ebf1;
+    padding-left: 20px;
+    min-width: 200px;
+}
+
+.save-tag {
+    color: #e53935;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.price-text { 
+    color: #ff5e1f; 
+    margin: 0 0 12px 0; 
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.price-text span {
+    font-size: 13px;
+    color: #687176;
+    font-weight: normal;
+}
+
+.btn-choose {
+    background: #5856D6;
+    color: white;
+    border: none;
+    padding: 10px 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-choose:hover {
+    background: #4644b3;
+}
+
+/* HÀNG 2: TIỆN ÍCH & TAGS */
+.extra-info {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.amenities {
+    display: flex;
+    gap: 15px;
+    margin-right: 20px;
+    color: #687176;
+    font-size: 14px;
+}
+
+.promo-tags {
+    display: flex;
+    gap: 8px;
+}
+
+.tag {
+    background: #fff0f0;
+    color: #e53935;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #ffcdd2;
+}
+
+/* NÚT TOGGLE CHI TIẾT */
+.details-toggle {
+    width: fit-content;
+    padding-bottom: 5px;
+    color: #5856D6;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 20px;
+    cursor: pointer; 
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.details-toggle:hover {
+    border-bottom: 2px solid #5856D6;
+}
+
+.details-toggle.active {
+    border-bottom: 2px solid #5856D6;
+}
+
+/* FLIGHT DETAILS PANEL (TIMELINE) */
+.flight-details-panel {
+    background: #f7f9fa;
+    border-top: 1px solid #e6ebf1;
+    padding: 25px 20px;
+}
+
+.timeline {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-point {
+    display: flex;
+    gap: 20px;
+}
+
+.time-col {
+    width: 60px;
+    text-align: right;
+    padding-top: 2px;
+}
+
+.time-col strong {
+    display: block;
+    font-size: 16px;
+    color: #1a2b49;
+}
+
+.time-col small {
+    color: #687176;
+    font-size: 12px;
+}
+
+.dot-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.circle-outline {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #5856D6;
+    border-radius: 50%;
+    background: #f7f9fa;
+    z-index: 2;
+}
+
+.circle-fill {
+    width: 14px;
+    height: 14px;
+    background: #5856D6;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.vertical-line {
+    width: 2px;
+    height: 160px; /* Điều chỉnh chiều cao nối thẳng xuống điểm tiếp theo */
+    background: #ccd1d5;
+    margin-top: -2px;
+    margin-bottom: -2px;
+}
+
+.info-col {
+    flex: 1;
+    padding-top: 2px;
+}
+
+.info-col strong {
+    font-size: 15px;
+    color: #1a2b49;
+}
+
+.info-col p {
+    margin: 5px 0 0 0;
+    font-size: 13px;
+    color: #687176;
+}
+
+.flight-segment {
+    margin-left: 100px; /* Căn lề trái bằng với vị trí của info-col */
+    margin-top: -120px; /* Kéo component này lên đè vào giữa đoạn vertical-line */
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.segment-info {
+    padding-left: 10px;
+}
+
+.small-logo {
+    width: 20px;
+    height: auto;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
+    color: #687176;
+    font-size: 13px;
+    padding-left: 30px; /* Thụt lề vào so với tên hãng bay */
+}
+
+.specs-grid i {
+    width: 20px;
+    text-align: center;
+    margin-right: 5px;
+    color: #8f9a9f;
+}
+
+/* =========================================
+   SEARCH HEADER WIDGET (CHỌN NGÀY Ở ĐẦU)
+========================================= */
+.search-header-widget {
+    background-color: #5856D6; 
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.search-header-widget::before {
+    content: '✈';
+    position: absolute;
+    right: 30px;
+    top: -20px;
+    font-size: 150px;
+    color: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.search-pill {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.pill-content .pill-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a2b49;
+    margin-bottom: 5px;
+}
+
+.pill-content .pill-title i {
+    font-size: 14px;
+    color: #687176;
+    margin: 0 5px;
+}
+
+.pill-content .pill-subtitle {
+    font-size: 14px;
+    color: #687176;
+    font-weight: 500;
+}
+
+.pill-search-btn {
+    background: none;
+    border: none;
+    color: #5856D6;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* =========================================
+   Thanh chọn ngày (Carousel)
+========================================= */
+.date-selector-bar {
+    display: flex;
+    align-items: stretch;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.date-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 5px;
+    color: white;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 5px;
+}
+
+.date-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.date-item.active {
+    background: #4644a6;
+    font-weight: 600;
+}
+
+.date-label {
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: inherit;
+}
+
+.date-price {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* =========================================
+   Nút Lịch (Calendar) ngoài cùng
+========================================= */
+.calendar-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    color: white;
+    padding: 0 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    min-width: 80px; 
+}
+
+.calendar-btn:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.calendar-btn i {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.calendar-btn span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* =========================================
+   Input Date (Bị ẩn hoàn toàn để JS xử lý)
+========================================= */
+.hidden-date-picker {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    bottom: 0;
+    pointer-events: none; 
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+
+/* 4. MODAL CHỌN VÉ (CONFIRM BOOKING OVERLAY)*/
+
+.ticket-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4); /* Lớp nền tối mờ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.ticket-modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 800px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header h3 {
+  color: #6366f1; /* Tiêu đề màu xanh tím */
+  font-weight: 700;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* Tóm tắt chuyến bay trong Modal */
+.selected-flight-summary {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin-bottom: 25px;
+}
+
+.summary-header {
+  font-size: 0.95rem;
+  color: #334155;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.summary-date {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* --- Định dạng container ngang --- */
+.summary-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+}
+
+.summary-logo {
+  flex-shrink: 0; /* Không cho logo bị ép nhỏ */
+}
+.modal-airline-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+/* --- Định dạng Giờ & Mã Sân Bay --- */
+.summary-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0; /* Đảm bảo cụm thời gian không bị móp */
+}
+
+.summary-time strong {
+  font-size: 1.6rem;
+  color: #0f172a;
+  margin-bottom: 8px; 
+  line-height: 1;
+}
+
+.airport-code-box {
+  background-color: #f1f5f9; 
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.95rem;
+  color: #334155;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* --- Định dạng Mũi tên & Thời gian bay --- */
+.summary-route {
+  flex-grow: 1; /* CHÌA KHÓA: Tự động chiếm hết khoảng trống ở giữa */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.route-duration {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.route-line-container {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-line {
+  width: 100%;
+  height: 2px;
+  background-color: #cbd5e1; 
+}
+
+.route-line::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -4px;
+  border: solid #cbd5e1;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  transform: rotate(-45deg);
+}
+
+.route-type {
+  position: absolute;
+  background-color: #f8fafc; 
+  padding: 0 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Lưới lựa chọn hạng vé trong Modal */
+.ticket-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ticket-option-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+.ticket-option-card:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-option-card h4 {
+  margin: 0 0 10px 0;
+  color: #475569;
+  font-size: 1.1rem;
+}
+
+.modal-price {
+  font-size: 1.5rem;
+  color: #0f172a;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+}
+
+.modal-price small {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.modal-amenities {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 25px 0;
+  flex-grow: 1;
+}
+
+.modal-amenities li {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-amenities li i {
+  width: 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.modal-amenities .disabled-text {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.modal-amenities .success-text {
+  color: #10b981; /* Màu xanh lá cho tính năng có sẵn */
+}
+
+.modal-amenities .success-text i {
+  color: #10b981;
+}
+
+.btn-select-final {
+  background-color: #6366f1; /* Màu xanh biển cho nút Select trong Modal */
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.btn-select-final:hover {
+  background-color: #4547c2;
+}
+
+/* =========================================================
+   5. TRẠNG THÁI LOADING & ERROR
+   ========================================================= */
+.loading-state, .error-state, .no-flights {
+  background: white;
+  padding: 40px;
+  text-align: center;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.error-state {
+  color: #ef4444;
+}

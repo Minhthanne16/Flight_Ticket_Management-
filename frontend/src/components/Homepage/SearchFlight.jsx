@@ -1,15 +1,26 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { ArrowRightLeft, Search } from 'lucide-react';
+
 import PassengerPicker from '../Picker/PassengerPicker';
 import Airport from '../Picker/AirportPicker';
 import DatePicker from '../Picker/DatePicker';
 
 function SearchFlight() {
+
+  const navigate = useNavigate(); // Khởi tạo hàm chuyển trang
+
   const [fromCity, setFromCity] = useState(null);
   const [toCity, setToCity] = useState(null);
   const [departureDate, setDepartureDate] = useState(new Date());
   const [returnDate, setReturnDate] = useState(new Date());
   const [tripType, setTripType] = useState('round-trip');
+
+  // BỔ SUNG THÊM STATE MỚI
+  const [isDirect, setIsDirect] = useState(false);
+  const [cabinClass, setCabinClass] = useState('economy');
+  const [passengers, setPassengers] = useState(1);
 
   const handleSwap = () => {
     const temp = fromCity;
@@ -17,9 +28,88 @@ function SearchFlight() {
     setToCity(temp);
   };
 
+  const handleSearch = () => {
+
+  if (!fromCity || !toCity) {
+
+    alert(
+      'Vui lòng chọn điểm đi và điểm đến!'
+    );
+
+    return;
+  }
+
+  if (!departureDate) {
+
+    alert(
+      'Vui lòng chọn ngày đi!'
+    );
+
+    return;
+  }
+
+  if (
+    tripType === 'round-trip' &&
+    !returnDate
+  ) {
+
+    alert(
+      'Vui lòng chọn ngày về!'
+    );
+
+    return;
+  }
+
+  if (tripType === 'multi-city') {
+
+    alert(
+      'Chức năng nhiều chặng đang phát triển!'
+    );
+
+    return;
+  }
+
+  const queryParams =
+    new URLSearchParams({
+
+      tripType,
+
+      from:
+        fromCity.airportCode,
+
+      to:
+        toCity.airportCode,
+
+      departDate:
+        format(
+          departureDate,
+          'yyyy-MM-dd'
+        ),
+
+      returnDate:
+        tripType === 'round-trip'
+          ? format(
+              returnDate,
+              'yyyy-MM-dd'
+            )
+          : '',
+
+      isDirect,
+
+      cabinClass,
+
+      passengers
+    });
+  
+  navigate(
+    `/customer/flight-results?${queryParams.toString()}`
+  );
+
+};
+
   return (
     <div className="relative -mt-24 z-20 container mx-auto px-4 md:px-8 max-w-6xl">
-      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+      <div className="relative z-50 bg-white rounded-2xl shadow-xl p-6 md:p-8 overflow-visible">
         
         {/* Top Options Row */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -46,18 +136,29 @@ function SearchFlight() {
 
           <div className="flex items-center space-x-4">
              <label className="flex items-center space-x-2 cursor-pointer">
-                 <input type="checkbox" className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                 <input 
+                   type="checkbox" 
+                   className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                   checked={isDirect}
+                   onChange={(e) => setIsDirect(e.target.checked)}
+                 />
                  <span className="text-sm text-slate-600 font-medium">Bay thẳng</span>
              </label>
              <div className="w-px h-6 bg-slate-200"></div>
-             <select className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer">
+             <select 
+               className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
+               value={cabinClass}
+               onChange={(e) => setCabinClass(e.target.value)}
+             >
                  <option value="economy">Phổ thông</option>
                  <option value="business">Thương gia</option>
                  <option value="first-class">Hạng nhất</option>
              </select>
              <div className="w-px h-6 bg-slate-200"></div>
              <div className="relative z-30">
-               <PassengerPicker />
+               <PassengerPicker
+                 setPassengers={setPassengers}
+               />
              </div>
           </div>
         </div>
@@ -65,7 +166,7 @@ function SearchFlight() {
         {/* Input Grid Row */}
         <div className="flex flex-col lg:flex-row items-center gap-4">
           {/* Location Group */}
-          <div className="flex w-full lg:w-5/12 relative border border-slate-200 rounded-xl bg-white hover:border-blue-400 transition-colors">
+          <div className="flex w-full lg:w-5/12 relative border  overflow-visible border-slate-200 rounded-xl bg-white hover:border-blue-400 transition-colors">
              <div className="flex-1 p-3">
                  <p className="text-xs text-slate-500 font-medium mb-1">Điểm đi</p>
                  <Airport
@@ -105,13 +206,16 @@ function SearchFlight() {
                     setDepartureDate={setDepartureDate}
                     returnDate={returnDate}
                     setReturnDate={setReturnDate}
+                    tripType={tripType}
                 />
              </div>
           </div>
 
           {/* Search Button */}
           <div className="w-full lg:w-3/12">
-            <button className="w-full h-[72px] bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center justify-center space-x-2 font-bold text-lg transition-colors shadow-lg shadow-orange-500/30">
+            <button 
+              onClick={handleSearch}
+              className="w-full h-[72px] bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center justify-center space-x-2 font-bold text-lg transition-colors shadow-lg shadow-orange-500/30">
                <Search className="w-5 h-5" />
                <span>Tìm chuyến bay</span>
             </button>

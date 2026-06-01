@@ -1,0 +1,177 @@
+.filter-container {
+    float: left;
+    width: 320px;
+    padding: 20px;
+    background: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.filter-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.reset-btn {
+    background: none;
+    border: none;
+    color: #5856D6;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.filter-section {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 15px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header .title {
+    font-weight: 600;
+    margin: 0;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.checkbox-item i {
+    width: 20px;
+    color: #666;
+}
+
+.time-grid, .class-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.time-btn, .class-btn {
+    padding: 12px 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background: #f8f8f8;
+    font-size: 11px;
+    color: #666;
+    cursor: pointer;
+    transition: 0.3s;
+    line-height: 1.4;
+}
+
+.time-btn.active, .class-btn.active {
+    background: #5856D6;
+    color: white;
+    border-color: #5856D6;
+}
+
+.class-btn span {
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+.checkbox-item input {
+    width: 18px;
+    height: 18px;
+    accent-color: #5856D6; 
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+}
+.button-apply {
+    background-color: #5856D6; 
+    color: #f0f0f0;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px; 
+    font-size: 16px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%; 
+    margin-top: 15px;
+}
+
+.button-apply:hover {
+    background-color: #4034a8; 
+    font-weight: 600;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px); 
+}
+
+.button-apply:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================
+   PASSENGER COUNTER
+========================================= */
+.passenger-counter {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.counter-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ccd1d5;
+    background: white;
+    color: #687176;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Nút được phép bấm (ví dụ dấu cộng) */
+.counter-btn.active-btn,
+.counter-btn:not(:disabled):hover {
+    border-color: #0194f3;
+    color: #0194f3;
+    background: #f0f8ff;
+}
+
+/* Nút bị vô hiệu hóa (khi số lượng = 1) */
+.counter-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.counter-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2b49;
+    min-width: 20px;
+    text-align: center;
+}

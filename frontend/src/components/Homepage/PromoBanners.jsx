@@ -9,7 +9,7 @@ const banners = [
 
 function PromoBanners() {
     return (
-        <div className="container mx-auto px-4 md:px-8 mt-12 mb-6">
+        <div className="relative z-0 container mx-auto px-4 md:px-8 mt-12 mb-6">
             <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 space-x-4 snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {banners.map(banner => (
                     <div key={banner.id} className="min-w-[300px] md:min-w-[400px] h-[160px] md:h-[200px] rounded-2xl overflow-hidden relative group shrink-0 snap-start cursor-pointer shadow-sm hover:shadow-md transition-shadow bg-slate-800">
