@@ -3,19 +3,27 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import signinHero from '../../assets/signin_hero.png';
 import logoImg from '../../assets/logo.png';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
 import authService from '../../api/authService';
+import { ADMIN_STAFF } from '../../data/adminMockData';
 
 function SignInForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (errorMsg) setErrorMsg('');
+    }, [email, password]);
 
     const handleLogin = async (e) => {
         if (e) e.preventDefault();
         setIsLoading(true);
+        setErrorMsg('');
         const cleanEmail = email.trim();
         try {
             const response = await authService.login({ email: cleanEmail, password });
@@ -38,7 +46,7 @@ function SignInForm() {
                     navigate('/customer/home');
                 }
             } else {
-                alert(response.message || 'Đăng nhập thất bại');
+                setErrorMsg(response.message || 'Đăng nhập thất bại');
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -54,6 +62,15 @@ function SignInForm() {
                     'staff@easyflight.vn': { password: 'staff123', role: 'STAFF', token: 'mock-staff-token', fullName: 'Nhân viên EasyFlight' },
                     'customer@gmail.com': { password: '123', role: 'CUSTOMER', token: 'mock-customer-token', fullName: 'Khách hàng mẫu' }
                 };
+
+                ADMIN_STAFF.forEach(staff => {
+                    mockUsers[staff.email] = {
+                        password: storedLogins[staff.email] || 'staff123',
+                        role: staff.role,
+                        token: `mock-${staff.role.toLowerCase()}-token`,
+                        fullName: staff.fullName
+                    };
+                });
 
                 const matchedUser = mockUsers[cleanEmail];
                 if (matchedUser && matchedUser.password === password) {
@@ -73,9 +90,20 @@ function SignInForm() {
                     }
                     return;
                 }
-                alert('Không thể kết nối đến server. Vui lòng kiểm tra xem Backend đã khởi động chưa (cổng 5000)!');
+                setErrorMsg('Không thể kết nối đến server. Vui lòng kiểm tra xem Backend đã khởi động chưa (cổng 5000)!');
             } else {
-                alert(error.response?.data?.message || 'Sai email hoặc mật khẩu!');
+                let msg = error.response?.data?.message || 'Sai email hoặc mật khẩu!';
+                const lowerMsg = msg.toLowerCase();
+                if (lowerMsg.includes('bad credentials') || lowerMsg.includes('password') || lowerMsg.includes('credentials')) {
+                    msg = 'Mật khẩu không đúng!';
+                } else if (lowerMsg.includes('user not found') || lowerMsg.includes('email not found')) {
+                    msg = 'Email không tồn tại trong hệ thống!';
+                } else if (lowerMsg.includes('email')) {
+                    msg = 'Email không hợp lệ hoặc không đúng!';
+                } else if (msg === error.response?.data?.message && !msg.includes(' ')) {
+                    msg = 'Sai email hoặc mật khẩu!'; 
+                }
+                setErrorMsg(msg);
             }
         } finally {
             setIsLoading(false);
@@ -119,6 +147,13 @@ function SignInForm() {
                     <p className="signin-subtext">
                         Vui lòng đăng nhập để tiếp tục hành trình của bạn.
                     </p>
+
+                    {errorMsg && (
+                        <div className="flex items-start gap-2 p-3 mb-5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                            <span className="leading-relaxed">{errorMsg}</span>
+                        </div>
+                    )}
 
                     {/* Form */}
                     <form className="signin-form-fields" onSubmit={handleLogin}>

@@ -1,9 +1,94 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronLeft, ChevronRight, FileDown, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Check, X, Send, Mail, Smartphone } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, FileDown, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Check, X, Send, Mail, Smartphone, Lock } from 'lucide-react';
 import { bookingService } from '../../api/services/bookingService';
 import { supportService } from '../../api/services/supportService';
 import { flightService } from '../../api/services/flightService';
 import { notificationService } from '../../api/services/notificationService';
+import { ADMIN_BOOKINGS, ADMIN_FLIGHTS } from '../../data/adminMockData';
+
+// ─── MOCK DATA derived from adminMockData ────────────────────────────────────
+const MOCK_CANCEL_REQUESTS = [
+  {
+    id: 'CR-001',
+    pnrCode: 'PNR-E6R1T',
+    customer: 'Nguyễn Minh Trí',
+    email: 'tri.nm@gmail.com',
+    avatar: 'MT',
+    flight: 'SGN → HAN',
+    flightCode: 'VJ621',
+    flightDate: '16/05/2026',
+    reason: 'Lịch trình cá nhân thay đổi',
+    requestDate: '12/05/2026',
+    refundAmount: '1.100.000 đ',
+    status: 'Đã duyệt',
+    ticketPrice: 1100000,
+  },
+  {
+    id: 'CR-002',
+    pnrCode: 'PNR-D2P5W',
+    customer: 'Phạm Thu Dung',
+    email: 'dung.pt@gmail.com',
+    avatar: 'PD',
+    flight: 'DAD → SGN',
+    flightCode: 'VN518',
+    flightDate: '16/05/2026',
+    reason: 'Lý do sức khỏe',
+    requestDate: '14/05/2026',
+    refundAmount: '1.975.000 đ',
+    status: 'Đang chờ',
+    ticketPrice: 1975000,
+  },
+  {
+    id: 'CR-003',
+    pnrCode: 'PNR-G1U4J',
+    customer: 'Đỗ Minh Khoa',
+    email: 'khoa.dm@gmail.com',
+    avatar: 'DK',
+    flight: 'SGN → CXR',
+    flightCode: 'QH412',
+    flightDate: '16/05/2026',
+    reason: 'Đặt nhầm chuyến bay',
+    requestDate: '15/05/2026',
+    refundAmount: '980.000 đ',
+    status: 'Đang chờ',
+    ticketPrice: 980000,
+  },
+];
+
+const MOCK_EXCHANGE_REQUESTS = [
+  {
+    id: 'EX-001',
+    pnrCode: 'PNR-B4M8R',
+    customer: 'Trần Thị Bình',
+    email: 'binh.tt@outlook.com',
+    avatar: 'TB',
+    flight: 'HAN → DAD',
+    flightCode: 'VJ305',
+    flightDate: '16/05/2026',
+    type: 'Đổi ngày bay',
+    from: 'VJ305 (HAN→DAD) - 850.000 đ',
+    to: 'Chuyến khác ngày 20/05/2026',
+    requestDate: '15/05/2026',
+    status: 'Đang chờ',
+    ticketPrice: 850000,
+  },
+  {
+    id: 'EX-002',
+    pnrCode: 'PNR-C9K2L',
+    customer: 'Lê Hoàng Cường',
+    email: 'cuong.lh@gmail.com',
+    avatar: 'LC',
+    flight: 'SGN → CXR',
+    flightCode: 'QH412',
+    flightDate: '16/05/2026',
+    type: 'Đổi ghế',
+    from: 'QH412 (SGN→CXR) ghế 12F - 1.470.000 đ',
+    to: 'Ghế lối đi hàng 10',
+    requestDate: '14/05/2026',
+    status: 'Đã duyệt',
+    ticketPrice: 1470000,
+  },
+];
 
 
 const TABS = [
@@ -50,7 +135,50 @@ const errorStatusDot = {
 };
 
 // ─── PREMIUM EXCEL EXPORTER ──────────────────────────────────────────────────
+const formatDateFilename = (date = new Date()) => {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${day}-${month}-${year}_${hours}h${minutes}`;
+};
+
 const downloadExcel = (title, headers, data, filename) => {
+  let staffName = 'Nhân viên EasyFlight';
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const stored = localStorage.getItem('local_staff_profile');
+    if (stored) {
+      const profile = JSON.parse(stored);
+      if (profile.email === user.email && profile.fullName) staffName = profile.fullName;
+    } else {
+      staffName = user.fullName || user.name || user.email || 'Nhân viên EasyFlight';
+    }
+  } catch {}
+
+  let sheetName = 'EasyFlight';
+  try {
+    let base = 'Bao cao';
+    const upTitle = title.toUpperCase();
+    if (upTitle.includes('HỦY VÉ')) base = 'Huy ve';
+    else if (upTitle.includes('ĐỔI VÉ')) base = 'Doi ve';
+    else if (upTitle.includes('KHIẾU NẠI')) base = 'Khieu nai';
+    else if (upTitle.includes('SỰ CỐ')) base = 'Su co';
+    else if (upTitle.includes('ĐẶT VÉ') || upTitle.includes('BOOKINGS')) base = 'Bookings';
+    else if (upTitle.includes('TUYẾN BAY') || upTitle.includes('ROUTES')) base = 'Tuyen bay';
+    else if (upTitle.includes('LỊCH BAY') || upTitle.includes('FLIGHTS')) base = 'Lich bay';
+    
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    sheetName = `${base} ${day}-${month}`.slice(0, 31);
+  } catch {}
+
+  const localTime = new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
   const meta = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
@@ -60,7 +188,7 @@ const downloadExcel = (title, headers, data, filename) => {
         <x:ExcelWorkbook>
           <x:ExcelWorksheets>
             <x:ExcelWorksheet>
-              <x:Name>EasyFlight Report</x:Name>
+              <x:Name>${sheetName}</x:Name>
               <x:WorksheetOptions>
                 <x:DisplayGridlines/>
               </x:WorksheetOptions>
@@ -71,49 +199,57 @@ const downloadExcel = (title, headers, data, filename) => {
       <![endif]-->
       <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .title { font-size: 16pt; font-weight: bold; color: #6C5CE7; text-align: center; height: 40px; }
-        .subtitle { font-size: 10pt; color: #6E7491; text-align: center; height: 25px; }
-        .header { background-color: #6C5CE7; color: #FFFFFF; font-weight: bold; text-align: center; height: 30px; border: 1px solid #D4D0F8; }
-        .row { height: 25px; }
-        .cell { border: 0.5pt solid #E8E8F0; font-size: 10pt; vertical-align: middle; }
-        .text { mso-number-format:"\\@"; text-align: left; }
+        .title { font-size: 16pt; font-weight: bold; color: #4F46E5; text-align: center; height: 45px; vertical-align: middle; }
+        .subtitle { font-size: 10pt; color: #475569; text-align: center; height: 25px; vertical-align: middle; }
+        .header { background-color: #4F46E5; color: #FFFFFF; font-weight: bold; text-align: center; height: 32px; border: 0.5pt solid #C7D2FE; vertical-align: middle; }
+        .row-even { background-color: #F8FAFC; height: 26px; }
+        .row-odd { background-color: #FFFFFF; height: 26px; }
+        .cell { border: 0.5pt solid #E2E8F0; font-size: 10pt; vertical-align: middle; padding: 4px; }
+        .text { mso-number-format:"\\\\@"; text-align: left; }
         .number { mso-number-format:"#,##0"; text-align: right; }
         .center { text-align: center; }
-        .badge-pending { color: #B45309; background-color: #FEF3C7; font-weight: bold; text-align: center; }
-        .badge-approved { color: #047857; background-color: #D1FAE5; font-weight: bold; text-align: center; }
-        .badge-rejected { color: #B91C1C; background-color: #FEE2E2; font-weight: bold; text-align: center; }
+        .badge-pending { color: #D97706; background-color: #FEF3C7; font-weight: bold; text-align: center; }
+        .badge-approved { color: #059669; background-color: #D1FAE5; font-weight: bold; text-align: center; }
+        .badge-rejected { color: #DC2626; background-color: #FEE2E2; font-weight: bold; text-align: center; }
       </style>
     </head>
     <body>
       <table>
         <tr><td colspan="${headers.length}" class="title">${title}</td></tr>
-        <tr><td colspan="${headers.length}" class="subtitle">Hệ thống quản lý vé EasyFlight - Báo cáo xuất ngày ${new Date().toLocaleString('vi-VN')}</td></tr>
+        <tr><td colspan="${headers.length}" class="subtitle">Hệ thống EasyFlight • Ngày xuất: ${localTime} • Người xuất: ${staffName}</td></tr>
         <tr><td colspan="${headers.length}" style="height: 15px;"></td></tr>
         <tr>
           ${headers.map(h => `<td class="header">${h}</td>`).join('')}
         </tr>
-        ${data.map((row, index) => `
-          <tr class="row">
-            ${row.map(cell => {
-              let cellClass = 'cell text';
-              let val = cell ?? '';
-              
-              if (typeof val === 'number' || (typeof val === 'string' && val.endsWith(' đ') && !isNaN(parseFloat(val.replace(/\./g, '').replace(' đ', ''))))) {
-                cellClass = 'cell number';
-              } else if (val === 'Đang chờ' || val === 'OPEN' || val === 'Chờ xử lý' || val === 'Đang xử lý') {
-                cellClass = 'cell badge-pending';
-              } else if (val === 'Đã duyệt' || val === 'RESOLVED' || val === 'Đã xử lý' || val === 'Đã phê duyệt') {
-                cellClass = 'cell badge-approved';
-              } else if (val === 'Bị từ chối' || val === 'CLOSED' || val === 'CRITICAL') {
-                cellClass = 'cell badge-rejected';
-              } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(val) || val.includes(':')) {
-                cellClass = 'cell center';
-              }
-              
-              return `<td class="${cellClass}">${val}</td>`;
-            }).join('')}
-          </tr>
-        `).join('')}
+        ${data.map((row, index) => {
+          const rowClass = index % 2 === 0 ? 'row-even' : 'row-odd';
+          return `
+            <tr class="${rowClass}">
+              ${row.map(cell => {
+                let cellClass = 'cell text';
+                let val = cell ?? '';
+                
+                if (typeof val === 'number' || (typeof val === 'string' && val.endsWith(' đ') && !isNaN(parseFloat(val.replace(/\./g, '').replace(' đ', ''))))) {
+                  cellClass = 'cell number';
+                } 
+                else if (val === 'Đang chờ' || val === 'OPEN' || val === 'Chờ xử lý' || val === 'Đang xử lý' || val === 'Pending' || val === 'UNPAID' || val === 'PENDING' || val === 'Scheduled' || val === 'SCHEDULED' || val === 'Boarding' || val === 'BOARDING') {
+                  cellClass = 'cell badge-pending';
+                } else if (val === 'Đã duyệt' || val === 'RESOLVED' || val === 'Đã xử lý' || val === 'Đã phê duyệt' || val === 'Confirmed' || val === 'PAID' || val === 'CONFIRMED' || val === 'Hoạt động' || val === 'ACTIVE') {
+                  cellClass = 'cell badge-approved';
+                } else if (val === 'Bị từ chối' || val === 'CLOSED' || val === 'CRITICAL' || val === 'Cancelled' || val === 'Expired' || val === 'REFUNDED' || val === 'CANCELLED' || val === 'EXPIRED' || val === 'Ngừng hoạt động' || val === 'Ngừng') {
+                  cellClass = 'cell badge-rejected';
+                } 
+                else if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(val) || val.includes(':') || /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                  cellClass = 'cell center';
+                } else if (val.startsWith('#') || val.startsWith('PNR-') || val.startsWith('FLIGHT-')) {
+                  cellClass = 'cell center';
+                }
+                
+                return `<td class="${cellClass}">${val}</td>`;
+              }).join('')}
+            </tr>
+          `;
+        }).join('')}
       </table>
     </body>
     </html>
@@ -184,8 +320,8 @@ function SearchFilter({ search, setSearch, status, setStatus, statusOptions }) {
       {statusOptions && statusOptions.length > 0 && (
         <div className="w-48">
           <label className="text-xs font-semibold text-[#6E7491] mb-1.5 block">Trạng thái</label>
-          <select 
-            value={status} 
+          <select
+            value={status}
             onChange={e => setStatus(e.target.value)}
             className="w-full px-3 py-2.5 border border-[#E8E8F0] rounded-lg text-sm text-[#6E7491] bg-white focus:outline-none cursor-pointer"
           >
@@ -232,24 +368,24 @@ const mapSupportToCancelRequest = (support, ticketMap) => {
   const email = support.createdByFullName
     ? `${passengerName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/\s+/g, '')}@gmail.com`
     : 'khachhang@gmail.com';
-  
+
   const status = support.status === 'APPROVED'
     ? 'Đã duyệt'
     : (support.status === 'REJECTED' ? 'Bị từ chối' : 'Đang chờ');
 
   const dbData = ticketMap[support.ticketId];
   const ticketPrice = dbData?.ticket?.price || 1500000;
-  
+
   const feeAmountVal = support.feeAmount || (ticketPrice * 0.8);
   const refundAmount = `${Number(feeAmountVal).toLocaleString('vi-VN')} đ`;
 
-  const flightName = dbData?.flight 
+  const flightName = dbData?.flight
     ? `${dbData.flight.departureAirportCode || dbData.flight.departureAirport?.airportCode || 'SGN'} → ${dbData.flight.arrivalAirportCode || dbData.flight.arrivalAirport?.airportCode || 'HAN'}`
     : `Vé #${support.ticketCode || support.ticketId}`;
-  
+
   const flightCode = dbData?.flight?.flightCode || support.ticketCode || 'N/A';
-  const flightDate = dbData?.flight?.departureTime 
-    ? new Date(dbData.flight.departureTime).toLocaleDateString('vi-VN') 
+  const flightDate = dbData?.flight?.departureTime
+    ? new Date(dbData.flight.departureTime).toLocaleDateString('vi-VN')
     : (support.createdAt ? new Date(support.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay');
 
   return {
@@ -278,7 +414,7 @@ const mapSupportToExchangeRequest = (support, ticketMap) => {
   const email = support.createdByFullName
     ? `${passengerName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/\s+/g, '')}@gmail.com`
     : 'khachhang@gmail.com';
-  
+
   const status = support.status === 'APPROVED'
     ? 'Đã duyệt'
     : (support.status === 'REJECTED' ? 'Bị từ chối' : 'Đang chờ');
@@ -286,13 +422,13 @@ const mapSupportToExchangeRequest = (support, ticketMap) => {
   const dbData = ticketMap[support.ticketId];
   const ticketPrice = dbData?.ticket?.price || 1500000;
 
-  const flightName = dbData?.flight 
+  const flightName = dbData?.flight
     ? `${dbData.flight.departureAirportCode || dbData.flight.departureAirport?.airportCode || 'SGN'} → ${dbData.flight.arrivalAirportCode || dbData.flight.arrivalAirport?.airportCode || 'HAN'}`
     : `Vé #${support.ticketCode || support.ticketId}`;
-  
+
   const flightCode = dbData?.flight?.flightCode || support.ticketCode || 'N/A';
-  const flightDate = dbData?.flight?.departureTime 
-    ? new Date(dbData.flight.departureTime).toLocaleDateString('vi-VN') 
+  const flightDate = dbData?.flight?.departureTime
+    ? new Date(dbData.flight.departureTime).toLocaleDateString('vi-VN')
     : (support.createdAt ? new Date(support.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay');
 
   const localStates = JSON.parse(localStorage.getItem('local_support_state') || '{}');
@@ -301,10 +437,10 @@ const mapSupportToExchangeRequest = (support, ticketMap) => {
   let toText = 'Thay đổi theo yêu cầu';
   if (local.newFlightCode) {
     const diff = Number(local.feeAmount || 0);
-    const diffText = diff > 0 
-      ? `(+${Number(diff).toLocaleString('vi-VN')} đ)` 
-      : diff < 0 
-        ? `(Hoàn ${Number(-diff).toLocaleString('vi-VN')} đ)` 
+    const diffText = diff > 0
+      ? `(+${Number(diff).toLocaleString('vi-VN')} đ)`
+      : diff < 0
+        ? `(Hoàn ${Number(-diff).toLocaleString('vi-VN')} đ)`
         : '(0 đ)';
     toText = `${local.newFlightCode} (${local.newFlightRoute}) - ${diffText}`;
   }
@@ -319,8 +455,8 @@ const mapSupportToExchangeRequest = (support, ticketMap) => {
     flightCode: flightCode,
     flightDate: flightDate,
     type: 'Đổi vé',
-    from: dbData?.flight 
-      ? `${dbData.flight.flightCode} (${dbData.flight.departureAirportCode || 'SGN'}→${dbData.flight.arrivalAirportCode || 'HAN'}) - ${Number(ticketPrice).toLocaleString('vi-VN')} đ` 
+    from: dbData?.flight
+      ? `${dbData.flight.flightCode} (${dbData.flight.departureAirportCode || 'SGN'}→${dbData.flight.arrivalAirportCode || 'HAN'}) - ${Number(ticketPrice).toLocaleString('vi-VN')} đ`
       : 'Vé hiện tại',
     to: toText,
     requestDate: support.createdAt ? new Date(support.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay',
@@ -339,7 +475,7 @@ function CancelTab({ requests, addToast, onRequestAction }) {
   const [page, setPage] = useState(1);
 
   const filtered = requests.filter(r => {
-    const matchesSearch = 
+    const matchesSearch =
       r.id.toLowerCase().includes(search.toLowerCase()) ||
       r.customer.toLowerCase().includes(search.toLowerCase()) ||
       r.email.toLowerCase().includes(search.toLowerCase());
@@ -361,7 +497,7 @@ function CancelTab({ requests, addToast, onRequestAction }) {
       r.refundAmount,
       r.status
     ]);
-    downloadExcel('DANH SÁCH YÊU CẦU HỦY VÉ', headers, data, `yeu_cau_huy_ve_${new Date().toISOString().slice(0, 10)}.xls`);
+    downloadExcel('DANH SÁCH YÊU CẦU HỦY VÉ', headers, data, `Yeu_Cau_Huy_Ve_${formatDateFilename(new Date())}.xls`);
     addToast('Xuất báo cáo thành công!', 'success');
   };
 
@@ -389,17 +525,24 @@ function CancelTab({ requests, addToast, onRequestAction }) {
         </button>
       </div>
 
-      <SearchFilter 
-        search={search} 
-        setSearch={setSearch} 
-        status={status} 
-        setStatus={setStatus} 
+      <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3.5 mb-5 shadow-sm">
+        <AlertCircle className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" />
+        <div className="text-xs text-indigo-700 leading-relaxed font-semibold">
+          Quy trình nghiệp vụ: Nhân viên (Staff) được quyền rà soát điều kiện vé và phê duyệt yêu cầu hủy vé/hoàn tiền của khách hàng theo đúng quy định hàng không hiện hành. Vui lòng đối chiếu cẩn thận trước khi bấm Duyệt.
+        </div>
+      </div>
+
+      <SearchFilter
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
         statusOptions={[
           { value: 'All', label: 'Tất cả trạng thái' },
           { value: 'Đang chờ', label: 'Đang chờ' },
           { value: 'Đã duyệt', label: 'Đã duyệt' },
           { value: 'Bị từ chối', label: 'Bị từ chối' }
-        ]} 
+        ]}
       />
 
       <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
@@ -484,7 +627,7 @@ function ExchangeTab({ requests, addToast, onRequestAction }) {
   const [page, setPage] = useState(1);
 
   const filtered = requests.filter(r => {
-    const matchesSearch = 
+    const matchesSearch =
       r.id.toLowerCase().includes(search.toLowerCase()) ||
       r.customer.toLowerCase().includes(search.toLowerCase()) ||
       r.email.toLowerCase().includes(search.toLowerCase());
@@ -507,7 +650,7 @@ function ExchangeTab({ requests, addToast, onRequestAction }) {
       r.requestDate,
       r.status
     ]);
-    downloadExcel('DANH SÁCH YÊU CẦU ĐỔI VÉ', headers, data, `yeu_cau_doi_ve_${new Date().toISOString().slice(0, 10)}.xls`);
+    downloadExcel('DANH SÁCH YÊU CẦU ĐỔI VÉ', headers, data, `Yeu_Cau_Doi_Ve_${formatDateFilename(new Date())}.xls`);
     addToast('Xuất báo cáo thành công!', 'success');
   };
 
@@ -535,17 +678,17 @@ function ExchangeTab({ requests, addToast, onRequestAction }) {
         </button>
       </div>
 
-      <SearchFilter 
-        search={search} 
-        setSearch={setSearch} 
-        status={status} 
-        setStatus={setStatus} 
+      <SearchFilter
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
         statusOptions={[
           { value: 'All', label: 'Tất cả trạng thái' },
           { value: 'Đang chờ', label: 'Đang chờ' },
           { value: 'Đã duyệt', label: 'Đã duyệt' },
           { value: 'Bị từ chối', label: 'Bị từ chối' }
-        ]} 
+        ]}
       />
 
       <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
@@ -643,7 +786,7 @@ function ComplaintTab({ complaints, setComplaints, addToast, refetch }) {
   const [loadingId, setLoadingId] = useState(null);
 
   const filtered = complaints.filter(c => {
-    const matchesSearch = 
+    const matchesSearch =
       String(c.id).toLowerCase().includes(search.toLowerCase()) ||
       c.customer.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -663,7 +806,7 @@ function ComplaintTab({ complaints, setComplaints, addToast, refetch }) {
       c.createdAt ? new Date(c.createdAt).toLocaleString('vi-VN') : '—',
       c.status
     ]);
-    downloadExcel('DANH SÁCH KHIẾU NẠI KHÁCH HÀNG', headers, data, `khieu_nai_${new Date().toISOString().slice(0, 10)}.xls`);
+    downloadExcel('DANH SÁCH KHIẾU NẠI KHÁCH HÀNG', headers, data, `Khieu_Nai_Khach_Hang_${formatDateFilename(new Date())}.xls`);
     addToast('Xuất báo cáo thành công!', 'success');
   };
 
@@ -723,18 +866,18 @@ function ComplaintTab({ complaints, setComplaints, addToast, refetch }) {
         )}
       </div>
 
-      <SearchFilter 
-        search={search} 
-        setSearch={setSearch} 
-        status={status} 
-        setStatus={setStatus} 
+      <SearchFilter
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
         statusOptions={[
           { value: 'All', label: 'Tất cả trạng thái' },
           { value: 'OPEN', label: 'OPEN' },
           { value: 'IN PROGRESS', label: 'IN PROGRESS' },
           { value: 'RESOLVED', label: 'RESOLVED' },
           { value: 'CLOSED', label: 'CLOSED' }
-        ]} 
+        ]}
       />
 
       <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
@@ -747,7 +890,7 @@ function ComplaintTab({ complaints, setComplaints, addToast, refetch }) {
             <p className="text-xs text-[#6E7491] max-w-md mb-6 leading-relaxed">
               Hệ thống EasyFlight hiện tại chưa ghi nhận dữ liệu khiếu nại nào trong database MySQL. Bạn có muốn khởi tạo bộ dữ liệu mẫu thử nghiệm để kiểm tra tính năng?
             </p>
-            <button 
+            <button
               onClick={generateMockData}
               className="px-5 py-2.5 bg-[#6C5CE7] hover:bg-[#5A4BD1] text-white rounded-xl text-xs font-bold shadow-md shadow-[#6C5CE7]/20 transition-all flex items-center gap-2"
             >
@@ -870,7 +1013,7 @@ function SystemErrorTab({ errors, setErrors, addToast, refetch }) {
   const [loadingId, setLoadingId] = useState(null);
 
   const filtered = errors.filter(e => {
-    const matchesSearch = 
+    const matchesSearch =
       String(e.id).toLowerCase().includes(search.toLowerCase()) ||
       e.type.toLowerCase().includes(search.toLowerCase()) ||
       e.description.toLowerCase().includes(search.toLowerCase());
@@ -888,7 +1031,7 @@ function SystemErrorTab({ errors, setErrors, addToast, refetch }) {
       e.severity,
       e.status
     ]);
-    downloadExcel('DANH SÁCH SỰ CỐ HỆ THỐNG VÉ', headers, data, `su_co_he_thong_${new Date().toISOString().slice(0, 10)}.xls`);
+    downloadExcel('DANH SÁCH SỰ CỐ HỆ THỐNG VÉ', headers, data, `Su_Co_He_Thong_${formatDateFilename(new Date())}.xls`);
     addToast('Xuất báo cáo thành công!', 'success');
   };
 
@@ -946,17 +1089,17 @@ function SystemErrorTab({ errors, setErrors, addToast, refetch }) {
         )}
       </div>
 
-      <SearchFilter 
-        search={search} 
-        setSearch={setSearch} 
-        status={status} 
-        setStatus={setStatus} 
+      <SearchFilter
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
         statusOptions={[
           { value: 'All', label: 'Tất cả trạng thái' },
           { value: 'Chờ xử lý', label: 'Chờ xử lý' },
           { value: 'Đang xử lý', label: 'Đang xử lý' },
           { value: 'Đã xử lý', label: 'Đã xử lý' }
-        ]} 
+        ]}
       />
 
       <div className="bg-white rounded-2xl border border-[#E8E8F0] shadow-sm overflow-hidden">
@@ -969,7 +1112,7 @@ function SystemErrorTab({ errors, setErrors, addToast, refetch }) {
             <p className="text-xs text-[#6E7491] max-w-md mb-6 leading-relaxed">
               Hệ thống EasyFlight hiện tại chưa có báo cáo sự cố phần mềm nào từ hệ thống. Bạn có muốn tạo các báo cáo mẫu để kiểm thử quy trình xử lý không?
             </p>
-            <button 
+            <button
               onClick={generateMockData}
               className="px-5 py-2.5 bg-[#6C5CE7] hover:bg-[#5A4BD1] text-white rounded-xl text-xs font-bold shadow-md shadow-[#6C5CE7]/20 transition-all flex items-center gap-2"
             >
@@ -1100,7 +1243,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
 
     const isApprove = action === 'Đã duyệt';
     const isCancel = type === 'cancel';
-    
+
     let sub = '';
     let body = '';
     let sms = '';
@@ -1120,7 +1263,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
       const ticketPrice = request.ticketPrice || 1500000;
       const newPrice = selectedFlight ? selectedFlight.basePrice : ticketPrice;
       const diff = Number(newPrice) - Number(ticketPrice);
-      
+
       let diffText = '0 đ';
       let policyText = 'Không phát sinh chênh lệch giá vé.';
       if (diff > 0) {
@@ -1131,8 +1274,8 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
         policyText = `Chính sách áp dụng: Phát sinh chênh lệch giá vé giảm. EasyFlight sẽ hoàn trả lại số tiền chênh lệch ${Number(-diff).toLocaleString('vi-VN')} đ vào tài khoản thanh toán ban đầu của Quý khách trong 3-5 ngày làm việc.`;
       }
 
-      const toFlightText = selectedFlight 
-        ? `${selectedFlight.flightCode} (${selectedFlight.departureAirportCode} → ${selectedFlight.arrivalAirportCode}) - Khởi hành: ${new Date(selectedFlight.departureTime).toLocaleDateString('vi-VN')} ${new Date(selectedFlight.departureTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}`
+      const toFlightText = selectedFlight
+        ? `${selectedFlight.flightCode} (${selectedFlight.departureAirportCode} → ${selectedFlight.arrivalAirportCode}) - Khởi hành: ${new Date(selectedFlight.departureTime).toLocaleDateString('vi-VN')} ${new Date(selectedFlight.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
         : 'Chuyến bay mới theo yêu cầu';
 
       if (isApprove) {
@@ -1196,7 +1339,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md overflow-y-auto py-6 px-4">
       <div className="bg-white rounded-3xl border border-[#E8E8F0] shadow-2xl w-[1000px] max-w-full overflow-hidden flex flex-col md:flex-row h-[680px] relative animate-in zoom-in-95 duration-200">
-        
+
         {sendingState && (
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white p-6">
             <div className="w-20 h-20 relative flex items-center justify-center mb-6">
@@ -1208,13 +1351,13 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
                 </div>
               )}
             </div>
-            
+
             <h3 className="text-xl font-bold mb-2 tracking-wide text-center">
               {sendingState === 'sms' && 'Đang kết nối cổng SMS Gateway...'}
               {sendingState === 'email' && 'Đang gửi Email qua SMTP Server...'}
               {sendingState === 'done' && 'Gửi thông báo thành công!'}
             </h3>
-            
+
             <p className="text-sm text-slate-400 mb-6 text-center max-w-md">
               {sendingState === 'sms' && 'Hệ thống đang mã hóa các ký tự và truyền qua kênh viễn thông...'}
               {sendingState === 'email' && `Đang chuyển phát Email và file đính kèm E-ticket tới ${request.email}...`}
@@ -1222,8 +1365,8 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
             </p>
 
             <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-              <div 
-                className="h-full bg-[#6C5CE7] transition-all duration-500 ease-out" 
+              <div
+                className="h-full bg-[#6C5CE7] transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -1234,9 +1377,8 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
         <div className="w-full md:w-3/5 p-6 flex flex-col border-r border-[#E8E8F0] overflow-y-auto">
           <div className="flex items-center justify-between pb-4 border-b border-[#E8E8F0] mb-4">
             <div>
-              <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                isApprove ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'
-              }`}>
+              <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1 ${isApprove ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'
+                }`}>
                 {isApprove ? 'Đồng ý' : 'Từ chối'} • {type === 'cancel' ? 'Hủy vé' : 'Đổi vé'}
               </span>
               <h2 className="text-lg font-bold text-[#27273F]">
@@ -1275,18 +1417,18 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
               >
                 {flights.map(f => (
                   <option key={f.id} value={f.id}>
-                    {f.flightCode} • {f.departureAirportCode} → {f.arrivalAirportCode} • Khởi hành: {new Date(f.departureTime).toLocaleDateString('vi-VN')} {new Date(f.departureTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ({Number(f.basePrice).toLocaleString('vi-VN')} đ)
+                    {f.flightCode} • {f.departureAirportCode} → {f.arrivalAirportCode} • Khởi hành: {new Date(f.departureTime).toLocaleDateString('vi-VN')} {new Date(f.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ({Number(f.basePrice).toLocaleString('vi-VN')} đ)
                   </option>
                 ))}
               </select>
-              
+
               {(() => {
                 const selectedFlight = flights.find(f => String(f.id) === String(selectedFlightId));
                 if (!selectedFlight) return null;
                 const ticketPrice = request.ticketPrice || 1500000;
                 const newPrice = selectedFlight.basePrice;
                 const diff = Number(newPrice) - Number(ticketPrice);
-                
+
                 return (
                   <div className="grid grid-cols-3 gap-3 border-t border-slate-200/60 pt-3 text-xs">
                     <div>
@@ -1303,23 +1445,38 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
                     </div>
                     <div>
                       <span className="text-[#9CA3AF] block font-medium mb-0.5">Chênh lệch tài chính</span>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold mt-0.5 ${
-                        diff > 0 
-                          ? 'text-amber-700 bg-amber-50 border border-amber-200' 
-                          : diff < 0 
-                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold mt-0.5 ${diff > 0
+                          ? 'text-amber-700 bg-amber-50 border border-amber-200'
+                          : diff < 0
+                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
                             : 'text-slate-600 bg-slate-100 border border-slate-200'
-                      }`}>
-                        {diff > 0 
-                          ? `Khách đóng thêm: +${Number(diff).toLocaleString('vi-VN')} đ` 
-                          : diff < 0 
-                            ? `Hoàn trả cho khách: -${Number(-diff).toLocaleString('vi-VN')} đ` 
+                        }`}>
+                        {diff > 0
+                          ? `Khách đóng thêm: +${Number(diff).toLocaleString('vi-VN')} đ`
+                          : diff < 0
+                            ? `Hoàn trả cho khách: -${Number(-diff).toLocaleString('vi-VN')} đ`
                             : '0 đ (Bằng giá)'}
                       </span>
                     </div>
                   </div>
                 );
               })()}
+            </div>
+          )}
+
+          {isApprove && (
+            <div className={`mb-4 border rounded-2xl p-4 ${
+              type === 'cancel' 
+                ? 'bg-red-50 border-red-200 text-red-700' 
+                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            }`}>
+              <p className="text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {type === 'cancel' 
+                  ? 'Hành động Hủy vé: Hệ thống sẽ thực hiện hủy vé khách hàng, cập nhật trạng thái đặt vé thành CANCELLED và tình trạng thanh toán thành REFUNDED.'
+                  : 'Hành động Đổi vé: Hệ thống sẽ phê duyệt yêu cầu đổi vé và ghi nhận thông tin chuyến bay mới.'
+                }
+              </p>
             </div>
           )}
 
@@ -1330,30 +1487,30 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
             </label>
             <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input 
-                  type="checkbox" 
-                  checked={sendEmail} 
-                  onChange={e => setSendEmail(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={e => setSendEmail(e.target.checked)}
                   className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
                 />
                 <span className="text-xs font-semibold text-slate-700">Email</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input 
-                  type="checkbox" 
-                  checked={sendInApp} 
-                  onChange={e => setSendInApp(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  checked={sendInApp}
+                  onChange={e => setSendInApp(e.target.checked)}
                   className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
                 />
                 <span className="text-xs font-semibold text-slate-700">Thông báo App khách hàng</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input 
-                  type="checkbox" 
-                  checked={sendSms} 
-                  onChange={e => setSendSms(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  checked={sendSms}
+                  onChange={e => setSendSms(e.target.checked)}
                   className="rounded text-[#6C5CE7] focus:ring-[#6C5CE7]/30 w-4 h-4 cursor-pointer"
                 />
                 <span className="text-xs font-semibold text-slate-700">Mobile SMS</span>
@@ -1365,11 +1522,11 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
             <div className="flex items-center gap-1.5 text-xs font-bold text-[#6E7491] uppercase tracking-wider">
               <Mail className="w-4 h-4 text-[#6C5CE7]" /> Soạn Email Thông Báo
             </div>
-            
+
             <div>
               <label className="text-[11px] font-semibold text-[#9CA3AF] block mb-1">Tiêu đề thư (Subject)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={emailSubject}
                 onChange={e => setEmailSubject(e.target.value)}
                 className="w-full px-3 py-2 border border-[#E8E8F0] rounded-xl text-sm placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/40 font-medium"
@@ -1378,7 +1535,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
 
             <div className="flex-1 flex flex-col">
               <label className="text-[11px] font-semibold text-[#9CA3AF] block mb-1">Nội dung Email</label>
-              <textarea 
+              <textarea
                 value={emailBody}
                 onChange={e => setEmailBody(e.target.value)}
                 className="w-full flex-1 p-3 border border-[#E8E8F0] rounded-xl text-xs placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6C5CE7]/20 focus:border-[#6C5CE7]/40 font-mono resize-none leading-relaxed"
@@ -1394,7 +1551,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
 
           <div className="w-[210px] h-[330px] bg-slate-950 rounded-[30px] p-2 shadow-xl relative border-4 border-slate-800 flex flex-col shrink-0 mb-3 select-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-slate-950 w-20 h-3 rounded-b-xl z-20" />
-            
+
             <div className="bg-[#ECE5DD] w-full h-full rounded-[22px] overflow-hidden flex flex-col relative border border-slate-900/10">
               <div className="h-4 bg-slate-900/10 text-[7px] text-slate-800 flex justify-between items-center px-3 pt-1 font-semibold">
                 <span>03:45</span>
@@ -1403,7 +1560,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
                   <span>🔋</span>
                 </div>
               </div>
-              
+
               <div className="bg-slate-800 text-white h-8 px-2 flex items-center gap-1.5 shrink-0">
                 <div className="w-4 h-4 rounded-full bg-[#6C5CE7] flex items-center justify-center text-[7px] font-bold">EF</div>
                 <div className="flex flex-col">
@@ -1411,7 +1568,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
                   <span className="text-[5px] text-slate-300">Brandname</span>
                 </div>
               </div>
-              
+
               <div className="flex-1 p-2 space-y-1.5 overflow-y-auto text-[8px] flex flex-col justify-end">
                 <div className="bg-white text-slate-800 p-2 rounded-xl rounded-tl-none max-w-[95%] shadow-sm self-start break-words border border-slate-200 leading-relaxed font-sans">
                   {smsText}
@@ -1432,7 +1589,7 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
 
           <div className="w-full space-y-1 mb-3">
             <label className="text-[11px] font-semibold text-[#9CA3AF] block">Nội dung tin nhắn SMS</label>
-            <textarea 
+            <textarea
               value={smsText}
               onChange={e => setSmsText(e.target.value)}
               rows={2}
@@ -1441,21 +1598,23 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
           </div>
 
           <div className="w-full flex gap-2">
-            <button 
+            <button
               onClick={onCancel}
               className="flex-1 py-2 border border-[#E8E8F0] text-[#6E7491] hover:bg-[#F0EFFA] rounded-xl text-xs font-semibold transition-colors"
             >
               Hủy bỏ
             </button>
-            <button 
+            <button
               onClick={handleSend}
-              className={`flex-1 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md ${
-                isApprove 
-                  ? 'bg-emerald-600 hover:bg-emerald-700' 
+              className={`flex-1 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md ${isApprove
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
                   : 'bg-red-600 hover:bg-red-700'
-              }`}
+                }`}
             >
-              Xác nhận & Gửi
+              {type === 'cancel' 
+                ? (isApprove ? 'Xác nhận Hủy vé & Gửi' : 'Xác nhận Từ chối & Gửi')
+                : (isApprove ? 'Xác nhận Đổi vé & Gửi' : 'Xác nhận Từ chối & Gửi')
+              }
             </button>
           </div>
         </div>
@@ -1467,10 +1626,10 @@ function DispatchNotificationModal({ isOpen, type, action, request, onConfirm, o
 // ─── MAIN CUSTOMER SUPPORT PAGE ──────────────────────────────────────────────
 function CustomerSupportPage() {
   const [activeTab, setActiveTab] = useState('cancel');
-  
+
   const [cancelRequests, setCancelRequests] = useState([]);
   const [exchangeRequests, setExchangeRequests] = useState([]);
-  
+
   const [flightsList, setFlightsList] = useState([]);
   const [apiLoading, setApiLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
@@ -1520,11 +1679,37 @@ function CustomerSupportPage() {
         }
       });
 
+      const localStates = JSON.parse(localStorage.getItem('local_support_state') || '{}');
+      const mappedMockCancel = MOCK_CANCEL_REQUESTS.map(r => {
+        const local = localStates[r.id];
+        return {
+          ...r,
+          status: local && local.status ? (local.status === 'APPROVED' ? 'Đã duyệt' : 'Bị từ chối') : r.status
+        };
+      });
+      const mappedMockExchange = MOCK_EXCHANGE_REQUESTS.map(r => {
+        const local = localStates[r.id];
+        return {
+          ...r,
+          status: local && local.status ? (local.status === 'APPROVED' ? 'Đã duyệt' : 'Bị từ chối') : r.status
+        };
+      });
+
       const mappedCancel = refunds.map(r => mapSupportToCancelRequest(r, ticketMap));
       const mappedExchange = changes.map(c => mapSupportToExchangeRequest(c, ticketMap));
 
-      setCancelRequests(mappedCancel);
-      setExchangeRequests(mappedExchange);
+      setCancelRequests(mappedCancel.length > 0 ? mappedCancel : mappedMockCancel);
+      setExchangeRequests(mappedExchange.length > 0 ? mappedExchange : mappedMockExchange);
+      setFlightsList(flights.length > 0 ? flights : ADMIN_FLIGHTS.map(f => ({
+        id: f.id,
+        flightCode: f.id,
+        airlineName: f.airline,
+        departureAirportCode: f.from,
+        arrivalAirportCode: f.to,
+        departureTime: `${f.date}T${f.dep}:00`,
+        arrivalTime: `${f.date}T${f.arr}:00`,
+        basePrice: f.basePrice,
+      })));
     } catch (err) {
       console.error("Lỗi fetch support requests từ database:", err);
       addToast("Không thể đồng bộ dữ liệu từ server. Đang hiển thị danh sách trống.", "error");
@@ -1553,19 +1738,21 @@ function CustomerSupportPage() {
     if (!request) return;
 
     const isApprove = action === 'Đã duyệt';
-    const id = Number(request.id);
+    const id = isNaN(Number(request.id)) ? request.id : Number(request.id);
+    const isMock = isNaN(Number(request.id)) || request.isDb !== true;
 
     try {
       if (type === 'cancel' || type === 'exchange') {
-        if (isApprove) {
-          await supportService.approveRequest(id);
-          
+        if (isMock) {
+          // Bỏ qua gọi API cho dữ liệu mẫu, chỉ lưu trạng thái cục bộ
+          supportService.saveLocalSupportState(id, { status: isApprove ? 'APPROVED' : 'REJECTED' });
+
           if (type === 'exchange' && selectedFlightId) {
             const selectedFlight = flightsList.find(f => String(f.id) === String(selectedFlightId));
             const ticketPrice = request.ticketPrice || 1500000;
             const newPrice = selectedFlight ? selectedFlight.basePrice : ticketPrice;
             const diff = Number(newPrice) - Number(ticketPrice);
-            
+
             supportService.saveLocalSupportState(id, {
               status: 'APPROVED',
               feeAmount: diff,
@@ -1575,7 +1762,52 @@ function CustomerSupportPage() {
             });
           }
         } else {
-          await supportService.rejectRequest(id);
+          // Giao tiếp với database cho dữ liệu thật
+          if (isApprove) {
+            await supportService.approveRequest(id);
+
+            if (type === 'exchange' && selectedFlightId) {
+              const selectedFlight = flightsList.find(f => String(f.id) === String(selectedFlightId));
+              const ticketPrice = request.ticketPrice || 1500000;
+              const newPrice = selectedFlight ? selectedFlight.basePrice : ticketPrice;
+              const diff = Number(newPrice) - Number(ticketPrice);
+
+              supportService.saveLocalSupportState(id, {
+                status: 'APPROVED',
+                feeAmount: diff,
+                newFlightCode: selectedFlight?.flightCode || 'N/A',
+                newFlightDate: selectedFlight ? new Date(selectedFlight.departureTime).toLocaleDateString('vi-VN') : 'N/A',
+                newFlightRoute: selectedFlight ? `${selectedFlight.departureAirportCode} → ${selectedFlight.arrivalAirportCode}` : 'N/A'
+              });
+            }
+          } else {
+            await supportService.rejectRequest(id);
+          }
+        }
+
+        // Đồng bộ trạng thái hủy vé sang danh sách đặt vé (Booking)
+        if (type === 'cancel' && isApprove) {
+          try {
+            const pnr = request.pnrCode;
+            if (pnr) {
+              const storedPayments = JSON.parse(localStorage.getItem('mock_payments') || '{}');
+              const matching = ADMIN_BOOKINGS.find(b => b.pnr === pnr);
+              if (matching) {
+                storedPayments[matching.id] = 'REFUNDED';
+                localStorage.setItem('mock_payments', JSON.stringify(storedPayments));
+
+                const localBookings = JSON.parse(localStorage.getItem('local_bookings_state') || '{}');
+                localBookings[matching.id] = {
+                  ...(localBookings[matching.id] || {}),
+                  status: 'CANCELLED',
+                  paymentStatus: 'REFUNDED'
+                };
+                localStorage.setItem('local_bookings_state', JSON.stringify(localBookings));
+              }
+            }
+          } catch (err) {
+            console.error("Lỗi khi đồng bộ huỷ vé sang danh sách booking:", err);
+          }
         }
 
         // Call notificationService.create for each selected channel
@@ -1589,8 +1821,8 @@ function CustomerSupportPage() {
             title = `EF Alert PNR ${request.pnrCode || request.id}`;
             content = smsText || emailBody.slice(0, 160);
           } else { // IN_APP
-            title = isApprove 
-              ? `Yêu cầu ${type === 'cancel' ? 'hủy' : 'đổi'} vé đã được duyệt` 
+            title = isApprove
+              ? `Yêu cầu ${type === 'cancel' ? 'hủy' : 'đổi'} vé đã được duyệt`
               : `Yêu cầu ${type === 'cancel' ? 'hủy' : 'đổi'} vé bị từ chối`;
             content = `Yêu cầu của quý khách đối với vé ${request.pnrCode || request.id} đã được ${isApprove ? 'chấp thuận' : 'từ chối'}. Vui lòng kiểm tra email chi tiết.`;
           }
@@ -1630,11 +1862,10 @@ function CustomerSupportPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 ${
-              activeTab === tab.id
+            className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 ${activeTab === tab.id
                 ? 'text-[#6C5CE7] border-[#6C5CE7]'
                 : 'text-[#9CA3AF] border-transparent hover:text-[#6E7491]'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -1650,16 +1881,16 @@ function CustomerSupportPage() {
       ) : (
         <>
           {activeTab === 'cancel' && (
-            <CancelTab 
-              requests={cancelRequests} 
-              addToast={addToast} 
+            <CancelTab
+              requests={cancelRequests}
+              addToast={addToast}
               onRequestAction={handleRequestAction}
             />
           )}
           {activeTab === 'exchange' && (
-            <ExchangeTab 
-              requests={exchangeRequests} 
-              addToast={addToast} 
+            <ExchangeTab
+              requests={exchangeRequests}
+              addToast={addToast}
               onRequestAction={handleRequestAction}
             />
           )}
@@ -1670,7 +1901,7 @@ function CustomerSupportPage() {
       <Toast toasts={toasts} onRemove={removeToast} />
 
       {/* Notification dispatching center modal */}
-      <DispatchNotificationModal 
+      <DispatchNotificationModal
         isOpen={dispatchModal.isOpen}
         type={dispatchModal.type}
         action={dispatchModal.action}

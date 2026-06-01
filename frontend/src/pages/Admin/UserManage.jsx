@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, X, CheckCircle, Shield, UserCheck } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, CheckCircle, Shield, UserCheck, Eye, EyeOff } from 'lucide-react';
 import { ADMIN_STAFF } from '../../data/adminMockData';
 
 const ROLE_STYLE = { ADMIN: 'bg-red-50 text-red-700 border border-red-200', STAFF: 'bg-violet-50 text-violet-700 border border-violet-200', AGENT: 'bg-blue-50 text-blue-700 border border-blue-200' };
@@ -9,9 +9,9 @@ const DEPTS = ['Ban Giám đốc', 'Vận hành mặt đất', 'Check-in', 'Chă
 function Toast({ msg, onClose }) {
   if (!msg) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white bg-violet-600 min-w-[260px]">
-      <CheckCircle className="w-4 h-4 shrink-0" /><span className="flex-1">{msg}</span>
-      <button onClick={onClose}><X className="w-4 h-4 opacity-70" /></button>
+    <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl text-base font-bold text-white bg-emerald-500 min-w-[320px] animate-bounce">
+      <CheckCircle className="w-6 h-6 shrink-0" /><span className="flex-1">{msg}</span>
+      <button onClick={onClose} className="hover:bg-emerald-600 p-1 rounded-full transition-colors"><X className="w-5 h-5 opacity-90" /></button>
     </div>
   );
 }
@@ -19,6 +19,7 @@ function Toast({ msg, onClose }) {
 function StaffModal({ initial, onSave, onClose }) {
   const [form, setForm] = useState(initial || { fullName: '', email: '', phone: '', role: 'STAFF', department: DEPTS[0], status: 'ACTIVE' });
   const [pwd, setPwd] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -38,8 +39,13 @@ function StaffModal({ initial, onSave, onClose }) {
           {!initial && (
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Mật khẩu</label>
-              <input type="password" value={pwd} onChange={e => setPwd(e.target.value)} placeholder="Nhập mật khẩu"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 transition-all" />
+              <div className="relative">
+                <input type={showPwd ? "text" : "password"} value={pwd} onChange={e => setPwd(e.target.value)} placeholder="Nhập mật khẩu"
+                  className="w-full border border-slate-200 rounded-xl pl-3 pr-10 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 transition-all" />
+                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-600 transition-colors">
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
@@ -76,7 +82,10 @@ function StaffModal({ initial, onSave, onClose }) {
 }
 
 export default function UserManage() {
-  const [staff, setStaff] = useState(ADMIN_STAFF);
+  const [staff, setStaff] = useState(() => {
+    const local = localStorage.getItem('local_staff_list');
+    return local ? JSON.parse(local) : ADMIN_STAFF;
+  });
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [modal, setModal] = useState(null);
@@ -90,18 +99,23 @@ export default function UserManage() {
   });
 
   const saveStaff = (form) => {
+    let updated;
     if (modal.data) {
-      setStaff(prev => prev.map(s => s.id === modal.data.id ? { ...s, ...form } : s));
+      updated = staff.map(s => s.id === modal.data.id ? { ...s, ...form } : s);
       showToast('Đã cập nhật thông tin nhân viên!');
     } else {
       const newId = `ST${String(staff.length + 1).padStart(3, '0')}`;
-      setStaff(prev => [...prev, { ...form, id: newId, joinDate: new Date().toISOString().split('T')[0], lastLogin: 'Chưa đăng nhập' }]);
+      updated = [...staff, { ...form, id: newId, joinDate: new Date().toISOString().split('T')[0], lastLogin: 'Chưa đăng nhập' }];
       showToast('Đã thêm nhân viên mới!');
     }
+    setStaff(updated);
+    localStorage.setItem('local_staff_list', JSON.stringify(updated));
     setModal(null);
   };
   const deactivate = (id) => {
-    setStaff(prev => prev.map(s => s.id === id ? { ...s, status: 'INACTIVE' } : s));
+    const updated = staff.map(s => s.id === id ? { ...s, status: 'INACTIVE' } : s);
+    setStaff(updated);
+    localStorage.setItem('local_staff_list', JSON.stringify(updated));
     showToast('Đã vô hiệu hóa tài khoản nhân viên.');
   };
 
@@ -153,45 +167,46 @@ export default function UserManage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap min-w-[800px]">
             <thead className="bg-slate-50 border-b border-slate-100">
-            <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              <th className="px-5 py-3">Nhân viên</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Phòng ban</th><th className="px-5 py-3">Ngày vào làm</th><th className="px-5 py-3">Đăng nhập gần nhất</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {filtered.map(s => (
-              <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
-                <td className="px-5 py-3.5 max-w-[200px]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">{s.fullName.charAt(0)}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{s.fullName}</p>
-                      <p className="text-xs text-slate-400 truncate">{s.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${ROLE_STYLE[s.role]}`}>{ROLE_LABEL[s.role]}</span>
-                </td>
-                <td className="px-5 py-3.5 text-sm text-slate-600">{s.department}</td>
-                <td className="px-5 py-3.5 text-sm text-slate-600">{new Date(s.joinDate).toLocaleDateString('vi-VN')}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-400">{s.lastLogin}</td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${s.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                    {s.status === 'ACTIVE' ? 'Đang làm việc' : 'Nghỉ việc'}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors" title="Sửa"><Edit2 className="w-3.5 h-3.5" /></button>
-                    {s.status === 'ACTIVE' && (
-                      <button onClick={() => deactivate(s.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors" title="Vô hiệu hóa"><Trash2 className="w-3.5 h-3.5" /></button>
-                    )}
-                  </div>
-                </td>
+              <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <th className="px-5 py-3">Nhân viên</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Phòng ban</th><th className="px-5 py-3">Ngày vào làm</th><th className="px-5 py-3">Đăng nhập gần nhất</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filtered.map(s => (
+                <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="px-5 py-3.5 max-w-[200px]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">{s.fullName.charAt(0)}</div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-700 truncate">{s.fullName}</p>
+                        <p className="text-xs text-slate-400 truncate">{s.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${ROLE_STYLE[s.role]}`}>{ROLE_LABEL[s.role]}</span>
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{s.department}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{new Date(s.joinDate).toLocaleDateString('vi-VN')}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-400">{s.lastLogin}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${s.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                      {s.status === 'ACTIVE' ? 'Đang làm việc' : 'Nghỉ việc'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => setModal({ data: s })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors" title="Sửa"><Edit2 className="w-3.5 h-3.5" /></button>
+                      {s.status === 'ACTIVE' && (
+                        <button onClick={() => deactivate(s.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors" title="Vô hiệu hóa"><Trash2 className="w-3.5 h-3.5" /></button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

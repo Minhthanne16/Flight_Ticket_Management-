@@ -199,11 +199,17 @@ export const BOOKINGS = [
 ];
 
 export const WORK_SHIFTS = [
-    { id: 'S001', staff: 'Le Minh', role: 'Check-in Agent', date: '2025-06-09', start: '06:00', end: '14:00', gate: 'A1', flight: 'VN123', status: 'Active' },
-    { id: 'S002', staff: 'Hoang Phuc', role: 'Boarding Agent', date: '2025-06-09', start: '07:30', end: '15:30', gate: 'B3', flight: 'VJ456', status: 'Active' },
-    { id: 'S003', staff: 'Tran Lan Anh', role: 'Ground Handler', date: '2025-06-09', start: '09:00', end: '17:00', gate: 'C2', flight: 'QH789', status: 'Scheduled' },
-    { id: 'S004', staff: 'Nguyen Duc Minh', role: 'Customer Service', date: '2025-06-09', start: '13:00', end: '21:00', gate: 'A2', flight: 'VN321', status: 'Scheduled' },
-    { id: 'S005', staff: 'Pham Quynh', role: 'Check-in Agent', date: '2025-06-10', start: '06:00', end: '14:00', gate: 'B1', flight: 'VN550', status: 'Scheduled' },
+    { id: 'S001', staff: 'Trần Thị Hoa', role: 'Check-in Agent', date: '2026-06-02', start: '06:00', end: '14:00', gate: 'A1', flight: 'VN201', status: 'Active' },
+    { id: 'S002', staff: 'Lê Minh Đức', role: 'Boarding Agent', date: '2026-06-02', start: '07:30', end: '15:30', gate: 'B3', flight: 'VJ305', status: 'Active' },
+    { id: 'S003', staff: 'Phạm Thu Hiền', role: 'Customer Service', date: '2026-06-02', start: '09:00', end: '17:00', gate: 'C2', flight: 'QH412', status: 'Scheduled' },
+    { id: 'S004', staff: 'Hoàng Văn Toàn', role: 'Ground Handler', date: '2026-06-02', start: '13:00', end: '21:00', gate: 'A2', flight: 'VN518', status: 'Scheduled' },
+    { id: 'S005', staff: 'Ngô Thị Lan', role: 'Check-in Agent', date: '2026-06-03', start: '06:00', end: '14:00', gate: 'B1', flight: 'VJ621', status: 'Scheduled' },
+    { id: 'S006', staff: 'Trần Thị Hoa', role: 'Ground Handler', date: '2026-06-03', start: '08:00', end: '16:00', gate: 'A3', flight: 'VN730', status: 'Scheduled' },
+    { id: 'S007', staff: 'Lê Minh Đức', role: 'Check-in Agent', date: '2026-06-03', start: '14:00', end: '22:00', gate: 'C1', flight: 'QH840', status: 'Scheduled' },
+    { id: 'S008', staff: 'Phạm Thu Hiền', role: 'Boarding Agent', date: '2026-06-04', start: '06:00', end: '14:00', gate: 'A1', flight: 'VN201', status: 'Scheduled' },
+    { id: 'S009', staff: 'Ngô Thị Lan', role: 'Customer Service', date: '2026-06-04', start: '10:00', end: '18:00', gate: 'B2', flight: 'VN518', status: 'Scheduled' },
+    { id: 'S010', staff: 'Trần Thị Hoa', role: 'Check-in Agent', date: '2026-06-01', start: '06:00', end: '14:00', gate: 'A2', flight: 'VN201', status: 'Completed' },
+    { id: 'S011', staff: 'Lê Minh Đức', role: 'Boarding Agent', date: '2026-06-01', start: '10:00', end: '18:00', gate: 'B1', flight: 'VJ305', status: 'Completed' },
 ];
 
 export const SUPPORT_TICKETS = [

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Tag, CheckCircle2, XCircle, Eye, ChevronLeft, ChevronRight, Search, Loader2, AlertCircle, X, Calendar, Hash, Percent, DollarSign, BarChart3, Clock } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { voucherService } from '../../api/services/voucherService';
+import { VOUCHERS as MOCK_VOUCHERS } from '../../data/adminMockData';
 
 const PAGE_SIZE = 4;
 
@@ -73,7 +74,20 @@ function PromotionPage() {
     };
   }, [refetch]);
 
-  const list = vouchers || [];
+  const list = (vouchers && vouchers.length > 0) ? vouchers : MOCK_VOUCHERS.map(v => ({
+    id: v.id,
+    voucherCode: v.code,
+    name: v.code,
+    discountType: v.type === 'PERCENT' ? 'PERCENTAGE' : 'FIXED',
+    discountValue: v.value,
+    minBookingAmount: v.minAmount,
+    maxDiscountAmount: v.maxDiscount,
+    usageLimit: v.usageLimit,
+    usedCount: v.usedCount,
+    startTime: v.validFrom,
+    endTime: v.validTo,
+    status: v.status,
+  }));
 
   const filtered = useMemo(() => {
     return list.filter(v => {
@@ -174,8 +188,6 @@ function PromotionPage() {
             <tbody className="divide-y divide-[#F0F0F5]">
               {loading ? (
                 <LoadingState />
-              ) : error ? (
-                <ErrorState message={error} onRetry={refetch} />
               ) : paginated.length === 0 ? (
                 <EmptyState />
               ) : paginated.map(v => {
