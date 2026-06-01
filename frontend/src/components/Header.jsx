@@ -2,6 +2,7 @@ import { Bell, HelpCircle, ChevronRight, User, LogOut, X, Info, AlertTriangle } 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { notificationService } from '../api/services/notificationService';
+import { ADMIN_STAFF } from '../data/adminMockData';
 
 const PAGE_LABELS = {
   dashboard: 'Bảng điều khiển',
@@ -66,7 +67,21 @@ function Header() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.role === 'STAFF') {
         const stored = localStorage.getItem('local_staff_profile');
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.email === user.email) return parsed;
+        }
+
+        const mockProfile = ADMIN_STAFF.find(s => s.email === user.email);
+        if (mockProfile) {
+            return {
+                fullName: mockProfile.fullName,
+                email: mockProfile.email,
+                role: 'STAFF',
+                department: mockProfile.department
+            };
+        }
+
         return {
           fullName: user.fullName || 'EasyFlight Staff',
           email: user.email || 'staff@easyflight.vn',
@@ -96,7 +111,22 @@ function Header() {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (user.role === 'STAFF') {
           const stored = localStorage.getItem('local_staff_profile');
-          if (stored) setProfile(JSON.parse(stored));
+          if (stored) {
+              const parsed = JSON.parse(stored);
+              if (parsed.email === user.email) {
+                  setProfile(parsed);
+                  return;
+              }
+          }
+          const mockProfile = ADMIN_STAFF.find(s => s.email === user.email);
+          if (mockProfile) {
+              setProfile({
+                  fullName: mockProfile.fullName,
+                  email: mockProfile.email,
+                  role: 'STAFF',
+                  department: mockProfile.department
+              });
+          }
         } else {
           setProfile({
             fullName: user.email === 'admin@easyflight.vn' ? 'Nguyễn Văn Admin' : (user.email || 'Admin'),

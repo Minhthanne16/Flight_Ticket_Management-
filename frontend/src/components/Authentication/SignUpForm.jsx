@@ -44,6 +44,17 @@ function SignUpForm() {
         setErrorMsg('');
         setSuccessMsg('');
 
+        if (
+            !formData.fullName.trim() ||
+            !formData.email.trim() ||
+            !formData.phoneNumber.trim() ||
+            !formData.password.trim() ||
+            !formData.confirmPassword.trim()
+        ) {
+            setErrorMsg('Vui lòng điền đầy đủ tất cả các thông tin đăng ký!');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setErrorMsg('Mật khẩu xác nhận không khớp!');
             return;

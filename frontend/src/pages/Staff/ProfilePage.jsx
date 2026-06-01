@@ -3,6 +3,7 @@ import { User, Mail, Phone, Lock, Shield, Save, CheckCircle2, X, Loader2, AlertC
 import { useApi } from '../../hooks/useApi';
 import { staffService } from '../../api/services/staffService';
 import authService from '../../api/authService';
+import { ADMIN_STAFF } from '../../data/adminMockData';
 
 function Toast({ toasts, onRemove }) {
     return (
@@ -71,7 +72,25 @@ function ProfilePage() {
     const [localStaff, setLocalStaff] = useState(() => {
         if (!isStaffUser) return null;
         const saved = localStorage.getItem('local_staff_profile');
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.email === user.email) return parsed;
+        }
+
+        const mockProfile = ADMIN_STAFF.find(s => s.email === user.email);
+        if (mockProfile) {
+            return {
+                id: mockProfile.id,
+                fullName: mockProfile.fullName,
+                email: mockProfile.email,
+                phoneNumber: mockProfile.phone,
+                staffCode: mockProfile.id,
+                department: mockProfile.department,
+                hireDate: mockProfile.joinDate,
+                status: mockProfile.status
+            };
+        }
+
         return {
             id: 9999,
             fullName: user.fullName || 'EasyFlight Staff',
