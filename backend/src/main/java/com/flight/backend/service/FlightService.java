@@ -50,6 +50,9 @@ public class FlightService {
     // CREATE FLIGHT
     @Transactional
     public FlightResponse createFlight(CreateFlightRequest req) {
+        if (flightRepo.existsByFlightCode(req.getFlightCode())) {
+    throw new RuntimeException("Flight code already exists");
+}
 
         // 1. Lấy Airplane
         Airplane airplane = airplaneRepo.findById(req.getAirplaneId())

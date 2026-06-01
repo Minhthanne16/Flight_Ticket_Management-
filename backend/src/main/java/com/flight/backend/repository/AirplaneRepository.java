@@ -18,4 +18,8 @@ public interface AirplaneRepository extends JpaRepository<Airplane, Long> {
     Optional<Airplane> findByAirplaneCode(String airplaneCode);
 
     Boolean existsByAirplaneCode(String airplaneCode);
+
+    Boolean existsByAirplaneCodeAndIdNot(
+            String airplaneCode,
+            Long id);
 }

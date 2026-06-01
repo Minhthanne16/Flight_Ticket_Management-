@@ -23,6 +23,7 @@ public class AirplaneService {
             AirplaneRepository airplaneRepository,
             AirlineRepository airlineRepository,
             AirplaneModelRepository airplaneModelRepository) {
+
         this.airplaneRepository = airplaneRepository;
         this.airlineRepository = airlineRepository;
         this.airplaneModelRepository = airplaneModelRepository;
@@ -30,22 +31,32 @@ public class AirplaneService {
 
     // CREATE
     public AirplaneResponse create(CreateAirplaneRequest request) {
-        if (airplaneRepository.existsByAirplaneCode(request.getAirplaneCode())) {
-            throw new RuntimeException("Airplane code already exists");
+
+        String airplaneCode =
+                request.getAirplaneCode().trim().toUpperCase();
+
+        if (airplaneRepository.existsByAirplaneCode(airplaneCode)) {
+            throw new RuntimeException(
+                    "Airplane code '" + airplaneCode + "' already exists");
         }
 
-        Airline airline = airlineRepository.findById(request.airlineId)
-                .orElseThrow(() -> new RuntimeException("Airline not found"));
+        Airline airline = airlineRepository.findById(
+                        request.getAirlineId())
+                .orElseThrow(() ->
+                        new RuntimeException("Airline not found"));
 
-        AirplaneModel airplaneModel = airplaneModelRepository.findById(request.modelId)
-                .orElseThrow(() -> new RuntimeException("Model not found"));
+        AirplaneModel airplaneModel =
+                airplaneModelRepository.findById(
+                                request.getModelId())
+                        .orElseThrow(() ->
+                                new RuntimeException("Model not found"));
 
         Airplane airplane = new Airplane();
-        airplane.setAirplaneCode(request.airplaneCode);
-        airplane.setModel(airplaneModel);
-        airplane.setAirline(airline);
 
-        airplane.setStatus(request.status);
+        airplane.setAirplaneCode(airplaneCode);
+        airplane.setAirline(airline);
+        airplane.setModel(airplaneModel);
+        airplane.setStatus(request.getStatus());
 
         Airplane saved = airplaneRepository.save(airplane);
 
@@ -54,6 +65,7 @@ public class AirplaneService {
 
     // GET ALL
     public List<AirplaneResponse> getAll() {
+
         return airplaneRepository.findAll()
                 .stream()
                 .map(this::toResponse)
@@ -62,20 +74,34 @@ public class AirplaneService {
 
     // GET BY ID
     public AirplaneResponse getById(Long id) {
+
         Airplane airplane = airplaneRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Airplane not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Airplane not found"));
 
         return toResponse(airplane);
     }
 
-    // mapper
-    private AirplaneResponse toResponse(Airplane a) {
-        AirplaneResponse res = new AirplaneResponse();
-        res.id = a.getId();
-        res.airplaneCode = a.getAirplaneCode();
-        res.model = a.getModel();
-        res.status = a.getStatus().name();
-        res.airlineName = a.getAirline().getAirlineName();
-        return res;
+    // MAPPER
+    private AirplaneResponse toResponse(Airplane airplane) {
+
+        AirplaneResponse response = new AirplaneResponse();
+
+        response.setId(airplane.getId());
+        response.setAirplaneCode(airplane.getAirplaneCode());
+        response.setModel(airplane.getModel());
+
+        response.setAirlineName(
+                airplane.getAirline().getAirlineName());
+
+        response.setStatus(
+                airplane.getStatus().name());
+
+        if (airplane.getModel() != null) {
+            response.setTotalSeats(
+                    airplane.getModel().getTotalSeats());
+        }
+
+        return response;
     }
 }

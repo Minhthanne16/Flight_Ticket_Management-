@@ -14,4 +14,13 @@ public interface AirlineRepository extends JpaRepository<Airline, Long> {
 
     boolean existsByAirlineCode(String airlineCode);
 
+    boolean existsByAirlineName(String airlineName);
+
+    boolean existsByAirlineCodeAndIdNot(
+            String airlineCode,
+            Long id);
+
+    boolean existsByAirlineNameAndIdNot(
+            String airlineName,
+            Long id);
 }

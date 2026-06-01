@@ -1,6 +1,7 @@
 package com.flight.backend.dto.airplane_model;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -28,12 +29,14 @@ public class CreateAirplaneModelRequest {
     private String description;
 
     @NotNull(message = "Total rows is required")
+    @Min(value = 1, message = "Total rows must be greater than 0")
     private Integer totalRows;
 
     @NotBlank(message = "Seat columns is required")
-    private String seatColumns; // Ví dụ: ABCDEF
+    private String seatColumns;
 
     @NotNull(message = "Total seats is required")
+    @Min(value = 1, message = "Total seats must be greater than 0")
     private Integer totalSeats;
 
     @Valid
