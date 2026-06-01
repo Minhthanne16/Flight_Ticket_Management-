@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -41,4 +41,5 @@ public class FlightSearchResponse {
     // Price
     private BigDecimal basePrice;
     private FlightStatus status;
+    private List<FlightStopResponse> flightStops;
 }

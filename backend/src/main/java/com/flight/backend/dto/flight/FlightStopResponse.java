@@ -16,7 +16,10 @@ import lombok.Setter;
 public class FlightStopResponse {
     private Long flightStopId;
     private Long airportStopId;
+    private String airportCode;
+    private String airportName;
     private LocalDateTime arrivalTime;
     private LocalDateTime departureTime;
+    private Long stopDuration;
     private int stopOrder;
 }

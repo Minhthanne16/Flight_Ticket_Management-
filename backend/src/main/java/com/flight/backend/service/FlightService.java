@@ -163,6 +163,8 @@ public class FlightService {
                     .estimateDuration(flight.getEstimateDuration())
                     .basePrice(flight.getBasePrice())
                     .status(flight.getStatus())
+                    .flightStops(flightStopService.getFlightStopsByFlightId(flight.getId())
+)
                     .build();
             responses.add(resp);
         }

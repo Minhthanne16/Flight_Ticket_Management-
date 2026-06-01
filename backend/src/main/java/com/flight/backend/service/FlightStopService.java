@@ -23,7 +23,7 @@ public class FlightStopService {
         this.flightStopRepository = flightStopRepository;
         this.airportService = airportService;
     }
-
+    
     public List<FlightStopResponse> createFlightStop(Flight flight, List<CreateFlightStopRequest> fts) {
         List<FlightStop> flightStops = new ArrayList<>();
         for (CreateFlightStopRequest ft : fts) {
@@ -47,4 +47,30 @@ public class FlightStopService {
                         .build())
                 .toList();
     }
+
+    public List<FlightStopResponse> getFlightStopsByFlightId(Long flightId) {
+
+    List<FlightStop> stops =
+        flightStopRepository.findByFlight_Id(flightId);
+
+    List<FlightStopResponse> responses = new ArrayList<>();
+
+    for (FlightStop stop : stops) {
+
+        FlightStopResponse response = FlightStopResponse.builder()
+                .flightStopId(stop.getId())
+                .airportStopId(stop.getStopAirport().getId())
+                .airportCode(stop.getStopAirport().getAirportCode())
+                .airportName(stop.getStopAirport().getName())
+                .arrivalTime(stop.getArrivalTime())
+                .departureTime(stop.getDepartureTime())
+                .stopDuration(stop.getStopDuration())
+                .stopOrder(stop.getStopOrder())
+                .build();
+
+        responses.add(response);
+    }
+
+    return responses;
+}
 }
