@@ -322,54 +322,94 @@ const SearchResults = () => {
                   </div>
 
                   {showDetails === flight.id && (
-                    <div className="flight-details-panel">
-                       <div className="details-content">
-                          <div className="timeline">
-                             <div className="time-point">
-                                <div className="time-col">
-                                   <strong>{formatTime(flight.departureTime)}</strong>
-                                   <small>Khởi hành</small>
-                                </div>
-                                <div className="dot-line">
-                                   <div className="circle-outline"></div>
-                                   <div className="vertical-line"></div>
-                                </div>
-                                <div className="info-col">
-                                   <strong>{flight.route?.departureAirport?.name || 'Sân bay khởi hành'} ({depCode})</strong>
-                                   <p>Terminal 1</p>
-                                </div>
-                             </div>
+  <div className="flight-details-panel">
+    <div className="details-content">
+      <div className="timeline">
+        
+        {/* 1. ĐIỂM KHỞI HÀNH BAN ĐẦU */}
+        <div className="time-point">
+          <div className="time-col">
+            <strong>{formatTime(flight.departureTime)}</strong>
+            <small>Khởi hành</small>
+          </div>
+          <div className="dot-line">
+            <div className="circle-outline"></div>
+            <div className="vertical-line"></div>
+          </div>
+          <div className="info-col">
+            <strong>{flight.route?.departureAirport?.name || 'Sân bay khởi hành'} ({depCode})</strong>
+            <p>Terminal 1</p>
+          </div>
+        </div>
 
-                             <div className="flight-segment">
-                                <div className="segment-info">
-                                   <img src={currentAirlineLogo} className="small-logo" alt="logo" />
-                                   <strong>{currentAirlineName} • {flight.flightCode} • Economy</strong>
-                                   <div className="specs-grid">
-                                      <span><i className="fa-solid fa-briefcase"></i> Baggage 23 kg</span>
-                                      <span><i className="fa-solid fa-plug"></i> Power available</span>
-                                      <span><i className="fa-solid fa-utensils"></i> Free Meal</span>
-                                      <span><i className="fa-solid fa-plane"></i> {airplaneModelName}</span>
-                                   </div>
-                                </div>
-                             </div>
+        {/* 2. CÁC TRẠM DỪNG TRANSIT (Sẽ tự động bỏ qua nếu là bay thẳng) */}
+        {flight.flightStops?.sort((a, b) => a.stopOrder - b.stopOrder).map((stop) => (
+          <React.Fragment key={stop.flightStopId}>
+            {/* Chặng bay từ điểm trước đó đến trạm dừng */}
+            <div className="flight-segment">
+              <div className="segment-info">
+                <img src={currentAirlineLogo} className="small-logo" alt="logo" />
+                <strong>{currentAirlineName} • {flight.flightCode} • Economy</strong>
+                <div className="specs-grid">
+                  <span><i className="fa-solid fa-briefcase"></i> Baggage 23 kg</span>
+                  <span><i className="fa-solid fa-plug"></i> Power available</span>
+                  <span><i className="fa-solid fa-utensils"></i> Free Meal</span>
+                  <span><i className="fa-solid fa-plane"></i> {airplaneModelName}</span>
+                </div>
+              </div>
+            </div>
 
-                             <div className="time-point">
-                                <div className="time-col">
-                                   <strong>{formatTime(flight.arrivalTime)}</strong>
-                                   <small>Đến nơi</small>
-                                </div>
-                                <div className="dot-line">
-                                   <div className="circle-fill"></div>
-                                </div>
-                                <div className="info-col">
-                                   <strong>{flight.route?.arrivalAirport?.name || 'Sân bay đến'} ({arrCode})</strong>
-                                   <p>Terminal 2</p>
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                  )}
+            {/* Thông tin Trạm dừng */}
+            <div className="time-point">
+              <div className="time-col">
+                <strong style={{color: '#ff5e1f'}}>{stop.stopDuration} min</strong>
+                <small>Transit</small>
+              </div>
+              <div className="dot-line">
+                <div className="circle-outline" style={{borderColor: '#ff5e1f'}}></div>
+                <div className="vertical-line"></div>
+              </div>
+              <div className="info-col">
+                <strong>{stop.airportName} ({stop.airportCode})</strong>
+                <p>Đến: {formatTime(stop.arrivalTime)} - Đi tiếp: {formatTime(stop.departureTime)}</p>
+              </div>
+            </div>
+          </React.Fragment>
+        ))}
+
+        {/* 3. CHẶNG BAY CUỐI CÙNG (Đến đích) */}
+        <div className="flight-segment">
+          <div className="segment-info">
+            <img src={currentAirlineLogo} className="small-logo" alt="logo" />
+            <strong>{currentAirlineName} • {flight.flightCode} • Economy</strong>
+            <div className="specs-grid">
+              <span><i className="fa-solid fa-briefcase"></i> Baggage 23 kg</span>
+              <span><i className="fa-solid fa-plug"></i> Power available</span>
+              <span><i className="fa-solid fa-utensils"></i> Free Meal</span>
+              <span><i className="fa-solid fa-plane"></i> {airplaneModelName}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. ĐIỂM ĐẾN CUỐI CÙNG */}
+        <div className="time-point">
+          <div className="time-col">
+            <strong>{formatTime(flight.arrivalTime)}</strong>
+            <small>Đến nơi</small>
+          </div>
+          <div className="dot-line">
+            <div className="circle-fill"></div>
+          </div>
+          <div className="info-col">
+            <strong>{flight.route?.arrivalAirport?.name || 'Sân bay đến'} ({arrCode})</strong>
+            <p>Terminal 2</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
                 </div>
               );
             })
