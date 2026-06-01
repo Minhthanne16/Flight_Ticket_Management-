@@ -129,7 +129,7 @@ export default function UserManage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[['Tổng nhân viên', staff.length, 'bg-violet-50 text-violet-700'], ['Đang làm việc', staff.filter(s => s.status === 'ACTIVE').length, 'bg-emerald-50 text-emerald-700'], ['Quản trị viên', counts.ADMIN, 'bg-red-50 text-red-700'], ['Đại lý', counts.AGENT, 'bg-blue-50 text-blue-700']].map(([lbl, val, cls]) => (
           <div key={lbl} className={`rounded-xl p-4 ${cls}`}>
             <p className="text-2xl font-bold">{val}</p>
@@ -139,10 +139,10 @@ export default function UserManage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-slate-200 rounded-xl px-3 py-2.5">
+      <div className="flex flex-col md:flex-row md:items-center gap-3">
+        <div className="flex items-center gap-2 w-full md:max-w-md bg-white border border-slate-200 rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm nhân viên, email, phòng ban..." className="flex-1 text-sm outline-none bg-transparent text-slate-700" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm nhân viên, email, phòng ban..." className="flex-1 text-sm outline-none bg-transparent text-slate-700 w-full" />
         </div>
         <div className="flex gap-2 flex-wrap">
           {[['ALL', 'Tất cả'], ['ADMIN', 'Quản trị viên'], ['STAFF', 'Nhân viên'], ['AGENT', 'Đại lý']].map(([val, lbl]) => (
@@ -156,8 +156,9 @@ export default function UserManage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 border-b border-slate-100">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left whitespace-nowrap min-w-[800px]">
+            <thead className="bg-slate-50 border-b border-slate-100">
             <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               <th className="px-5 py-3">Nhân viên</th><th className="px-5 py-3">Vai trò</th><th className="px-5 py-3">Phòng ban</th><th className="px-5 py-3">Ngày vào làm</th><th className="px-5 py-3">Đăng nhập gần nhất</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3"></th>
             </tr>
@@ -165,12 +166,12 @@ export default function UserManage() {
           <tbody className="divide-y divide-slate-50">
             {filtered.map(s => (
               <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
-                <td className="px-5 py-3.5">
+                <td className="px-5 py-3.5 max-w-[200px]">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">{s.fullName.charAt(0)}</div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">{s.fullName}</p>
-                      <p className="text-xs text-slate-400">{s.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-700 truncate">{s.fullName}</p>
+                      <p className="text-xs text-slate-400 truncate">{s.email}</p>
                     </div>
                   </div>
                 </td>
@@ -198,6 +199,7 @@ export default function UserManage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

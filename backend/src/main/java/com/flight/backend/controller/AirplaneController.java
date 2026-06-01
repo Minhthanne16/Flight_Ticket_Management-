@@ -7,7 +7,6 @@ import com.flight.backend.service.AirplaneService;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

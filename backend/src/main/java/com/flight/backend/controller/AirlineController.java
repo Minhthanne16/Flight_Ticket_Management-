@@ -41,7 +41,7 @@ public class AirlineController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AirlineResponse>> updateAirline(
             @PathVariable Long id,
-            @RequestBody UpdateAirlineRequest airline) {
+          @Valid  @RequestBody UpdateAirlineRequest airline) {
 
         AirlineResponse res = this.airlineService.updateAirline(id, airline);
         return ApiResponse.success(res, "Cập nhật hãng bay thành công.");

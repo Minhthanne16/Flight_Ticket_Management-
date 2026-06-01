@@ -19,11 +19,20 @@ public class AirportService {
 
     public AirportResponse create(CreateAirportRequest req) {
 
+        String airportCode =
+                req.getAirportCode().trim().toUpperCase();
+
+        if (airportRepository.existsByAirportCode(airportCode)) {
+            throw new RuntimeException(
+                    "Airport code already exists");
+        }
+
         Airport airport = new Airport();
-        airport.setAirportCode(req.airportCode);
-        airport.setName(req.name);
-        airport.setCity(req.city);
-        airport.setCountry(req.country);
+
+        airport.setAirportCode(airportCode);
+        airport.setName(req.getName().trim());
+        airport.setCity(req.getCity().trim());
+        airport.setCountry(req.getCountry().trim());
 
         Airport saved = airportRepository.save(airport);
 
@@ -38,19 +47,25 @@ public class AirportService {
     }
 
     public List<AirportResponse> getAll() {
-        return airportRepository.findAll().stream().map(a -> {
-            AirportResponse res = new AirportResponse();
-            res.setId(a.getId());
-            res.setAirportCode(a.getAirportCode());
-            res.setName(a.getName());
-            res.setCity(a.getCity());
-            res.setCountry(a.getCountry());
-            return res;
-        }).toList();
+
+        return airportRepository.findAll()
+                .stream()
+                .map(a -> {
+                    AirportResponse res = new AirportResponse();
+                    res.setId(a.getId());
+                    res.setAirportCode(a.getAirportCode());
+                    res.setName(a.getName());
+                    res.setCity(a.getCity());
+                    res.setCountry(a.getCountry());
+                    return res;
+                })
+                .toList();
     }
 
     public Airport getAirportById(Long id) {
-        return this.airportRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Airport not found"));
+
+        return airportRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Airport not found"));
     }
 }

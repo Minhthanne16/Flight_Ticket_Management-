@@ -3,7 +3,7 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.customer.CustomerRequest;
 import com.flight.backend.dto.customer.CustomerResponse;
 import com.flight.backend.service.CustomerService;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<CustomerResponse> create(
-            @RequestBody CustomerRequest request
+          @Valid  @RequestBody CustomerRequest request
     ) {
         return ResponseEntity.ok(
                 customerService.create(request));
@@ -55,7 +55,7 @@ public class CustomerController {
     @PutMapping("/{id}")
     public ResponseEntity<CustomerResponse> update(
             @PathVariable Long id,
-            @RequestBody CustomerRequest request
+           @Valid @RequestBody CustomerRequest request
     ) {
 
         return ResponseEntity.ok(

@@ -98,16 +98,17 @@
 }
 
 .signin-brand__logo-box {
-    width: 280px;
-    height: 70px;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .signin-brand__logo {
-    height: 100%;
     width: 100%;
+    height: auto;
     object-fit: contain;
 }
 
@@ -175,7 +176,7 @@
 
 .si-input-wrapper input {
     width: 100%;
-    padding: 16px 44px 16px 48px;
+    padding: 16px 44px 16px 48px !important;
     background: #F3F4F6;
     border: 1.5px solid transparent;
     border-radius: 12px;

@@ -22,7 +22,7 @@ const navItems = [
   { path: '/admin/regulations', label: 'Quy định', icon: FileText },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -40,10 +40,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div
-      style={{ width: '220px', minWidth: '220px' }}
-      className="bg-white border-r border-slate-200 min-h-screen flex flex-col font-sans select-none"
-    >
+    <div className="w-64 bg-white border-r border-slate-200 h-full flex flex-col font-sans select-none">
       {/* ── Logo ── */}
       <div className="px-6 py-8 flex items-center justify-center">
         <img
@@ -53,17 +50,6 @@ const Sidebar = () => {
         />
       </div>
 
-      {/* ── Nút Đặt vé mới ── */}
-      <div className="px-4 mb-5">
-        <Link
-          to="/admin/flight-schedule"
-          className="flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-white text-sm font-bold transition-transform hover:scale-[1.02] shadow-md shadow-[#003366]/20"
-          style={{ backgroundColor: '#003366' }}
-        >
-          <Plus size={18} strokeWidth={2.5} />
-          Đặt vé mới
-        </Link>
-      </div>
 
       {/* ── Nav Items ── */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
@@ -74,6 +60,7 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all"
               style={{
                 backgroundColor: active ? '#003366' : 'transparent',

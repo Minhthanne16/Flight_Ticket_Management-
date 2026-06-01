@@ -4,9 +4,10 @@ import com.flight.backend.dto.ticket_class.CreateTicketClassRequest;
 import com.flight.backend.dto.ticket_class.TicketClassResponse;
 import com.flight.backend.entity.TicketClass;
 import com.flight.backend.repository.TicketClassRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class TicketClassService {
@@ -18,27 +19,27 @@ public class TicketClassService {
         this.ticketClassRepository = ticketClassRepository;
     }
 
-    public TicketClassResponse create(CreateTicketClassRequest request) {
-        if (ticketClassRepository.existsByClassCode(request.getClassCode())) {
-            throw new RuntimeException("Ticket class code already exists");
+    public TicketClassResponse create(
+            CreateTicketClassRequest request) {
+
+        String classCode = request.getClassCode().trim().toUpperCase();
+
+        if (ticketClassRepository.existsByClassCode(classCode)) {
+            throw new RuntimeException(
+                    "Ticket class code already exists");
         }
 
         TicketClass ticketClass = new TicketClass();
-        ticketClass.setClassCode(request.getClassCode());
-        ticketClass.setClassName(request.getClassName());
+
+        ticketClass.setClassCode(classCode);
+        ticketClass.setClassName(request.getClassName().trim());
         ticketClass.setDescription(request.getDescription());
         ticketClass.setPriceMultiplier(request.getPriceMultiplier());
 
-        TicketClass saved = ticketClassRepository.save(ticketClass);
+        TicketClass saved =
+                ticketClassRepository.save(ticketClass);
 
-        TicketClassResponse response = new TicketClassResponse();
-        response.setId(saved.getId());
-        response.setClassCode(saved.getClassCode());
-        response.setClassName(saved.getClassName());
-        response.setDescription(saved.getDescription());
-        response.setPriceMultiplier(saved.getPriceMultiplier());
-
-        return response;
+        return mapToResponse(saved);
     }
 
     public List<TicketClass> getAll() {
@@ -46,7 +47,22 @@ public class TicketClassService {
     }
 
     public TicketClass findTicketClassById(Long id) {
-        return this.ticketClassRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("TicketClass not found"));
+
+        return ticketClassRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Ticket class not found"));
+    }
+
+    private TicketClassResponse mapToResponse(
+            TicketClass ticketClass) {
+
+        return new TicketClassResponse(
+                ticketClass.getId(),
+                ticketClass.getClassCode(),
+                ticketClass.getClassName(),
+                ticketClass.getDescription(),
+                ticketClass.getPriceMultiplier()
+        );
     }
 }
