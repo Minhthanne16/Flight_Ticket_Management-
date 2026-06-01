@@ -8,6 +8,7 @@ import { useApi } from '../../hooks/useApi';
 import { flightService } from '../../api/services/flightService';
 import { reportService } from '../../api/services/reportService';
 import { notificationService } from '../../api/services/notificationService';
+import { ADMIN_STAFF, ADMIN_FLIGHTS } from '../../data/adminMockData';
 
 const getStatusColor = (status) => ({
   SCHEDULED: 'text-indigo-700 bg-indigo-50 border border-indigo-200',
@@ -129,7 +130,6 @@ function StaffDashboard() {
   const [notifiedIds, setNotifiedIds] = useState(new Set());
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Read user info from localStorage (set on login)
   const staffName = useMemo(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -137,8 +137,12 @@ function StaffDashboard() {
         const stored = localStorage.getItem('local_staff_profile');
         if (stored) {
           const profile = JSON.parse(stored);
-          if (profile.fullName) return profile.fullName;
+          if (profile.email === user.email && profile.fullName) return profile.fullName;
         }
+        
+        const mockProfile = ADMIN_STAFF.find(s => s.email === user.email);
+        if (mockProfile) return mockProfile.fullName;
+
         return user.fullName || 'EasyFlight Staff';
       }
       return user.fullName || user.name || user.email || 'Nhân viên';
@@ -172,7 +176,18 @@ function StaffDashboard() {
 
   const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
-  const allFlights = flights || [];
+  const MOCK_FLIGHTS = ADMIN_FLIGHTS.map(f => ({
+    id: f.id,
+    flightCode: f.id,
+    airlineName: f.airline,
+    departureAirportCode: f.from,
+    arrivalAirportCode: f.to,
+    departureTime: `${f.date}T${f.dep}:00`,
+    arrivalTime: `${f.date}T${f.arr}:00`,
+    status: f.status,
+  }));
+
+  const allFlights = (flights && flights.length > 0) ? flights : MOCK_FLIGHTS;
 
   const displayFlights = statusFilter === 'ALL'
     ? allFlights

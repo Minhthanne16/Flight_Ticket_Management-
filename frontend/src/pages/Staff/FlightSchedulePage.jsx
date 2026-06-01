@@ -10,6 +10,7 @@ import { flightService } from '../../api/services/flightService';
 import { routeService } from '../../api/services/routeService';
 import api from '../../api/axios';
 import { notificationService } from '../../api/services/notificationService';
+import { ADMIN_FLIGHTS, ROUTES as MOCK_ROUTES } from '../../data/adminMockData';
 
 const STATUS_OPTIONS = ['All', 'SCHEDULED', 'BOARDING', 'DELAYED', 'DEPARTED', 'COMPLETED', 'CANCELLED'];
 const STATUS_LABELS = {
@@ -164,8 +165,27 @@ function FlightSchedulePage() {
     () => routeService.getAll(), []
   );
 
-  const flights = rawFlights || [];
-  const routes = rawRoutes || [];
+  const flights = (rawFlights && rawFlights.length > 0) ? rawFlights : ADMIN_FLIGHTS.map(f => ({
+    id: f.id,
+    flightCode: f.id,
+    airlineName: f.airline,
+    departureAirportCode: f.from,
+    arrivalAirportCode: f.to,
+    departureTime: `${f.date}T${f.dep}:00`,
+    arrivalTime: `${f.date}T${f.arr}:00`,
+    status: f.status,
+    basePrice: f.basePrice,
+    totalSeats: f.totalSeats,
+    bookedSeats: f.bookedSeats,
+  }));
+
+  const routes = (rawRoutes && rawRoutes.length > 0) ? rawRoutes : MOCK_ROUTES.map(r => ({
+    id: r.id,
+    routeCode: `${r.from}-${r.to}`,
+    departureAirportId: r.from,
+    arrivalAirportId: r.to,
+    status: r.status,
+  }));
 
   const addToast = useCallback((msg) => {
     const id = Date.now();
@@ -404,13 +424,6 @@ function FlightSchedulePage() {
                         ))}
                       </tr>
                     ))
-                  ) : error ? (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-10 text-center">
-                        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-300" />
-                        <p className="text-sm text-red-400">{error}</p>
-                      </td>
-                    </tr>
                   ) : paginated.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-5 py-10 text-center">

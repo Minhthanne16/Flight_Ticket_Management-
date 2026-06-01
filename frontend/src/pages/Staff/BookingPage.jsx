@@ -3,6 +3,7 @@ import { Search, Eye, RefreshCw, ChevronLeft, ChevronRight, X, CheckCircle2, XCi
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { bookingService } from '../../api/services/bookingService';
+import { ADMIN_BOOKINGS } from '../../data/adminMockData';
 
 const PAGE_SIZE = 8;
 
@@ -56,7 +57,31 @@ function BookingPage() {
     setSearch(searchParams.get('search') || '');
   }, [searchParams]);
 
-  const bookings = data || [];
+  const bookings = (data && data.length > 0) ? data : (() => {
+    const storedPayments = JSON.parse(localStorage.getItem('mock_payments') || '{}');
+    return ADMIN_BOOKINGS.map(b => {
+      const mockPaymentStatus = storedPayments[b.id] || b.paymentStatus;
+      const mockBookingStatus = mockPaymentStatus === 'PAID' ? 'CONFIRMED' : b.status;
+      return {
+        bookingId: b.id,
+        pnrCode: b.pnr,
+        passengerName: b.passenger,
+        phone: b.phone,
+        email: b.email,
+        flightId: b.flight,
+        flightCode: b.flight,
+        route: b.route,
+        date: b.date,
+        seatClass: b.seatClass,
+        seat: b.seat,
+        totalAmount: b.amount,
+        status: mockBookingStatus,
+        paymentStatus: mockPaymentStatus,
+        paymentMethod: b.paymentMethod,
+        bookedAt: b.bookedAt,
+      };
+    });
+  })();
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -193,12 +218,6 @@ function BookingPage() {
                 <tr><td colSpan={7} className="py-20 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-violet-500 mx-auto mb-2" />
                   <p className="text-sm text-slate-400">Đang tải dữ liệu...</p>
-                </td></tr>
-              ) : error ? (
-                <tr><td colSpan={7} className="py-20 text-center">
-                  <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
-                  <p className="text-sm text-red-400 mb-3">{error}</p>
-                  <button onClick={refetch} className="text-xs font-semibold text-violet-600 hover:underline">Thử lại</button>
                 </td></tr>
               ) : paginated.length === 0 ? (
                 <tr><td colSpan={7} className="py-20 text-center text-slate-400 text-sm italic">Không có dữ liệu hiển thị</td></tr>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Clock, CheckCircle2, X, Calendar, User } from 'lucide-react';
-import { WORK_SHIFTS, STAFF_USER } from '../../data/sharedData';
+import { WORK_SHIFTS } from '../../data/sharedData';
+import { ADMIN_STAFF } from '../../data/adminMockData';
 
 const statusStyle = {
   Active: 'text-emerald-700 bg-emerald-50 border-emerald-200',
@@ -14,13 +15,31 @@ const HOURS = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '2
 function WorkSchedulePage() {
   const [view, setView] = useState('list'); // 'list' | 'calendar'
 
+  const staffName = useMemo(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.role === 'STAFF') {
+        const stored = localStorage.getItem('local_staff_profile');
+        if (stored) {
+          const profile = JSON.parse(stored);
+          if (profile.email === user.email && profile.fullName) return profile.fullName;
+        }
+        
+        const mockProfile = ADMIN_STAFF.find(s => s.email === user.email);
+        if (mockProfile) return mockProfile.fullName;
+
+        return user.fullName || 'EasyFlight Staff';
+      }
+      return user.fullName || user.name || user.email || 'Nhân viên';
+    } catch { return 'Nhân viên'; }
+  }, []);
+
   // LỌC CHỈ LẤY LỊCH CỦA CÁ NHÂN ĐANG ĐĂNG NHẬP
   const myShifts = useMemo(() => {
     return WORK_SHIFTS.filter(s => 
-      s.staff === STAFF_USER.fullName || 
-      s.staff === STAFF_USER.name
+      s.staff === staffName
     );
-  }, []);
+  }, [staffName]);
 
   const activeCount = myShifts.filter(s => s.status === 'Active').length;
   const upcomingCount = myShifts.filter(s => s.status === 'Scheduled').length;
@@ -36,7 +55,7 @@ function WorkSchedulePage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-800">Lịch làm việc của tôi</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Chào {STAFF_USER.fullName}, xem lịch trình được phân công của bạn.</p>
+            <p className="text-sm text-slate-400 mt-0.5">Chào {staffName}, xem lịch trình được phân công của bạn.</p>
           </div>
         </div>
         

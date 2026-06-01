@@ -6,6 +6,7 @@ import {
   BookOpen,
   MapPin,
   Users,
+  UserCog,
   FileText,
   LogOut,
   Plus,
@@ -17,7 +18,7 @@ const navItems = [
   { path: '/admin/flight-schedule', label: 'Quản lý chuyến bay', icon: Plane },
   { path: '/admin/bookings', label: 'Quản lý đặt chỗ', icon: BookOpen },
   { path: '/admin/airports', label: 'Sân bay & Tuyến bay', icon: MapPin },
-  { path: '/admin/staff', label: 'Nhân viên', icon: Users },
+  { path: '/admin/staff', label: 'Nhân viên', icon: UserCog },
   { path: '/admin/regulations', label: 'Quy định', icon: FileText },
 ];
 

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { bookingService } from '../../api/services/bookingService';
 import { flightService } from '../../api/services/flightService';
+import { ADMIN_BOOKINGS, ADMIN_FLIGHTS } from '../../data/adminMockData';
 
 // Toast (local, minimal)
 function Toast({ toasts, onRemove }) {
@@ -70,7 +71,50 @@ function BookingDetailPage() {
   const [toasts, setToasts] = useState([]);
   const [confirm, setConfirm] = useState(null);
 
-  const flight = flights?.find(f => f.id === booking?.flightId);
+  // Normalize fetched booking, or fall back to mock data
+  const mockBookingRaw = ADMIN_BOOKINGS.find(b => String(b.id) === String(id));
+  const storedPayments = JSON.parse(localStorage.getItem('mock_payments') || '{}');
+  const mockPaymentStatus = storedPayments[id] || (mockBookingRaw?.paymentStatus || 'UNPAID');
+  const mockBookingStatus = mockPaymentStatus === 'PAID' ? 'CONFIRMED' : (mockBookingRaw?.status || 'PENDING');
+
+  const mockBooking = mockBookingRaw ? {
+    bookingId: mockBookingRaw.id,
+    pnrCode: mockBookingRaw.pnr,
+    flightId: mockBookingRaw.flight,
+    totalAmount: mockBookingRaw.amount,
+    status: mockBookingStatus,
+    paymentStatus: mockPaymentStatus,
+    paymentMethod: mockBookingRaw.paymentMethod,
+    bookingDate: mockBookingRaw.bookedAt,
+    expirationTime: null,
+    tickets: [{
+      ticketId: 1,
+      passengerName: mockBookingRaw.passenger,
+      documentNumber: 'CCCD-001234567',
+      nationality: 'Việt Nam',
+      seatNumber: mockBookingRaw.seat,
+      status: 'ACTIVE',
+      price: mockBookingRaw.amount,
+    }]
+  } : null;
+
+  const resolvedBooking = booking || mockBooking;
+
+  const mockFlightRaw = ADMIN_FLIGHTS.find(f => f.id === (resolvedBooking?.flightId));
+  const mockFlight = mockFlightRaw ? {
+    id: mockFlightRaw.id,
+    flightCode: mockFlightRaw.id,
+    airlineName: mockFlightRaw.airline,
+    departureAirportCode: mockFlightRaw.from,
+    arrivalAirportCode: mockFlightRaw.to,
+    departureTime: `${mockFlightRaw.date}T${mockFlightRaw.dep}:00`,
+    arrivalTime: `${mockFlightRaw.date}T${mockFlightRaw.arr}:00`,
+    departureCity: '',
+    arrivalCity: '',
+    estimateDuration: 130,
+  } : null;
+
+  const flight = flights?.find(f => f.id === resolvedBooking?.flightId) || mockFlight;
 
   const addToast = useCallback((msg, type = 'success') => {
     const toastId = Date.now();
@@ -80,39 +124,32 @@ function BookingDetailPage() {
 
   const removeToast = (toastId) => setToasts(prev => prev.filter(t => t.id !== toastId));
 
-  const handleCancel = () => {
-    if (!booking) return;
-    setConfirm({
-      title: 'Hủy đặt vé',
-      message: `Bạn có chắc chắn muốn hủy đặt vé với mã PNR ${booking.pnrCode}? Thao tác này sẽ cập nhật trạng thái đặt vé về Đã hủy.`,
-      confirmLabel: 'Hủy đặt vé',
-      confirmClass: 'bg-red-500 hover:bg-red-600',
-      onConfirm: async () => {
-        try {
-          await bookingService.cancel(booking.bookingId);
-          addToast(`Đã hủy đặt vé PNR ${booking.pnrCode} thành công.`, 'success');
-          refetchBooking();
-        } catch (err) {
-          addToast(err.response?.data?.message || err.message || 'Lỗi khi hủy đặt vé', 'error');
-        } finally {
-          setConfirm(null);
-        }
-      }
-    });
-  };
-
   const handleConfirmPayment = () => {
-    if (!booking) return;
+    if (!resolvedBooking) return;
+    const isMock = !booking;
+    const bookingId = resolvedBooking.bookingId;
+    const pnrCode = resolvedBooking.pnrCode;
+    const totalAmount = resolvedBooking.totalAmount;
+
     setConfirm({
       title: 'Xác nhận thanh toán',
-      message: `Bạn xác nhận đã nhận đủ số tiền ${booking.totalAmount.toLocaleString('vi-VN')} đ cho mã đặt vé ${booking.pnrCode}? Trạng thái vé sẽ chuyển sang ĐÃ THANH TOÁN.`,
+      message: `Bạn xác nhận đã nhận đủ số tiền ${totalAmount.toLocaleString('vi-VN')} đ cho mã đặt vé ${pnrCode}? Trạng thái vé sẽ chuyển sang ĐÃ THANH TOÁN.`,
       confirmLabel: 'Xác nhận',
       confirmClass: 'bg-emerald-600 hover:bg-emerald-700',
       onConfirm: async () => {
         try {
-          await bookingService.confirmPayment(booking.bookingId);
-          addToast(`Xác nhận thanh toán thành công cho PNR ${booking.pnrCode}!`, 'success');
-          refetchBooking();
+          if (isMock) {
+            // Xác nhận thanh toán mock lưu vào localStorage
+            const stored = JSON.parse(localStorage.getItem('mock_payments') || '{}');
+            stored[bookingId] = 'PAID';
+            localStorage.setItem('mock_payments', JSON.stringify(stored));
+            addToast(`Xác nhận thanh toán thành công cho PNR ${pnrCode}!`, 'success');
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            await bookingService.confirmPayment(bookingId);
+            addToast(`Xác nhận thanh toán thành công cho PNR ${pnrCode}!`, 'success');
+            refetchBooking();
+          }
         } catch (err) {
           addToast(err.response?.data?.message || err.message || 'Lỗi khi xác nhận thanh toán', 'error');
         } finally {
@@ -165,12 +202,12 @@ function BookingDetailPage() {
     );
   }
 
-  if (bookingError) {
+  if (!resolvedBooking) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto my-12">
         <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
         <h3 className="font-bold text-red-800 mb-1">Không thể tải thông tin đặt vé</h3>
-        <p className="text-sm text-red-600 mb-4">{bookingError}</p>
+        <p className="text-sm text-red-600 mb-4">{bookingError || 'Không tìm thấy thông tin đặt vé phù hợp.'}</p>
         <div className="flex gap-3 justify-center">
           <button onClick={() => navigate('/staff/booking')} className="px-4 py-2 border border-slate-200 text-sm font-semibold text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
             Quay lại
@@ -183,7 +220,7 @@ function BookingDetailPage() {
     );
   }
 
-  if (!booking) {
+  if (!resolvedBooking) {
     return (
       <div className="text-center py-20 text-slate-400 italic">
         Không tìm thấy thông tin đặt vé phù hợp.
@@ -191,8 +228,8 @@ function BookingDetailPage() {
     );
   }
 
-  const primaryPassenger = booking.tickets?.[0];
-  const totalAmountVal = booking.totalAmount || 0;
+  const primaryPassenger = resolvedBooking.tickets?.[0];
+  const totalAmountVal = resolvedBooking.totalAmount || 0;
   const refundAmount = Math.max(0, totalAmountVal - 150000);
 
   return (
@@ -212,9 +249,9 @@ function BookingDetailPage() {
       <div className="flex items-center gap-1.5 text-sm text-slate-400">
         <button onClick={() => navigate('/staff/booking')} className="hover:text-sky-500 transition-colors font-medium">Danh sách đặt vé</button>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="font-semibold text-slate-700">{booking.pnrCode}</span>
-        <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLES[booking.status] || 'text-slate-500 bg-slate-50'}`}>
-          {STATUS_LABELS[booking.status] || booking.status}
+        <span className="font-semibold text-slate-700">{resolvedBooking.pnrCode}</span>
+        <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLES[resolvedBooking.status] || 'text-slate-500 bg-slate-50'}`}>
+          {STATUS_LABELS[resolvedBooking.status] || resolvedBooking.status}
         </span>
       </div>
 
@@ -251,16 +288,16 @@ function BookingDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold text-slate-800">{totalAmountVal.toLocaleString('vi-VN')} đ</span>
                 <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border ${
-                  booking.paymentStatus === 'PAID' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                  resolvedBooking.paymentStatus === 'PAID' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
                 }`}>
-                  <CheckCircle2 className="w-3 h-3" /> {PAYMENT_STATUS_LABELS[booking.paymentStatus] || booking.paymentStatus}
+                  <CheckCircle2 className="w-3 h-3" /> {PAYMENT_STATUS_LABELS[resolvedBooking.paymentStatus] || resolvedBooking.paymentStatus}
                 </span>
               </div>
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-slate-500"><span>Phương thức</span><span className="font-semibold">{booking.paymentMethod || 'Chưa chọn'}</span></div>
-              <div className="flex justify-between text-slate-500"><span>Ngày đặt</span><span>{formatDateTime(booking.bookingDate)}</span></div>
-              <div className="flex justify-between text-slate-500"><span>Hết hạn</span><span>{formatDateTime(booking.expirationTime)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Phương thức</span><span className="font-semibold">{resolvedBooking.paymentMethod || 'Chưa chọn'}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Ngày đặt</span><span>{formatDateTime(resolvedBooking.bookingDate)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Hết hạn</span><span>{formatDateTime(resolvedBooking.expirationTime)}</span></div>
             </div>
           </div>
 
@@ -335,7 +372,7 @@ function BookingDetailPage() {
 
             <div className="flex gap-8 relative z-10 border-t border-white/10 pt-5">
               {[
-                ['Ghế đã chọn', booking.tickets?.map(t => t.seatNumber).filter(Boolean).join(', ') || 'Chưa xếp'],
+                ['Ghế đã chọn', resolvedBooking.tickets?.map(t => t.seatNumber).filter(Boolean).join(', ') || 'Chưa xếp'],
                 ['Hãng bay', flight?.airlineName || 'Vietnam Airlines'],
                 ['Thời gian đến', flight ? formatDateTime(flight.arrivalTime) : '—']
               ].map(([label, val]) => (
@@ -350,10 +387,10 @@ function BookingDetailPage() {
           {/* Tickets Detail List */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2 text-sm">
-              <Ticket className="w-4 h-4 text-sky-500" /> Chi tiết từng hành khách & Ghế ngồi ({booking.tickets?.length || 0})
+              <Ticket className="w-4 h-4 text-sky-500" /> Chi tiết từng hành khách & Ghế ngồi ({resolvedBooking.tickets?.length || 0})
             </h3>
             <div className="space-y-3">
-              {booking.tickets?.map((t, idx) => (
+              {resolvedBooking.tickets?.map((t, idx) => (
                 <div key={t.ticketId || idx} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between hover:bg-slate-100/50 transition-colors">
                   <div>
                     <div className="flex items-center gap-2">
@@ -414,15 +451,7 @@ function BookingDetailPage() {
           {/* Actions */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex gap-2">
-              {booking.status !== 'CANCELLED' && (
-                <button
-                  onClick={handleCancel}
-                  className="px-5 py-2.5 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors"
-                >
-                  Hủy đặt vé
-                </button>
-              )}
-              {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' && (
+              {resolvedBooking.paymentStatus !== 'PAID' && resolvedBooking.status !== 'CANCELLED' && (
                 <button
                   onClick={handleConfirmPayment}
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
@@ -451,15 +480,15 @@ function BookingDetailPage() {
           <div className="grid grid-cols-3 gap-4 pt-4 mt-1 border-t border-slate-100">
             <div>
               <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Mã đặt vé</p>
-              <p className="text-xs text-sky-600 font-bold">#{booking.bookingId}</p>
+              <p className="text-xs text-sky-600 font-bold">#{resolvedBooking.bookingId}</p>
             </div>
             <div>
               <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Phương thức</p>
-              <p className="text-xs text-slate-700 font-medium">{booking.paymentMethod || 'Chưa thanh toán'}</p>
+              <p className="text-xs text-slate-700 font-medium">{resolvedBooking.paymentMethod || 'Chưa thanh toán'}</p>
             </div>
             <div>
               <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Hạn thanh toán</p>
-              <p className="text-xs text-red-500 font-bold">{formatDateTime(booking.expirationTime)}</p>
+              <p className="text-xs text-red-500 font-bold">{formatDateTime(resolvedBooking.expirationTime)}</p>
             </div>
           </div>
         </div>

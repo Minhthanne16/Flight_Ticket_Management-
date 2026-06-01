@@ -4,6 +4,91 @@ import { bookingService } from '../../api/services/bookingService';
 import { supportService } from '../../api/services/supportService';
 import { flightService } from '../../api/services/flightService';
 import { notificationService } from '../../api/services/notificationService';
+import { ADMIN_BOOKINGS, ADMIN_FLIGHTS } from '../../data/adminMockData';
+
+// ─── MOCK DATA derived from adminMockData ────────────────────────────────────
+const MOCK_CANCEL_REQUESTS = [
+  {
+    id: 'CR-001',
+    pnrCode: 'PNR-E6R1T',
+    customer: 'Nguyễn Minh Trí',
+    email: 'tri.nm@gmail.com',
+    avatar: 'MT',
+    flight: 'SGN → HAN',
+    flightCode: 'VJ621',
+    flightDate: '16/05/2026',
+    reason: 'Lịch trình cá nhân thay đổi',
+    requestDate: '12/05/2026',
+    refundAmount: '1.100.000 đ',
+    status: 'Đã duyệt',
+    ticketPrice: 1100000,
+  },
+  {
+    id: 'CR-002',
+    pnrCode: 'PNR-D2P5W',
+    customer: 'Phạm Thu Dung',
+    email: 'dung.pt@gmail.com',
+    avatar: 'PD',
+    flight: 'DAD → SGN',
+    flightCode: 'VN518',
+    flightDate: '16/05/2026',
+    reason: 'Lý do sức khỏe',
+    requestDate: '14/05/2026',
+    refundAmount: '1.975.000 đ',
+    status: 'Đang chờ',
+    ticketPrice: 1975000,
+  },
+  {
+    id: 'CR-003',
+    pnrCode: 'PNR-G1U4J',
+    customer: 'Đỗ Minh Khoa',
+    email: 'khoa.dm@gmail.com',
+    avatar: 'DK',
+    flight: 'SGN → CXR',
+    flightCode: 'QH412',
+    flightDate: '16/05/2026',
+    reason: 'Đặt nhầm chuyến bay',
+    requestDate: '15/05/2026',
+    refundAmount: '980.000 đ',
+    status: 'Đang chờ',
+    ticketPrice: 980000,
+  },
+];
+
+const MOCK_EXCHANGE_REQUESTS = [
+  {
+    id: 'EX-001',
+    pnrCode: 'PNR-B4M8R',
+    customer: 'Trần Thị Bình',
+    email: 'binh.tt@outlook.com',
+    avatar: 'TB',
+    flight: 'HAN → DAD',
+    flightCode: 'VJ305',
+    flightDate: '16/05/2026',
+    type: 'Đổi ngày bay',
+    from: 'VJ305 (HAN→DAD) - 850.000 đ',
+    to: 'Chuyến khác ngày 20/05/2026',
+    requestDate: '15/05/2026',
+    status: 'Đang chờ',
+    ticketPrice: 850000,
+  },
+  {
+    id: 'EX-002',
+    pnrCode: 'PNR-C9K2L',
+    customer: 'Lê Hoàng Cường',
+    email: 'cuong.lh@gmail.com',
+    avatar: 'LC',
+    flight: 'SGN → CXR',
+    flightCode: 'QH412',
+    flightDate: '16/05/2026',
+    type: 'Đổi ghế',
+    from: 'QH412 (SGN→CXR) ghế 12F - 1.470.000 đ',
+    to: 'Ghế lối đi hàng 10',
+    requestDate: '14/05/2026',
+    status: 'Đã duyệt',
+    ticketPrice: 1470000,
+  },
+];
 
 
 const TABS = [
@@ -1520,11 +1605,37 @@ function CustomerSupportPage() {
         }
       });
 
+      const localStates = JSON.parse(localStorage.getItem('local_support_state') || '{}');
+      const mappedMockCancel = MOCK_CANCEL_REQUESTS.map(r => {
+        const local = localStates[r.id];
+        return {
+          ...r,
+          status: local && local.status ? (local.status === 'APPROVED' ? 'Đã duyệt' : 'Bị từ chối') : r.status
+        };
+      });
+      const mappedMockExchange = MOCK_EXCHANGE_REQUESTS.map(r => {
+        const local = localStates[r.id];
+        return {
+          ...r,
+          status: local && local.status ? (local.status === 'APPROVED' ? 'Đã duyệt' : 'Bị từ chối') : r.status
+        };
+      });
+
       const mappedCancel = refunds.map(r => mapSupportToCancelRequest(r, ticketMap));
       const mappedExchange = changes.map(c => mapSupportToExchangeRequest(c, ticketMap));
 
-      setCancelRequests(mappedCancel);
-      setExchangeRequests(mappedExchange);
+      setCancelRequests(mappedCancel.length > 0 ? mappedCancel : mappedMockCancel);
+      setExchangeRequests(mappedExchange.length > 0 ? mappedExchange : mappedMockExchange);
+      setFlightsList(flights.length > 0 ? flights : ADMIN_FLIGHTS.map(f => ({
+        id: f.id,
+        flightCode: f.id,
+        airlineName: f.airline,
+        departureAirportCode: f.from,
+        arrivalAirportCode: f.to,
+        departureTime: `${f.date}T${f.dep}:00`,
+        arrivalTime: `${f.date}T${f.arr}:00`,
+        basePrice: f.basePrice,
+      })));
     } catch (err) {
       console.error("Lỗi fetch support requests từ database:", err);
       addToast("Không thể đồng bộ dữ liệu từ server. Đang hiển thị danh sách trống.", "error");
@@ -1553,12 +1664,14 @@ function CustomerSupportPage() {
     if (!request) return;
 
     const isApprove = action === 'Đã duyệt';
-    const id = Number(request.id);
+    const id = isNaN(Number(request.id)) ? request.id : Number(request.id);
+    const isMock = isNaN(Number(request.id)) || request.isDb !== true;
 
     try {
       if (type === 'cancel' || type === 'exchange') {
-        if (isApprove) {
-          await supportService.approveRequest(id);
+        if (isMock) {
+          // Bỏ qua gọi API cho dữ liệu mẫu, chỉ lưu trạng thái cục bộ
+          supportService.saveLocalSupportState(id, { status: isApprove ? 'APPROVED' : 'REJECTED' });
           
           if (type === 'exchange' && selectedFlightId) {
             const selectedFlight = flightsList.find(f => String(f.id) === String(selectedFlightId));
@@ -1575,7 +1688,27 @@ function CustomerSupportPage() {
             });
           }
         } else {
-          await supportService.rejectRequest(id);
+          // Giao tiếp với database cho dữ liệu thật
+          if (isApprove) {
+            await supportService.approveRequest(id);
+            
+            if (type === 'exchange' && selectedFlightId) {
+              const selectedFlight = flightsList.find(f => String(f.id) === String(selectedFlightId));
+              const ticketPrice = request.ticketPrice || 1500000;
+              const newPrice = selectedFlight ? selectedFlight.basePrice : ticketPrice;
+              const diff = Number(newPrice) - Number(ticketPrice);
+              
+              supportService.saveLocalSupportState(id, {
+                status: 'APPROVED',
+                feeAmount: diff,
+                newFlightCode: selectedFlight?.flightCode || 'N/A',
+                newFlightDate: selectedFlight ? new Date(selectedFlight.departureTime).toLocaleDateString('vi-VN') : 'N/A',
+                newFlightRoute: selectedFlight ? `${selectedFlight.departureAirportCode} → ${selectedFlight.arrivalAirportCode}` : 'N/A'
+              });
+            }
+          } else {
+            await supportService.rejectRequest(id);
+          }
         }
 
         // Call notificationService.create for each selected channel
