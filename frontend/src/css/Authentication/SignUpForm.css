@@ -78,16 +78,17 @@
 }
 
 .signup-brand__logo-box {
-    width: 280px;
-    height: 70px;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .signup-brand__logo {
-    height: 100%;
     width: 100%;
+    height: auto;
     object-fit: contain;
 }
 
@@ -155,7 +156,7 @@
 
 .input-wrapper input {
     width: 100%;
-    padding: 16px 42px 16px 48px;
+    padding: 16px 42px 16px 48px !important;
     background: #EDE9FE;
     border: 1.5px solid transparent;
     border-radius: 12px;

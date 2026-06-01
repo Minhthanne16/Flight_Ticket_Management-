@@ -22,6 +22,12 @@ public class StaffService {
     private final PasswordEncoder passwordEncoder;
 
     public StaffResponse create(StaffRequest request) {
+        if (staffRepository.existsByStaffCode(
+        request.getStaffCode())) {
+
+    throw new RuntimeException(
+            "Staff code already exists");
+}
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
@@ -93,29 +99,54 @@ public class StaffService {
                 .toList();
     }
 
-    public StaffResponse update(Long id, StaffRequest request) {
+public StaffResponse update(
+        Long id,
+        StaffRequest request) {
 
-        Staff staff = staffRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy nhân viên"));
+    Staff staff = staffRepository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException(
+                            "Không tìm thấy nhân viên"));
 
-        User user = staff.getUser();
+    User user = staff.getUser();
 
-        user.setFullName(request.getFullName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setUpdatedAt(LocalDateTime.now());
+    // phone duplicate
+    if (!user.getPhoneNumber().equals(
+            request.getPhoneNumber())
+            &&
+            userRepository.existsByPhoneNumber(
+                    request.getPhoneNumber())) {
 
-        userRepository.save(user);
-
-        staff.setStaffCode(request.getStaffCode());
-        staff.setDepartment(request.getDepartment());
-        staff.setHireDate(request.getHireDate());
-        staff.setStatus(request.getStatus());
-
-        staffRepository.save(staff);
-
-        return mapToResponse(staff);
+        throw new RuntimeException(
+                "Số điện thoại đã tồn tại");
     }
+
+    // staff code duplicate
+    if (!staff.getStaffCode().equals(
+            request.getStaffCode())
+            &&
+            staffRepository.existsByStaffCode(
+                    request.getStaffCode())) {
+
+        throw new RuntimeException(
+                "Staff code already exists");
+    }
+
+    user.setFullName(request.getFullName());
+    user.setPhoneNumber(request.getPhoneNumber());
+    user.setUpdatedAt(LocalDateTime.now());
+
+    userRepository.save(user);
+
+    staff.setStaffCode(request.getStaffCode());
+    staff.setDepartment(request.getDepartment());
+    staff.setHireDate(request.getHireDate());
+    staff.setStatus(request.getStatus());
+
+    staffRepository.save(staff);
+
+    return mapToResponse(staff);
+}
 
     public void delete(Long id) {
 

@@ -56,31 +56,26 @@ function ExploreDestinations() {
                 </div>
                 
                 {/* Horizontal Scrollable Container */}
-                <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 space-x-4 md:space-x-6 snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {destinations.map((item) => (
-                        <div key={item.id} className="min-w-[240px] md:min-w-[280px] h-[320px] md:h-[380px] rounded-2xl overflow-hidden relative group snap-start cursor-pointer shrink-0 shadow-sm hover:shadow-lg transition-all">
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                            
-                            {/* Text Content */}
-                            <div className="absolute bottom-0 left-0 p-5 w-full">
-                                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{item.name}</h3>
-                                <div className="flex items-center text-white/80 space-x-1">
-                                    <MapPin className="w-4 h-4" />
-                                    <p className="text-sm font-medium">{item.location}</p>
+                <div className="relative overflow-hidden group py-4">
+                    <div className="flex w-max animate-marquee space-x-6">
+                        {[...destinations, ...destinations].map((item, index) => (
+                            <div key={`${item.id}-${index}`} className="w-[280px] shrink-0 h-[380px] rounded-2xl overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-lg transition-all">
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                {/* Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                
+                                {/* Text Content */}
+                                <div className="absolute bottom-0 left-0 p-5 w-full">
+                                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{item.name}</h3>
+                                    <div className="flex items-center text-white/80 space-x-1">
+                                        <MapPin className="w-4 h-4" />
+                                        <p className="text-sm font-medium">{item.location}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-                
-                {/* CSS to hide scrollbar for webkit browsers */}
-                <style dangerouslySetInnerHTML={{__html: `
-                    .overflow-x-auto::-webkit-scrollbar {
-                        display: none;
-                    }
-                `}} />
             </div>
         </div>
     );

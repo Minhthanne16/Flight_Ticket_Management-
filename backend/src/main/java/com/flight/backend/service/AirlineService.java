@@ -21,71 +21,110 @@ public class AirlineService {
 
     // CREATE
     public AirlineResponse createAirline(CreateAirlineRequest req) {
+
         if (airlineRepository.existsByAirlineCode(req.getAirlineCode())) {
-            throw new RuntimeException("Code already exists");
+            throw new RuntimeException(
+                    "Airline code '" + req.getAirlineCode()
+                            + "' already exists");
+        }
+
+        if (airlineRepository.existsByAirlineName(req.getAirlineName())) {
+            throw new RuntimeException(
+                    "Airline name '" + req.getAirlineName()
+                            + "' already exists");
         }
 
         Airline airline = new Airline();
 
-        airline.setAirlineCode(req.getAirlineCode());
-        airline.setAirlineName(req.getAirlineName());
+        airline.setAirlineCode(
+                req.getAirlineCode().trim().toUpperCase());
+
+        airline.setAirlineName(
+                req.getAirlineName().trim());
+
         airline.setDescription(req.getDescription());
         airline.setLogo(req.getLogo());
 
         Airline saved = airlineRepository.save(airline);
 
-        AirlineResponse response = new AirlineResponse();
-        response.setId(saved.getId());
-        response.setAirlineCode(saved.getAirlineCode());
-        response.setAirlineName(saved.getAirlineName());
-        response.setDescription(saved.getDescription());
-        response.setLogo(saved.getLogo());
-
-        return response;
+        return mapToResponse(saved);
     }
 
     // GET ALL
     public List<AirlineResponse> getAllAirlines() {
-        return airlineRepository.findAll().stream().map(a -> {
-            AirlineResponse res = new AirlineResponse();
-            res.setId(a.getId());
-            res.setAirlineCode(a.getAirlineCode());
-            res.setAirlineName(a.getAirlineName());
-            res.setDescription(a.getDescription());
-            res.setLogo(a.getLogo());
-            return res;
-        }).toList();
+
+        return airlineRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     // UPDATE
-    public AirlineResponse updateAirline(Long id, UpdateAirlineRequest updatedAirline) {
+    public AirlineResponse updateAirline(
+            Long id,
+            UpdateAirlineRequest request) {
 
         Airline airline = airlineRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Airline not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Airline not found"));
 
-        airline.setAirlineCode(updatedAirline.getAirlineCode());
-        airline.setAirlineName(updatedAirline.getAirlineName());
-        airline.setDescription(updatedAirline.getDescription());
-        airline.setLogo(updatedAirline.getLogo());
+        if (airlineRepository.existsByAirlineCodeAndIdNot(
+                request.getAirlineCode(),
+                id)) {
 
-        Airline saved = this.airlineRepository.save(airline);
+            throw new RuntimeException(
+                    "Airline code '" + request.getAirlineCode()
+                            + "' already exists");
+        }
 
-        AirlineResponse response = new AirlineResponse();
-        response.setId(saved.getId());
-        response.setAirlineCode(saved.getAirlineCode());
-        response.setAirlineName(saved.getAirlineName());
-        response.setDescription(saved.getDescription());
-        response.setLogo(saved.getLogo());
+        if (airlineRepository.existsByAirlineNameAndIdNot(
+                request.getAirlineName(),
+                id)) {
 
-        return response;
+            throw new RuntimeException(
+                    "Airline name '" + request.getAirlineName()
+                            + "' already exists");
+        }
+
+        airline.setAirlineCode(
+                request.getAirlineCode().trim().toUpperCase());
+
+        airline.setAirlineName(
+                request.getAirlineName().trim());
+
+        airline.setDescription(request.getDescription());
+        airline.setLogo(request.getLogo());
+
+        Airline saved = airlineRepository.save(airline);
+
+        return mapToResponse(saved);
     }
 
     // DELETE
     public void deleteAirline(Long id) {
 
         Airline airline = airlineRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Airline not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Airline not found"));
+
+        if (!airline.getAirplanes().isEmpty()) {
+            throw new RuntimeException(
+                    "Cannot delete airline because it is being used by airplanes");
+        }
 
         airlineRepository.delete(airline);
+    }
+
+    private AirlineResponse mapToResponse(Airline airline) {
+
+        AirlineResponse response = new AirlineResponse();
+
+        response.setId(airline.getId());
+        response.setAirlineCode(airline.getAirlineCode());
+        response.setAirlineName(airline.getAirlineName());
+        response.setDescription(airline.getDescription());
+        response.setLogo(airline.getLogo());
+
+        return response;
     }
 }

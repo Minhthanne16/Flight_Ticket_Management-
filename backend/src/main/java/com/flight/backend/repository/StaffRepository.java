@@ -9,4 +9,5 @@ import java.util.List;
 public interface StaffRepository extends JpaRepository<Staff, Long> {
 
     List<Staff> findByUser_FullNameContainingIgnoreCase(String keyword);
+    boolean existsByStaffCode(Integer staffCode);
 }

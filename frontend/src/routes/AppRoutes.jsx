@@ -29,6 +29,7 @@ import BookingManage from '../pages/Admin/BookingManage';
 import AirportManage from '../pages/Admin/AirportManage';
 import UserManage from '../pages/Admin/UserManage';
 import RegulationManage from '../pages/Admin/RegulationManage';
+import AdminProfile from '../pages/Admin/Profile';
 
 const RootRoute = () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -125,7 +126,7 @@ function AppRoutes() {
           <Route path="regulations" element={<RegulationManage />} />
           {/* Redirect legacy paths */}
           <Route path="booking" element={<Navigate to="/admin/bookings" replace />} />
-          <Route path="profile" element={<Navigate to="/admin/staff" replace />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>
         <Route
