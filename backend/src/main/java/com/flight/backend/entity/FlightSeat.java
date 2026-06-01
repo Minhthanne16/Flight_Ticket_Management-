@@ -50,4 +50,7 @@ public class FlightSeat {
 
     @OneToOne(mappedBy = "flightSeat")
     private Ticket ticket;
+
+    @jakarta.persistence.Version
+    private Long version;
 }

@@ -1,14 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, HelpCircle, ChevronDown, AlertCircle, CheckCircle, Info, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Menu, Search, Bell, HelpCircle, ChevronDown, AlertCircle, CheckCircle, Info, X, User, LogOut } from 'lucide-react';
 
-const AdminHeader = ({ title = '' }) => {
+const AdminHeader = ({ title = '', onMenuClick }) => {
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const notificationRef = useRef(null);
+  const profileRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const displayName = user.fullName || user.username || 'Admin';
-  const initials = displayName.charAt(0).toUpperCase();
+  const displayName = user.fullName || user.username || 'EasyFlight Staff';
+  const getInitials = (name) => {
+    if (!name) return 'A';
+    const words = name.split(' ');
+    if (words.length >= 2) {
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+  const initials = getInitials(displayName);
 
   const notifications = [
     { id: 1, type: 'alert', message: 'Chuyến bay VN305 bị delay 30 phút do thời tiết xấu.', time: '10 phút trước', read: false },
@@ -16,11 +28,14 @@ const AdminHeader = ({ title = '' }) => {
     { id: 3, type: 'info', message: 'Hệ thống tự động cập nhật giá vé cuối tuần.', time: '2 giờ trước', read: true },
   ];
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfile(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -33,7 +48,13 @@ const AdminHeader = ({ title = '' }) => {
       style={{ borderColor: '#E8EBF0', minHeight: '60px' }}
     >
       {/* Title (tuỳ theo trang) */}
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+        <button 
+          onClick={onMenuClick}
+          className="md:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100"
+        >
+          <Menu size={24} />
+        </button>
         {title ? (
           <h1 className="text-xl font-bold text-[#7C5CFC] whitespace-nowrap">{title}</h1>
         ) : (
@@ -58,7 +79,7 @@ const AdminHeader = ({ title = '' }) => {
       {/* Right side */}
       <div className="flex items-center gap-4">
         {/* Bell & Notifications */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className={`relative p-2 rounded-lg transition-colors ${showNotifications ? 'bg-slate-100' : 'hover:bg-gray-100'}`}
@@ -120,17 +141,50 @@ const AdminHeader = ({ title = '' }) => {
         <div className="w-px h-6 bg-gray-200" />
 
         {/* Profile */}
-        <button className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors hover:bg-gray-100">
-          {/* Avatar */}
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-            style={{ backgroundColor: '#7C5CFC' }}
+        <div className="relative" ref={profileRef}>
+          <button 
+            onClick={() => setShowProfile(!showProfile)}
+            className="flex items-center gap-2 px-1 py-1 rounded-full transition-colors hover:bg-gray-100 focus:outline-none"
           >
-            {initials}
-          </div>
-          <span className="text-sm font-medium text-gray-700 hidden md:block">Profile Settings</span>
-          <ChevronDown size={14} style={{ color: '#9CA3AF' }} className="hidden md:block" />
-        </button>
+            {/* Avatar */}
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-base font-semibold flex-shrink-0"
+              style={{ backgroundColor: '#7C5CFC' }}
+            >
+              {initials}
+            </div>
+          </button>
+          
+          {showProfile && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] p-2">
+              <div className="px-3 py-2">
+                <p className="font-semibold text-[#003366] text-base">{displayName}</p>
+                <p className="text-sm text-slate-500 mt-0.5">{user.role || 'Nhân viên'} &middot; {user.department || 'Phục vụ mặt đất'}</p>
+              </div>
+              <div className="h-px bg-slate-100 my-1"></div>
+              <button 
+                onClick={() => {
+                  setShowProfile(false);
+                  navigate('/admin/profile');
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#003366] hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <User size={18} className="text-slate-500" />
+                <span>Thông tin cá nhân</span>
+              </button>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('user');
+                  window.location.href = '/login';
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-1"
+              >
+                <LogOut size={18} />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
