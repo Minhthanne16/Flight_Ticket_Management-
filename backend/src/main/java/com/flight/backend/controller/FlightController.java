@@ -22,10 +22,9 @@ public class FlightController {
         this.flightService = flightService;
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<FlightResponse>> create( @Valid @RequestBody CreateFlightRequest request) {
+   @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ApiResponse<FlightResponse>> create(@RequestBody CreateFlightRequest request) {
+    public ResponseEntity<ApiResponse<FlightResponse>> create(@Valid @RequestBody CreateFlightRequest request) {
         FlightResponse res = this.flightService.createFlight(request);
         return ApiResponse.success(res, "Tạo mới chuyến bay thành công.");
     }
