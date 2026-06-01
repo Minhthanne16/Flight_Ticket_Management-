@@ -54,9 +54,15 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
 
         <div className="modal-body">
   <div className="selected-flight-summary">
-    {/* Phần Header */}
+    
+    {/* Phần Header (ĐÃ CHUYỂN LOGO LÊN ĐÂY) */}
     <div className="summary-header">
-      <div className="header-left">
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <img 
+          src={flight.airlineLogo || '/default-airline.png'} 
+          alt="logo" 
+          className="header-airline-logo" 
+        />
         <strong>Departure</strong> 
       </div>
       <span className="summary-date">
@@ -64,35 +70,63 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
       </span>
     </div>
 
-    {/* Phần Details (Sẽ áp dụng lưới Grid 4 cột) */}
+    {/* Phần Details (Đường bay tự động canh giữa tuyệt đối) */}
     <div className="summary-details">
-  <div className="summary-logo">
-    <img src={flight.airplane?.airline?.logo || '/default-airline.png'} alt="logo" className="modal-airline-logo" />
-  </div>
+      
+      {/* Cột trái: Khởi hành */}
+      <div className="summary-time">
+        <strong>{formatTime(flight.departureTime)}</strong>
+        <span className="airport-code-box">{fromCode}</span>
+      </div>
 
-  <div className="summary-time">
-    <strong>{formatTime(flight.departureTime)}</strong>
-    {/* Thêm class mới để tạo khung xám bo góc */}
-    <span className="airport-code-box">{fromCode}</span>
-  </div>
+      {/* Trục giữa: Đường bay & Transit */}
+      <div className="summary-route">
+        <div className="route-duration">
+          {Math.floor(flight.estimateDuration / 60)}h {flight.estimateDuration % 60}m
+        </div>
+        
+        <div className="route-line-container">
+          <div className="route-line"></div>
+          <div 
+             className="route-type" 
+             style={{ color: flight.flightStops?.length > 0 ? '#ff5e1f' : '#64748b' }}
+          >
+            {flight.flightStops?.length > 0 
+                ? `${flight.flightStops.length} stop${flight.flightStops.length > 1 ? 's' : ''}` 
+                : 'Direct'}
+          </div>
+        </div>
 
-  {/* Trục đường bay theo style mới */}
-  <div className="summary-route">
-    <div className="route-duration">
-      {Math.floor(flight.estimateDuration / 60)}h {flight.estimateDuration % 60}m
+        {/* Chi tiết Transit */}
+        {flight.flightStops?.length > 0 && (
+          <div className="transit-details-mini">
+            {flight.flightStops.sort((a, b) => a.stopOrder - b.stopOrder).map((stop) => (
+              <div key={stop.flightStopId} className="transit-stop-item">
+                <span className="transit-dot"></span>
+                <div className="transit-text">
+                  <div>Dừng tại <strong>{stop.airportCode}</strong> • {Math.floor(stop.stopDuration / 60)}h {stop.stopDuration % 60}m</div>
+                  <small>({formatTime(stop.arrivalTime)} - {formatTime(stop.departureTime)})</small>
+                  
+                  {/* LOGO HÃNG PHỤC VỤ CHẶNG TRANSIT NÀY */}
+                  <div className="transit-airline">
+                    <img src={flight.airlineLogo || '/default-airline.png'} alt="airline" className="transit-micro-logo" />
+                    <small> {flight.airlineName || 'Airline'}</small>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cột phải: Đến nơi */}
+      <div className="summary-time">
+        <strong>{formatTime(flight.arrivalTime)}</strong>
+        <span className="airport-code-box">{toCode}</span>
+      </div>
+      
     </div>
-    <div className="route-line-container">
-      <div className="route-line"></div>
-      <div className="route-type">Direct</div>
-    </div>
-  </div>
-
-  <div className="summary-time">
-    <strong>{formatTime(flight.arrivalTime)}</strong>
-    <span className="airport-code-box">{toCode}</span>
-  </div>
-</div>
-  </div>
+  
 
 
          
@@ -116,7 +150,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
             <div className="ticket-option-card recommended">
               <h4>Business Class {filters.cabinClass === 'business'}</h4>
               <h2 className="modal-price">
-                {formatPrice((totalPrice + (totalPrice * 0.5)) * passengerCount)} VND
+                {formatPrice((totalPrice + (totalPrice * 0.5)) )} VND
                 <small>/ {passengerCount} pax</small>
               </h2>
               <ul className="modal-amenities">
@@ -133,6 +167,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
 
       </div>
     </div>
+  </div>
   );
 }
 

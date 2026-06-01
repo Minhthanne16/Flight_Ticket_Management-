@@ -133,29 +133,6 @@ function Filter() {
         </div>
       </div>
 
-      {/* Class Section */}
-      <div className="filter-section">
-        <div className="section-header">
-          <p className="title">Class</p>
-          <i className="fa-solid fa-chevron-up"></i>
-        </div>
-        <div className="class-group">
-          <button 
-            className={`class-btn ${currentClass === 'economy' ? 'active' : ''}`}
-            onClick={() => updateUrlParam('cabinClass', 'economy')}
-          >
-            Economy Class
-          </button>
-
-          <button 
-            className={`class-btn ${currentClass === 'business' ? 'active' : ''}`}
-            onClick={() => updateUrlParam('cabinClass', 'business')}
-          >
-            Business Class
-          </button>
-        </div>
-      </div>
-
     </div>
   );
 }

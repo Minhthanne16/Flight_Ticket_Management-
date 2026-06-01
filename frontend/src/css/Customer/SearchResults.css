@@ -682,6 +682,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  margin-top: 30px;
 }
 
 .ticket-option-card {
@@ -783,4 +784,94 @@
 
 .error-state {
   color: #ef4444;
+}
+
+
+/* =========================================================
+   CHI TIẾT TRANSIT TRONG MODAL CONFIRM BOOKING
+   ========================================================= */
+.transit-details-mini {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: row; /* Đổi từ column (dọc) sang row (ngang) */
+  justify-content: center; /* Căn giữa các khối transit */
+  flex-wrap: wrap; /* Rất quan trọng: Nếu màn hình nhỏ hoặc có quá nhiều trạm dừng, nó sẽ tự động rớt xuống dòng cho đỡ chật */
+  gap: 15px; /* Tăng khoảng cách giữa các trạm ra một chút cho thoáng */
+  width: 100%;
+}
+
+.transit-stop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fff7f5; /* Nền cam rất nhạt, hợp tone Masupilami */
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px dashed #ffccb8;
+  width: max-content;
+  max-width: 100%;
+}
+
+
+.transit-text {
+  font-size: 0.85rem;
+  color: #475569;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.transit-text strong {
+  color: #0f172a;
+}
+
+.transit-text small {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+
+/* --- Tinh chỉnh Header có chứa Logo --- */
+.header-airline-logo {
+  width: 100px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* --- Tinh chỉnh phần Details để Trục bay vô giữa --- */
+.summary-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px; /* Tạo khoảng trống đều 2 bên */
+  width: 100%;
+  padding: 0 10px; /* Thụt vào 1 xíu cho đẹp */
+}
+
+.summary-route {
+  flex-grow: 1; /* Tự động phình to chiếm hết chỗ trống ở giữa */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- Tinh chỉnh phần Transit có chứa Logo --- */
+.transit-airline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ffd6c7; /* Đường kẻ ngang mờ chia cách giờ và hãng bay */
+}
+
+.transit-micro-logo {
+  width: 60px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.transit-airline small {
+  font-size: 0.7rem !important;
+  color: #64748b !important;
+  font-style: italic;
 }
