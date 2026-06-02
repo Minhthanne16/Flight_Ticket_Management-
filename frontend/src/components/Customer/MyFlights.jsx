@@ -14,6 +14,9 @@ const STATUS_LABEL = {
   EXPIRED: 'Hết hạn'
 };
 
+// Các trạng thái còn có thể hủy (khớp với backend: chưa CANCELLED/EXPIRED)
+const CANCELLABLE = new Set(['PENDING', 'CONFIRMED', 'PAID']);
+
 // Nhóm lọc -> các status tương ứng
 const FILTERS = [
   { key: 'ALL', label: 'Tất cả', match: () => true },
@@ -175,8 +178,9 @@ function SeatSelectionModal({ booking, onClose, onDone }) {
 }
 
 // ===== Modal chi tiết đơn (vé điện tử) =====
-function BookingDetailModal({ booking, onClose, onChooseSeat }) {
+function BookingDetailModal({ booking, onClose, onChooseSeat, onCancel }) {
   const canChooseSeat = booking.status === 'PAID' && !booking.seatsAssigned;
+  const canCancel = CANCELLABLE.has(booking.status);
   return (
     <div className="mf-modal-overlay" onClick={onClose}>
       <div className="mf-modal" onClick={(e) => e.stopPropagation()}>
@@ -223,8 +227,54 @@ function BookingDetailModal({ booking, onClose, onChooseSeat }) {
               <i className="fa-solid fa-chair"></i> Đặt chỗ ngồi
             </button>
           )}
+          {canCancel && (
+            <button className="mf-btn-cancel mf-btn-cancel--block" onClick={onCancel}>
+              <i className="fa-solid fa-ban"></i> Hủy vé
+            </button>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ===== Hộp xác nhận hủy vé =====
+function CancelConfirmModal({ booking, busy, onConfirm, onClose }) {
+  const isPaid = booking.status === 'PAID' || booking.status === 'CONFIRMED';
+  return (
+    <div className="mf-modal-overlay" onClick={busy ? undefined : onClose}>
+      <div className="mf-confirm" onClick={(e) => e.stopPropagation()}>
+        <div className="mf-confirm-icon"><i className="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>Hủy vé chuyến bay?</h3>
+        <p>
+          Bạn sắp hủy đơn <strong>{booking.pnrCode}</strong> ({booking.departureAirportCode} → {booking.arrivalAirportCode}).
+        </p>
+        <ul className="mf-confirm-notes">
+          <li>Chỉ được hủy trước giờ khởi hành ít nhất <strong>24 giờ</strong> theo quy định.</li>
+          {isPaid
+            ? <li>Đơn đã thanh toán sẽ được hoàn <strong>80%</strong> giá trị theo quy định.</li>
+            : <li>Đơn chưa thanh toán sẽ được hủy mà không phát sinh hoàn tiền.</li>}
+          <li>Thao tác này không thể hoàn tác.</li>
+        </ul>
+        <div className="mf-confirm-actions">
+          <button className="mf-confirm-keep" onClick={onClose} disabled={busy}>Giữ vé</button>
+          <button className="mf-confirm-cancel" onClick={onConfirm} disabled={busy}>
+            {busy ? 'Đang hủy...' : 'Xác nhận hủy'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== Toast nhỏ =====
+function Toast({ msg, type, onClose }) {
+  if (!msg) return null;
+  return (
+    <div className={`mf-toast ${type}`}>
+      <i className={`fa-solid ${type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check'}`}></i>
+      <span>{msg}</span>
+      <button onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
     </div>
   );
 }
@@ -236,6 +286,30 @@ function MyFlights() {
   const [filter, setFilter] = useState('ALL');
   const [detailBooking, setDetailBooking] = useState(null);
   const [seatBooking, setSeatBooking] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type }), 4000);
+  };
+
+  const doCancel = async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      await bookingService.cancel(cancelTarget.bookingId);
+      setCancelTarget(null);
+      setDetailBooking(null);
+      await load();
+      showToast('Đã hủy vé. Khoản hoàn tiền (nếu có) sẽ được xử lý theo quy định.');
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'Hủy vé thất bại. Vui lòng thử lại.', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -336,6 +410,9 @@ function MyFlights() {
                       {canSeat && (
                         <button className="mf-btn-seat" onClick={() => setSeatBooking(b)}>Đặt chỗ ngồi</button>
                       )}
+                      {CANCELLABLE.has(b.status) && (
+                        <button className="mf-btn-cancel" onClick={() => setCancelTarget(b)}>Hủy vé</button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -350,8 +427,21 @@ function MyFlights() {
           booking={detailBooking}
           onClose={() => setDetailBooking(null)}
           onChooseSeat={() => { setSeatBooking(detailBooking); setDetailBooking(null); }}
+          onCancel={() => setCancelTarget(detailBooking)}
         />
       )}
+
+      {cancelTarget && (
+        <CancelConfirmModal
+          booking={cancelTarget}
+          busy={cancelling}
+          onConfirm={doCancel}
+          onClose={() => !cancelling && setCancelTarget(null)}
+        />
+      )}
+
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: toast.type })} />
+
 
       {seatBooking && (
         <SeatSelectionModal

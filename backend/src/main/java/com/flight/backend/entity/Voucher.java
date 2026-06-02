@@ -1,5 +1,6 @@
 package com.flight.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flight.backend.entity.enums.VoucherDiscountType;
 import com.flight.backend.entity.enums.VoucherStatus;
 import jakarta.persistence.Column;
@@ -73,6 +74,7 @@ public class Voucher {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "voucher")
     private List<BookingVoucher> bookingVouchers = new ArrayList<>();
 }

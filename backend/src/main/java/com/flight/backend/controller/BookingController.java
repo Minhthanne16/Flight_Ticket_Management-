@@ -66,8 +66,14 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
-        BookingResponse booking = this.bookingService.cancelBooking(id);
-        return ApiResponse.success(booking, "Xóa Booking thành công");
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
+            @PathVariable Long id, Authentication authentication) {
+        // Staff/Admin hủy hộ mọi đơn; khách hàng chỉ được hủy đơn của chính mình.
+        boolean isStaffOrAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                        || a.getAuthority().equals("ROLE_STAFF"));
+        String customerEmail = (!isStaffOrAdmin && authentication != null) ? authentication.getName() : null;
+        BookingResponse booking = this.bookingService.cancelBooking(id, customerEmail);
+        return ApiResponse.success(booking, "Hủy đơn đặt chỗ thành công");
     }
 }

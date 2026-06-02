@@ -312,7 +312,22 @@ public class BookingService {
 
     @Transactional
     public BookingResponse cancelBooking(Long id) {
+        return cancelBooking(id, null);
+    }
+
+    // customerEmail != null: khách tự hủy -> chỉ được hủy đơn của chính mình.
+    // customerEmail == null: Staff/Admin hủy hộ -> không ràng buộc quyền sở hữu.
+    @Transactional
+    public BookingResponse cancelBooking(Long id, String customerEmail) {
         Booking booking = getBookingById(id);
+
+        if (customerEmail != null) {
+            User owner = booking.getCustomer();
+            if (owner == null || owner.getEmail() == null
+                    || !owner.getEmail().equalsIgnoreCase(customerEmail)) {
+                throw new RuntimeException("Bạn không có quyền hủy đơn đặt chỗ này.");
+            }
+        }
 
         if (booking.getStatus() == BookingStatus.CANCELLED
                 || booking.getStatus() == BookingStatus.EXPIRED) {
