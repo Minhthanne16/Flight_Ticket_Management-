@@ -5,15 +5,21 @@ import com.flight.backend.dto.notification.NotificationResponse;
 import com.flight.backend.entity.Booking;
 import com.flight.backend.entity.Notification;
 import com.flight.backend.entity.User;
+import com.flight.backend.entity.enums.BookingStatus;
+import com.flight.backend.entity.enums.NotificationChannel;
 import com.flight.backend.entity.enums.NotificationStatus;
+import com.flight.backend.entity.enums.NotificationType;
 import com.flight.backend.repository.BookingRepository;
 import com.flight.backend.repository.NotificationRepository;
 import com.flight.backend.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +30,8 @@ public class NotificationService {
     private final UserRepository userRepository;
 
     private final BookingRepository bookingRepository;
+
+    private final EmailService emailService;
 
     // STAFF tạo notification
     public NotificationResponse createNotification(
@@ -62,13 +70,100 @@ public class NotificationService {
         Notification savedNotification =
                 notificationRepository.save(notification);
 
-        // giả lập gửi thành công
-        savedNotification.setStatus(NotificationStatus.SENT);
+        // Gửi email thật nếu kênh là EMAIL; trạng thái phản ánh kết quả gửi.
+        boolean delivered = true;
+        if (request.getChannel() == NotificationChannel.EMAIL) {
+            delivered = trySendEmail(user, request.getTitle(), request.getContent());
+        }
+        savedNotification.setStatus(
+                delivered ? NotificationStatus.SENT : NotificationStatus.FAILED);
 
         Notification updatedNotification =
                 notificationRepository.save(savedNotification);
 
+        if (!delivered) {
+            throw new RuntimeException(
+                    "Đã lưu thông báo nhưng gửi email thất bại. Kiểm tra cấu hình SMTP hoặc email người nhận.");
+        }
+
         return mapToResponse(updatedNotification);
+    }
+
+    // Gửi thông báo (kèm email nếu chọn EMAIL) cho TẤT CẢ khách có vé còn hiệu lực trên 1 chuyến bay.
+    // Trả về số khách đã gửi email thành công.
+    @Transactional
+    public int notifyFlightCustomers(
+            Long flightId,
+            NotificationType type,
+            NotificationChannel channel,
+            String title,
+            String content
+    ) {
+
+        List<Booking> bookings = bookingRepository.findByFlight_Id(flightId);
+
+        // Gom khách duy nhất (bỏ đơn đã huỷ/hết hạn, bỏ khách không có email)
+        Map<Long, User> recipients = new LinkedHashMap<>();
+        Map<Long, Booking> bookingByUser = new LinkedHashMap<>();
+        for (Booking b : bookings) {
+            if (b.getStatus() == BookingStatus.CANCELLED
+                    || b.getStatus() == BookingStatus.EXPIRED) {
+                continue;
+            }
+            User u = b.getCustomer();
+            if (u == null || u.getEmail() == null || u.getEmail().isBlank()) {
+                continue;
+            }
+            if (!recipients.containsKey(u.getId())) {
+                recipients.put(u.getId(), u);
+                bookingByUser.put(u.getId(), b);
+            }
+        }
+
+        if (recipients.isEmpty()) {
+            throw new RuntimeException(
+                    "Chuyến bay này chưa có hành khách (có email) để gửi thông báo.");
+        }
+
+        int sent = 0;
+        for (User u : recipients.values()) {
+            Notification n = new Notification();
+            n.setUser(u);
+            n.setBooking(bookingByUser.get(u.getId()));
+            n.setType(type);
+            n.setChannel(channel);
+            n.setTitle(title);
+            n.setContent(content);
+            n.setSentAt(LocalDateTime.now());
+            n.setStatus(NotificationStatus.PENDING);
+            notificationRepository.save(n);
+
+            boolean delivered = true;
+            if (channel == NotificationChannel.EMAIL) {
+                delivered = trySendEmail(u, title, content);
+            }
+            n.setStatus(delivered ? NotificationStatus.SENT : NotificationStatus.FAILED);
+            notificationRepository.save(n);
+            if (delivered) {
+                sent++;
+            }
+        }
+
+        if (sent == 0 && channel == NotificationChannel.EMAIL) {
+            throw new RuntimeException(
+                    "Gửi email thất bại cho tất cả hành khách. Kiểm tra cấu hình SMTP.");
+        }
+
+        return sent;
+    }
+
+    private boolean trySendEmail(User user, String title, String content) {
+        try {
+            emailService.sendText(user.getEmail(), title, content);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // STAFF xem toàn bộ notification

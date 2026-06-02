@@ -32,6 +32,12 @@ export const notificationService = {
       return getLocalNotifs();
     }
   },
+  // Gửi thông báo (kèm email) cho toàn bộ hành khách của một chuyến bay.
+  // KHÔNG nuốt lỗi: để UI báo cho staff khi gửi thất bại.
+  notifyFlight: async (flightId, data) => {
+    const res = await api.post(`/notifications/flight/${flightId}`, data);
+    return res.data?.data || res.data;
+  },
   create: async (data) => {
     try {
       const res = await api.post('/notifications', data);

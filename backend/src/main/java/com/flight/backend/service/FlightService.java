@@ -300,10 +300,17 @@ public class FlightService {
                     .id(f.getId())
                     .flightCode(f.getFlightCode())
                     .departureTime(f.getDepartureTime())
+                    .arrivalTime(f.getArrivalTime())
                     .estimateDuration(f.getEstimateDuration())
                     .status(f.getStatus() != null ? f.getStatus().name() : null)
                     .basePrice(f.getBasePrice())
                     .routeCode(rt != null ? rt.getRouteCode() : null)
+                    .airlineName(ap != null && ap.getAirline() != null
+                            ? ap.getAirline().getAirlineName() : null)
+                    .departureAirportCode(rt != null && rt.getDepartureAirport() != null
+                            ? rt.getDepartureAirport().getAirportCode() : null)
+                    .arrivalAirportCode(rt != null && rt.getArrivalAirport() != null
+                            ? rt.getArrivalAirport().getAirportCode() : null)
                     .departureCity(rt != null && rt.getDepartureAirport() != null
                             ? rt.getDepartureAirport().getCity() : null)
                     .arrivalCity(rt != null && rt.getArrivalAirport() != null

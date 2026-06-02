@@ -4,7 +4,13 @@ import { bookingService } from '../../api/services/bookingService';
 import { flightService } from '../../api/services/flightService';
 import { reportService } from '../../api/services/reportService';
 
-const fmtShort = (n) => n >= 1e9 ? `${(n / 1e9).toFixed(1)} tỷ` : n >= 1e6 ? `${(n / 1e6).toFixed(0)} tr` : Number(n || 0).toLocaleString('vi-VN');
+const shortNum = (n, div) => (n / div).toFixed(1).replace(/\.0$/, '').replace('.', ',');
+const fmtShort = (n) => {
+  n = Number(n || 0);
+  if (n >= 1e9) return `${shortNum(n, 1e9)} tỷ`;
+  if (n >= 1e6) return `${shortNum(n, 1e6)} tr`;
+  return n.toLocaleString('vi-VN');
+};
 const unwrap = (res) => res?.data?.data ?? res?.data ?? null;
 
 // Xuất mảng-các-hàng ra file CSV (kèm BOM để Excel đọc đúng tiếng Việt)

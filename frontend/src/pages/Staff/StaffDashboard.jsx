@@ -18,6 +18,12 @@ const getStatusColor = (status) => ({
   CANCELLED: 'text-slate-500 bg-slate-100 border border-slate-200',
 }[status] || 'text-slate-500 bg-slate-100 border border-slate-200');
 
+const sameDay = (iso, d) => {
+  if (!iso) return false;
+  const x = new Date(iso);
+  return x.getFullYear() === d.getFullYear() && x.getMonth() === d.getMonth() && x.getDate() === d.getDate();
+};
+
 const STATUS_FILTERS = ['ALL', 'SCHEDULED', 'BOARDING', 'DELAYED', 'DEPARTED', 'COMPLETED', 'CANCELLED'];
 const STATUS_LABELS = {
   ALL: 'Tất cả',
@@ -65,21 +71,22 @@ function DelayNotifyModal({ flight, onClose, onSent }) {
     `Kính gửi Quý khách,\n\nChuyến bay ${flight.flightCode} bị trễ do sự cố kỹ thuật.\n\nChúng tôi thành thật xin lỗi vì sự bất tiện này. Vui lòng theo dõi bảng thông báo tại sân bay.\n\nTrân trọng,\nEasyFlight`
   );
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSend = async () => {
     setSending(true);
+    setError('');
     try {
-      await notificationService.create({
+      const res = await notificationService.notifyFlight(flight.id, {
         title: `Cập nhật trễ chuyến ${flight.flightCode}`,
         content: message,
-        userId: 1, // Default system user or dynamic staff user
         type: 'FLIGHT_UPDATED',
-        channel: 'IN_APP'
+        channel: 'EMAIL'
       });
-      onSent(`Đã gửi thông báo delay cho chuyến ${flight.flightCode}`);
+      onSent(res?.message || `Đã gửi thông báo delay cho chuyến ${flight.flightCode}`);
       onClose();
     } catch (err) {
-      console.error('Failed to send delay notification:', err);
+      setError(err?.response?.data?.message || err?.message || 'Gửi thông báo thất bại.');
     } finally {
       setSending(false);
     }
@@ -109,6 +116,9 @@ function DelayNotifyModal({ flight, onClose, onSent }) {
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all resize-none leading-relaxed"
             />
           </div>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-semibold">{error}</div>
+          )}
         </div>
         <div className="flex gap-3 p-5 pt-0 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Huỷ</button>
@@ -149,9 +159,10 @@ function StaffDashboard() {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  // Real API calls
+  // Real API calls — dùng danh sách quản trị (toàn bộ chuyến) thay vì search của khách
+  // (search ẩn chuyến sắp/đã khởi hành & chuyến đầy chỗ -> sai cho màn theo dõi vận hành).
   const { data: flights, loading: flightsLoading, error: flightsError } = useApi(
-    () => flightService.search({}),
+    () => flightService.getAdminList(),
     []
   );
   const { data: revenue, loading: revenueLoading } = useApi(
@@ -173,6 +184,7 @@ function StaffDashboard() {
   const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
   const allFlights = flights || [];
+  const todayFlights = allFlights.filter(f => sameDay(f.departureTime, now));
 
   const displayFlights = statusFilter === 'ALL'
     ? allFlights
@@ -223,7 +235,8 @@ function StaffDashboard() {
         />
         <StatCard
           icon={Plane} iconColor="bg-indigo-50" iconIconColor="text-indigo-500"
-          label="Chuyến bay hôm nay" value={allFlights.length}
+          label="Chuyến bay hôm nay" value={todayFlights.length}
+          sub={`${allFlights.length} tổng cộng`}
           loading={flightsLoading}
         />
         <StatCard

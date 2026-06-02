@@ -52,6 +52,7 @@ function NotifyModal({ flight, onClose, onSent }) {
   const [reason, setReason] = useState('Thời tiết');
   const [body, setBody] = useState(`Kính gửi Quý khách đi chuyến ${flight.flightCode},\n\n[Nhập nội dung thông báo tại đây]\n\nTrân trọng,\nEasyFlight`);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
   const REASONS = ['Thời tiết', 'Chờ máy bay trước', 'Kỹ thuật', 'Điều phối bay', 'Khác'];
 
   const depTime = flight.departureTime ? new Date(flight.departureTime) : null;
@@ -70,24 +71,24 @@ function NotifyModal({ flight, onClose, onSent }) {
 
   const handleSend = async () => {
     setSending(true);
+    setError('');
     try {
       const title = isDelayed
         ? `Thông báo delay chuyến bay ${flight.flightCode}`
         : `Thông báo khẩn cấp chuyến bay ${flight.flightCode}`;
       const content = isDelayed ? delayMessage : body;
 
-      await notificationService.create({
+      const res = await notificationService.notifyFlight(flight.id, {
         title,
         content,
-        userId: 1, // Default user
         type: 'FLIGHT_UPDATED',
         channel: 'EMAIL'
       });
 
-      onSent(flight.flightCode);
+      onSent(res?.message || `Đã gửi thông báo đến hành khách chuyến ${flight.flightCode}.`);
       onClose();
     } catch (err) {
-      console.error('Failed to send flight notification:', err);
+      setError(err?.response?.data?.message || err?.message || 'Gửi thông báo thất bại.');
     } finally {
       setSending(false);
     }
@@ -127,6 +128,10 @@ function NotifyModal({ flight, onClose, onSent }) {
           )}
         </div>
 
+        {error && (
+          <div className="mx-5 mb-3 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-semibold">{error}</div>
+        )}
+
         <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Huỷ</button>
           <button onClick={handleSend} disabled={sending}
@@ -156,8 +161,10 @@ function FlightSchedulePage() {
     setSearch(searchParams.get('search') || '');
   }, [searchParams]);
 
+  // Dùng danh sách quản trị (toàn bộ chuyến) — không ẩn chuyến sắp/đã khởi hành hay đầy chỗ,
+  // để khớp với Dashboard và phục vụ thao tác đổi trạng thái / gửi thông báo.
   const { data: rawFlights, loading, error, refetch } = useApi(
-    () => flightService.search({}), []
+    () => flightService.getAdminList(), []
   );
 
   const { data: rawRoutes } = useApi(
@@ -250,8 +257,8 @@ function FlightSchedulePage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleSent = useCallback((code) => {
-    addToast(`Đã gửi thông báo đến hành khách chuyến ${code}.`);
+  const handleSent = useCallback((msg) => {
+    addToast(msg);
   }, [addToast]);
 
   const handleExportReport = () => {

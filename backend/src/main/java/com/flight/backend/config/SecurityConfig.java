@@ -123,7 +123,7 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/notifications/my")
                                                 .hasAnyRole("CUSTOMER", "STAFF")
 
-                                                .requestMatchers(HttpMethod.POST, "/notifications").hasRole("STAFF")
+                                                .requestMatchers(HttpMethod.POST, "/notifications", "/notifications/**").hasRole("STAFF")
 
                                                 .requestMatchers(HttpMethod.PUT, "/notifications/**").hasRole("STAFF")
 

@@ -41,11 +41,11 @@ public interface BookingRepository
     FROM Booking b
     WHERE MONTH(b.bookingDate) = :month
     AND YEAR(b.bookingDate) = :year
-    AND b.status = :status
+    AND b.status IN :statuses
 """)
 BigDecimal getRevenueByMonth(
         @Param("month") int month,
         @Param("year") int year,
-        @Param("status") BookingStatus status
+        @Param("statuses") List<BookingStatus> statuses
 );
 }

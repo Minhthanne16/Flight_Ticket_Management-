@@ -27,11 +27,13 @@ public class ReportService {
             int year
     ) {
 
+        // Doanh thu tính trên đơn đã thanh toán (PAID). Giữ CONFIRMED để tương thích
+        // nếu sau này có luồng xác nhận riêng đặt trạng thái này.
         BigDecimal revenue =
                 bookingRepository.getRevenueByMonth(
                         month,
                         year,
-                        BookingStatus.CONFIRMED
+                        List.of(BookingStatus.PAID, BookingStatus.CONFIRMED)
                 );
 
         return new RevenueResponse(

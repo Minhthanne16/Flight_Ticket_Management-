@@ -19,10 +19,14 @@ public class FlightAdminResponse {
     private Long id;
     private String flightCode;
     private LocalDateTime departureTime;
+    private LocalDateTime arrivalTime;
     private Integer estimateDuration;
     private String status;
     private BigDecimal basePrice;
     private String routeCode;
+    private String airlineName;
+    private String departureAirportCode;
+    private String arrivalAirportCode;
     private String departureCity;
     private String arrivalCity;
     private String airplaneCode;
