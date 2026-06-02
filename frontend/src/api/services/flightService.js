@@ -16,11 +16,31 @@ export const flightService = {
     const res = await api.post('/flights', data);
     return res.data?.data || res.data;
   },
+  update: async (id, data) => {
+    const res = await api.put(`/flights/${id}`, data);
+    return res.data?.data || res.data;
+  },
+  delete: async (id) => {
+    const res = await api.delete(`/flights/${id}`);
+    return res.data?.data || res.data;
+  },
   getAll: async () => {
     const res = await api.get('/flights');
     const flights = res.data?.data || res.data || [];
     const statuses = getLocalFlightStatuses();
     return flights.map(f => ({ ...f, status: statuses[f.id] || f.status }));
+  },
+  // Danh sách chuyến bay cho Admin (DTO sạch từ DB)
+  getAdminList: async () => {
+    const res = await api.get('/flights/admin');
+    const flights = res.data?.data || res.data || [];
+    const statuses = getLocalFlightStatuses();
+    return flights.map(f => ({ ...f, status: statuses[f.id] || f.status }));
+  },
+  // Sơ đồ ghế của chuyến bay (đọc từ DB)
+  getSeatMap: async (id) => {
+    const res = await api.get(`/flights/${id}/seat-map`);
+    return res.data?.data || res.data || [];
   },
   getById: async (id) => {
     const res = await api.get(`/flights/${id}`);

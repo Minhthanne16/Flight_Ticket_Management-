@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findByAirplaneModelId(Long airplaneModelId);
+
+    boolean existsByTicketClassId(Long ticketClassId);
 }

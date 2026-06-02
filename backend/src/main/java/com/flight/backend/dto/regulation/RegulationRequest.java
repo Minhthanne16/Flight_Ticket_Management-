@@ -13,18 +13,18 @@ import lombok.Setter;
 @Setter
 public class RegulationRequest {
 
-    @NotBlank(message = "Regulation name is required")
+    @NotBlank(message = "Vui lòng nhập tên quy định")
     private String regulationName;
 
-    @NotBlank(message = "Setting key is required")
+    @NotBlank(message = "Vui lòng nhập khóa cấu hình")
     private String settingKey;
 
-    @NotNull(message = "Setting value is required")
+    @NotNull(message = "Vui lòng nhập giá trị")
     @DecimalMin(value = "0.0", inclusive = false,
-            message = "Setting value must be greater than 0")
+            message = "Giá trị phải lớn hơn 0")
     private BigDecimal settingValue;
 
-    @NotBlank(message = "Unit is required")
+    @NotBlank(message = "Vui lòng nhập đơn vị")
     private String unit;
 
     private String description;

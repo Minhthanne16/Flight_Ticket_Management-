@@ -333,7 +333,7 @@ function StaffDashboard() {
                       </td>
                       <td className="px-5 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getStatusColor(flight.status)}`}>
-                          {flight.status}
+                          {STATUS_LABELS[flight.status] || flight.status}
                         </span>
                       </td>
                     </tr>

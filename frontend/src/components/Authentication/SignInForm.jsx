@@ -2,7 +2,7 @@ import '../../css/Authentication/SignInForm.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import signinHero from '../../assets/signin_hero.png';
 import logoImg from '../../assets/logo.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import authService from '../../api/authService';
 
@@ -11,12 +11,35 @@ function SignInForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+    // Trang khách muốn vào trước khi bị yêu cầu đăng nhập (vd: trang kết quả chuyến bay)
+    const redirectTo = location.state?.from?.pathname
+        ? `${location.state.from.pathname}${location.state.from.search || ''}`
+        : '/customer/home';
 
     const handleLogin = async (e) => {
         if (e) e.preventDefault();
-        setIsLoading(true);
+        setErrorMsg('');
         const cleanEmail = email.trim();
+
+        // ===== Validate phía client, hiển thị thông báo cho người dùng =====
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!cleanEmail) {
+            setErrorMsg('Vui lòng nhập email.');
+            return;
+        }
+        if (!emailRegex.test(cleanEmail)) {
+            setErrorMsg('Email không hợp lệ. Vui lòng kiểm tra lại.');
+            return;
+        }
+        if (!password) {
+            setErrorMsg('Vui lòng nhập mật khẩu.');
+            return;
+        }
+
+        setIsLoading(true);
         try {
             const response = await authService.login({ email: cleanEmail, password });
             // Backend trả về { status: "success", message: "...", data: { email, role, accessToken } }
@@ -35,10 +58,10 @@ function SignInForm() {
                 } else if (data.role === 'STAFF') {
                     navigate('/staff/dashboard');
                 } else {
-                    navigate('/customer/home');
+                    navigate(redirectTo);
                 }
             } else {
-                alert(response.message || 'Đăng nhập thất bại');
+                setErrorMsg(response.message || 'Đăng nhập thất bại.');
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -69,13 +92,13 @@ function SignInForm() {
                     } else if (matchedUser.role === 'STAFF') {
                         navigate('/staff/dashboard');
                     } else {
-                        navigate('/customer/home');
+                        navigate(redirectTo);
                     }
                     return;
                 }
-                alert('Không thể kết nối đến server. Vui lòng kiểm tra xem Backend đã khởi động chưa (cổng 5000)!');
+                setErrorMsg('Không thể kết nối đến server. Vui lòng kiểm tra Backend đã khởi động chưa (cổng 5000)!');
             } else {
-                alert(error.response?.data?.message || 'Sai email hoặc mật khẩu!');
+                setErrorMsg(error.response?.data?.message || 'Sai email hoặc mật khẩu!');
             }
         } finally {
             setIsLoading(false);
@@ -121,7 +144,22 @@ function SignInForm() {
                     </p>
 
                     {/* Form */}
-                    <form className="signin-form-fields" onSubmit={handleLogin}>
+                    <form className="signin-form-fields" onSubmit={handleLogin} noValidate>
+
+                        {/* Thông báo lỗi */}
+                        {errorMsg && (
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#FEE2E2',
+                                color: '#991B1B',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                border: '1px solid #FCA5A5',
+                                marginBottom: '4px'
+                            }}>
+                                {errorMsg}
+                            </div>
+                        )}
 
                         {/* Email */}
                         <div className="si-form-group">

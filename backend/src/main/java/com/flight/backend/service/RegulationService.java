@@ -23,7 +23,7 @@ public class RegulationService {
         request.getSettingKey())) {
 
     throw new RuntimeException(
-            "Setting key already exists");
+            "Khóa cấu hình đã tồn tại");
 }
 
         regulation.setRegulationName(request.getRegulationName());
@@ -67,7 +67,7 @@ public class RegulationService {
                 request.getSettingKey())) {
 
     throw new RuntimeException(
-            "Setting key already exists");
+            "Khóa cấu hình đã tồn tại");
 }
 
         regulation.setRegulationName(request.getRegulationName());

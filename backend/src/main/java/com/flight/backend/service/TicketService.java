@@ -33,6 +33,7 @@ public class TicketService {
         ticket.setBooking(booking);
         ticket.setPassenger(passenger);
         ticket.setFlightSeat(flightSeat);
+        ticket.setTicketClass(ticketClass);
         // Giá vé
         BigDecimal price = flight.getBasePrice().multiply(ticketClass.getPriceMultiplier());
 

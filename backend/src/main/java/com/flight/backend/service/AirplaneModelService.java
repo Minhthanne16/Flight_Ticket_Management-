@@ -14,6 +14,7 @@ import com.flight.backend.entity.AirplaneModel;
 import com.flight.backend.entity.Seat;
 import com.flight.backend.entity.enums.SeatStatus;
 import com.flight.backend.repository.AirplaneModelRepository;
+import com.flight.backend.repository.AirplaneRepository;
 import com.flight.backend.repository.SeatRepository;
 import com.flight.backend.repository.TicketClassRepository;
 
@@ -25,15 +26,50 @@ public class AirplaneModelService {
     private final AirplaneModelRepository airplaneModelRepository;
     private final TicketClassRepository ticketClassRepository;
     private final SeatRepository seatRepository;
+    private final AirplaneRepository airplaneRepository;
 
     public AirplaneModelService(
             AirplaneModelRepository airplaneModelRepository,
             TicketClassRepository ticketClassRepository,
-            SeatRepository seatRepository) {
+            SeatRepository seatRepository,
+            AirplaneRepository airplaneRepository) {
 
         this.airplaneModelRepository = airplaneModelRepository;
         this.ticketClassRepository = ticketClassRepository;
         this.seatRepository = seatRepository;
+        this.airplaneRepository = airplaneRepository;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        airplaneModelRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Model không tồn tại"));
+
+        if (airplaneRepository.existsByModelId(id)) {
+            throw new RuntimeException(
+                    "Không thể xóa: model đang được sử dụng bởi máy bay.");
+        }
+
+        // Xóa toàn bộ ghế thuộc model trước, rồi mới xóa model
+        seatRepository.deleteAll(seatRepository.findByAirplaneModelId(id));
+        airplaneModelRepository.deleteById(id);
+    }
+
+    // GET ALL (không kèm danh sách ghế để tránh lazy-loading)
+    public List<AirplaneModelResponse> getAll() {
+        return airplaneModelRepository.findAll()
+                .stream()
+                .map(m -> new AirplaneModelResponse(
+                        m.getId(),
+                        m.getModelName(),
+                        m.getManufacturer(),
+                        m.getDescription(),
+                        m.getTotalRows(),
+                        m.getSeatColumns(),
+                        m.getTotalSeats(),
+                        List.of()))
+                .toList();
     }
 
     @Transactional

@@ -4,6 +4,8 @@ import com.flight.backend.dto.airport.AirportResponse;
 import com.flight.backend.dto.airport.CreateAirportRequest;
 import com.flight.backend.entity.Airport;
 import com.flight.backend.repository.AirportRepository;
+import com.flight.backend.repository.FlightStopRepository;
+import com.flight.backend.repository.RouteRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +14,37 @@ import java.util.List;
 public class AirportService {
 
     private final AirportRepository airportRepository;
+    private final RouteRepository routeRepository;
+    private final FlightStopRepository flightStopRepository;
 
-    public AirportService(AirportRepository airportRepository) {
+    public AirportService(
+            AirportRepository airportRepository,
+            RouteRepository routeRepository,
+            FlightStopRepository flightStopRepository) {
         this.airportRepository = airportRepository;
+        this.routeRepository = routeRepository;
+        this.flightStopRepository = flightStopRepository;
+    }
+
+    public void delete(Long id) {
+        airportRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy sân bay"));
+
+        boolean usedByRoute =
+                !routeRepository.findByDepartureAirportId(id).isEmpty()
+                        || !routeRepository.findByArrivalAirportId(id).isEmpty();
+        if (usedByRoute) {
+            throw new RuntimeException(
+                    "Không thể xóa: sân bay đang được dùng trong tuyến bay.");
+        }
+
+        if (flightStopRepository.existsByStopAirportId(id)) {
+            throw new RuntimeException(
+                    "Không thể xóa: sân bay đang là điểm dừng của chuyến bay.");
+        }
+
+        airportRepository.deleteById(id);
     }
 
     public AirportResponse create(CreateAirportRequest req) {
@@ -24,7 +54,7 @@ public class AirportService {
 
         if (airportRepository.existsByAirportCode(airportCode)) {
             throw new RuntimeException(
-                    "Airport code already exists");
+                    "Mã sân bay đã tồn tại");
         }
 
         Airport airport = new Airport();
@@ -66,6 +96,6 @@ public class AirportService {
 
         return airportRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Airport not found"));
+                        new RuntimeException("Không tìm thấy sân bay"));
     }
 }

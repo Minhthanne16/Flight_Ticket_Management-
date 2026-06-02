@@ -455,12 +455,12 @@ function FlightSchedulePage() {
                               }}
                               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${statusStyle[f.status] || 'text-slate-500 bg-slate-100 border-slate-200'}`}
                             >
-                              <option value="SCHEDULED">Scheduled</option>
-                              <option value="BOARDING">Boarding</option>
-                              <option value="DEPARTED">Departed</option>
-                              <option value="DELAYED">Delayed</option>
-                              <option value="COMPLETED">Completed</option>
-                              <option value="CANCELLED">Cancelled</option>
+                              <option value="SCHEDULED">Đã lên lịch</option>
+                              <option value="BOARDING">Đang lên máy bay</option>
+                              <option value="DEPARTED">Đã cất cánh</option>
+                              <option value="DELAYED">Trễ chuyến</option>
+                              <option value="COMPLETED">Đã hạ cánh</option>
+                              <option value="CANCELLED">Đã hủy</option>
                             </select>
                           </td>
                           <td className="px-5 py-4 text-center">

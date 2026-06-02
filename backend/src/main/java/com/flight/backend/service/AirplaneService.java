@@ -8,7 +8,10 @@ import com.flight.backend.entity.AirplaneModel;
 import com.flight.backend.repository.AirlineRepository;
 import com.flight.backend.repository.AirplaneModelRepository;
 import com.flight.backend.repository.AirplaneRepository;
+import com.flight.backend.repository.FlightRepository;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,15 +21,33 @@ public class AirplaneService {
     private final AirplaneRepository airplaneRepository;
     private final AirlineRepository airlineRepository;
     private final AirplaneModelRepository airplaneModelRepository;
+    private final FlightRepository flightRepository;
 
     public AirplaneService(
             AirplaneRepository airplaneRepository,
             AirlineRepository airlineRepository,
-            AirplaneModelRepository airplaneModelRepository) {
+            AirplaneModelRepository airplaneModelRepository,
+            FlightRepository flightRepository) {
 
         this.airplaneRepository = airplaneRepository;
         this.airlineRepository = airlineRepository;
         this.airplaneModelRepository = airplaneModelRepository;
+        this.flightRepository = flightRepository;
+    }
+
+    // DELETE
+    public void delete(Long id) {
+
+        airplaneRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Máy bay không tồn tại"));
+
+        if (!flightRepository.findByAirplaneId(id).isEmpty()) {
+            throw new RuntimeException(
+                    "Không thể xóa: máy bay đang được dùng trong chuyến bay.");
+        }
+
+        airplaneRepository.deleteById(id);
     }
 
     // CREATE
@@ -64,6 +85,7 @@ public class AirplaneService {
     }
 
     // GET ALL
+    @Transactional(readOnly = true)
     public List<AirplaneResponse> getAll() {
 
         return airplaneRepository.findAll()
@@ -73,6 +95,7 @@ public class AirplaneService {
     }
 
     // GET BY ID
+    @Transactional(readOnly = true)
     public AirplaneResponse getById(Long id) {
 
         Airplane airplane = airplaneRepository.findById(id)
@@ -89,7 +112,11 @@ public class AirplaneService {
 
         response.setId(airplane.getId());
         response.setAirplaneCode(airplane.getAirplaneCode());
-        response.setModel(airplane.getModel());
+
+        // gỡ Hibernate proxy để map/serialize an toàn khi OSIV tắt
+        AirplaneModel model =
+                (AirplaneModel) Hibernate.unproxy(airplane.getModel());
+        response.setModel(model);
 
         response.setAirlineName(
                 airplane.getAirline().getAirlineName());

@@ -116,12 +116,82 @@
   padding-bottom: 10px;
 }
 
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: #475569;
+  padding: 4px 0;
+}
+
+.price-row.discount {
+  color: #16a34a;
+  font-weight: 600;
+}
+
 .price-row.total {
   display: flex;
   justify-content: space-between;
   font-weight: 700;
   font-size: 1.2rem;
   color: #ef4444; /* Màu đỏ cho giá tiền giống ảnh */
+  border-top: 1px solid #f1f5f9;
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+/* Mã giảm giá */
+.voucher-input-row {
+  display: flex;
+  gap: 8px;
+}
+.voucher-input-row input {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  outline: none;
+}
+.voucher-input-row input:focus { border-color: #6366f1; }
+.voucher-input-row button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.voucher-input-row button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.voucher-error {
+  color: #dc2626;
+  font-size: 0.82rem;
+  margin: 8px 0 0;
+}
+
+.voucher-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.voucher-applied i { color: #16a34a; margin-right: 6px; }
+.voucher-applied p { margin: 4px 0 0; font-size: 0.82rem; color: #047857; }
+.voucher-remove {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
 @keyframes fadeIn {

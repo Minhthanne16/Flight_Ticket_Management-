@@ -1,181 +1,367 @@
-import React, { useState } from 'react';
-import '../../css/Customer/MyFlights.css'; 
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../../css/Customer/MyFlights.css';
+import '../../css/Customer/SeatMap.css';
 import Navbar from '../Homepage/Navbar';
 import Footer from '../Homepage/Footer';
-function MyFlights() {
-  // Dữ liệu giả lập mô phỏng chính xác cấu trúc Backend của bạn
-  const mockBookings = [
-    {
-      id: 1,
-      pnrCode: '5YF37M',
-      bookingDate: '2026-05-31T10:00:00',
-      totalAmount: 4308400,
-      status: 'CONFIRMED',
-      flight: {
-        airlineName: 'Bamboo Airways',
-        flightCode: 'QH201',
-        departureAirportCode: 'HAN',
-        arrivalAirportCode: 'SGN',
-        departureTime: '2026-06-18T06:30:00',
-        arrivalTime: '2026-06-18T08:40:00'
-      },
-      tickets: [
-        {
-          ticketNumber: '5YF37M01',
-          flightSeat: { seatNumber: '12A' },
-          passenger: { fullName: 'TRAN NGUYEN PHU THUAN', documentNumber: '087205014217' }
-        },
-        {
-          ticketNumber: '5YF37M02',
-          flightSeat: { seatNumber: '12B' },
-          passenger: { fullName: 'NGUYEN THI HANH', documentNumber: '087168001901' }
-        }
-      ]
-    },
-    {
-      id: 2,
-      pnrCode: 'A8B9C0',
-      bookingDate: '2026-04-15T14:30:00',
-      totalAmount: 1650000,
-      status: 'COMPLETED',
-      flight: {
-        airlineName: 'VietJet Air',
-        flightCode: 'VJ123',
-        departureAirportCode: 'SGN',
-        arrivalAirportCode: 'DAD',
-        departureTime: '2026-05-10T09:00:00',
-        arrivalTime: '2026-05-10T10:20:00'
-      },
-      tickets: [
-        {
-          ticketNumber: 'A8B9C001',
-          flightSeat: { seatNumber: '5C' },
-          passenger: { fullName: 'TRAN NGUYEN PHU THUAN', documentNumber: '087205014217' }
-        }
-      ]
+import { bookingService } from '../../api/services/bookingService';
+
+const STATUS_LABEL = {
+  PENDING: 'Chờ xác nhận',
+  CONFIRMED: 'Đã xác nhận',
+  PAID: 'Đã thanh toán',
+  CANCELLED: 'Đã hủy',
+  EXPIRED: 'Hết hạn'
+};
+
+// Nhóm lọc -> các status tương ứng
+const FILTERS = [
+  { key: 'ALL', label: 'Tất cả', match: () => true },
+  { key: 'PENDING', label: 'Chờ xác nhận', match: (s) => s === 'PENDING' },
+  { key: 'PAID', label: 'Đã thanh toán', match: (s) => s === 'PAID' || s === 'CONFIRMED' },
+  { key: 'CANCELLED', label: 'Đã hủy', match: (s) => s === 'CANCELLED' || s === 'EXPIRED' }
+];
+
+const fmtTime = (d) => {
+  if (!d) return '--:--';
+  const x = new Date(d);
+  return `${String(x.getHours()).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')}`;
+};
+const fmtDate = (d) => {
+  if (!d) return '';
+  const x = new Date(d);
+  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  return `${days[x.getDay()]}, ${x.getDate()}/${x.getMonth() + 1}/${x.getFullYear()}`;
+};
+const fmtMoney = (n) => new Intl.NumberFormat('vi-VN').format(n || 0);
+
+// ===== Modal chọn ghế =====
+function SeatSelectionModal({ booking, onClose, onDone }) {
+  const [seats, setSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const ticketsToSeat = (booking.tickets || []).filter(t => !t.seatNumber);
+  const [assignments, setAssignments] = useState({});
+  const [activeTicketId, setActiveTicketId] = useState(ticketsToSeat[0]?.ticketId ?? null);
+
+  useEffect(() => {
+    let mounted = true;
+    bookingService.getAvailableSeats(booking.flightId)
+      .then(data => { if (mounted) setSeats(data); })
+      .catch(() => { if (mounted) setError('Không tải được sơ đồ ghế.'); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, [booking.flightId]);
+
+  const selectedSeatIds = new Set(Object.values(assignments).map(s => s.seatId));
+
+  const bookingClassId = booking.ticketClassId;
+  // Ghế khác hạng vé đã mua -> không được chọn
+  const isWrongClass = (seat) =>
+    bookingClassId != null && seat.ticketClassId != null && seat.ticketClassId !== bookingClassId;
+
+  const handleSeatClick = (seat) => {
+    const ownerTicketId = Object.keys(assignments).find(tid => assignments[tid].seatId === seat.seatId);
+    if (ownerTicketId) {
+      setAssignments(prev => { const next = { ...prev }; delete next[ownerTicketId]; return next; });
+      setActiveTicketId(Number(ownerTicketId));
+      return;
     }
-  ];
-
-  // State lưu trữ chuyến bay đang được chọn để hiển thị ở cột phải
-  const [selectedBooking, setSelectedBooking] = useState(mockBookings[0]);
-
-  // Hàm format ngày giờ hiển thị
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} - ${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    if (!seat.available || isWrongClass(seat)) return;
+    if (activeTicketId == null) return;
+    setAssignments(prev => ({ ...prev, [activeTicketId]: seat }));
+    const next = ticketsToSeat.find(t => t.ticketId !== activeTicketId && !assignments[t.ticketId]);
+    setActiveTicketId(next ? next.ticketId : activeTicketId);
   };
+
+  const allAssigned = ticketsToSeat.length > 0 && ticketsToSeat.every(t => assignments[t.ticketId]);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const payload = Object.entries(assignments).map(([ticketId, seat]) => ({
+        ticketId: Number(ticketId), seatId: seat.seatId
+      }));
+      await bookingService.selectSeats(booking.bookingId, payload);
+      onDone();
+    } catch (e) {
+      setError(e?.response?.data?.message || 'Đặt chỗ ngồi thất bại.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const rows = {};
+  seats.forEach(s => { const r = s.rowNumber ?? 0; if (!rows[r]) rows[r] = []; rows[r].push(s); });
+  const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
+
+  const seatClass = (seat) => {
+    if (selectedSeatIds.has(seat.seatId)) return 'seat selected';
+    if (!seat.available) return 'seat taken';
+    if (isWrongClass(seat)) return 'seat otherclass';
+    return 'seat available';
+  };
+
+  return (
+    <div className="seatmap-overlay" onClick={onClose}>
+      <div className="seatmap-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="seatmap-header">
+          <h3>Chọn chỗ ngồi · {booking.flightCode} ({booking.departureAirportCode} → {booking.arrivalAirportCode})</h3>
+          <button className="seatmap-close" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
+        </div>
+
+        {booking.ticketClassName && (
+          <p className="seatmap-class-note">
+            <i className="fa-solid fa-circle-info"></i> Bạn chỉ được chọn ghế thuộc hạng <strong>{booking.ticketClassName}</strong> đã mua.
+          </p>
+        )}
+
+        <div className="seatmap-passengers">
+          {ticketsToSeat.map(t => (
+            <button key={t.ticketId}
+              className={`pax-chip ${activeTicketId === t.ticketId ? 'active' : ''}`}
+              onClick={() => setActiveTicketId(t.ticketId)}>
+              <span className="pax-name">{t.passengerName}</span>
+              <span className="pax-seat">{assignments[t.ticketId]?.seatNumber || 'Chọn ghế'}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="seatmap-body">
+          {loading ? (
+            <p className="seatmap-info">Đang tải sơ đồ ghế...</p>
+          ) : seats.length === 0 ? (
+            <p className="seatmap-info">Chuyến bay này chưa có sơ đồ ghế.</p>
+          ) : (
+            <div className="seatmap-grid">
+              {rowKeys.map(r => (
+                <div className="seat-row" key={r}>
+                  <span className="row-num">{r}</span>
+                  {rows[r].sort((a, b) => (a.columnLetter || '').localeCompare(b.columnLetter || ''))
+                    .map(seat => (
+                      <button key={seat.seatId} className={seatClass(seat)}
+                        onClick={() => handleSeatClick(seat)} disabled={!seat.available || isWrongClass(seat)}
+                        title={`${seat.seatNumber}${seat.ticketClassName ? ' · ' + seat.ticketClassName : ''}`}>
+                        {seat.columnLetter || seat.seatNumber}
+                      </button>
+                    ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="seatmap-legend">
+          <span><i className="dot available"></i> Còn trống</span>
+          <span><i className="dot selected"></i> Đang chọn</span>
+          <span><i className="dot taken"></i> Đã có người</span>
+          <span><i className="dot otherclass"></i> Khác hạng vé</span>
+        </div>
+
+        {error && <div className="seatmap-error">{error}</div>}
+
+        <div className="seatmap-footer">
+          <button className="seatmap-btn-cancel" onClick={onClose}>Hủy</button>
+          <button className="seatmap-btn-confirm" onClick={handleSubmit} disabled={!allAssigned || submitting}>
+            {submitting ? 'Đang lưu...' : 'Xác nhận chỗ ngồi'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== Modal chi tiết đơn (vé điện tử) =====
+function BookingDetailModal({ booking, onClose, onChooseSeat }) {
+  const canChooseSeat = booking.status === 'PAID' && !booking.seatsAssigned;
+  return (
+    <div className="mf-modal-overlay" onClick={onClose}>
+      <div className="mf-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mf-modal-header">
+          <div>
+            <div className="mf-modal-route">{booking.departureAirportCode} → {booking.arrivalAirportCode}</div>
+            <div className="mf-modal-sub">
+              {booking.airlineName} • {booking.flightCode} · {fmtDate(booking.departureTime)} · {fmtTime(booking.departureTime)}
+            </div>
+          </div>
+          <button className="mf-modal-close" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div className="mf-modal-body">
+          <div className="mf-pnr-box">
+            <span>MÃ ĐẶT CHỖ</span>
+            <h2>{booking.pnrCode}</h2>
+          </div>
+
+          <p className="mf-sec-title">Hành khách</p>
+          {booking.tickets?.map(t => (
+            <div className="mf-pax" key={t.ticketId}>
+              <div className="mf-pax-row"><span className="k">Họ tên</span><span className="v">{t.passengerName}</span></div>
+              <div className="mf-pax-row"><span className="k">Giấy tờ</span><span className="v">{t.documentNumber}</span></div>
+              <div className="mf-pax-row"><span className="k">Ghế</span><span className="v seat">{t.seatNumber || 'Chưa chọn'}</span></div>
+              <div className="mf-pax-row"><span className="k">Mã vé</span><span className="v">{t.ticketNumber}</span></div>
+            </div>
+          ))}
+
+          <div className="mf-total">
+            <span className="lbl">Tổng tiền</span>
+            <span className="val">{fmtMoney(booking.totalAmount)}đ</span>
+          </div>
+        </div>
+
+        <div className="mf-modal-foot">
+          {booking.status === 'PENDING' && (
+            <div className="mf-pending-note">
+              <i className="fa-solid fa-clock"></i> Đơn đang chờ nhân viên xác nhận chuyển khoản.
+            </div>
+          )}
+          {canChooseSeat && (
+            <button className="mf-btn-seat" onClick={onChooseSeat}>
+              <i className="fa-solid fa-chair"></i> Đặt chỗ ngồi
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MyFlights() {
+  const navigate = useNavigate();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('ALL');
+  const [detailBooking, setDetailBooking] = useState(null);
+  const [seatBooking, setSeatBooking] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await bookingService.getMy();
+      setBookings(data);
+    } catch {
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const activeFilter = FILTERS.find(f => f.key === filter) || FILTERS[0];
+  const visible = bookings.filter(b => activeFilter.match(b.status));
+  const countFor = (f) => bookings.filter(b => f.match(b.status)).length;
+
+  // giữ modal chi tiết đồng bộ sau khi reload (vd: sau khi chọn ghế)
+  const refreshAfterSeat = async () => {
+    setSeatBooking(null);
+    await load();
+  };
+
+  // cập nhật detailBooking từ danh sách mới nếu đang mở
+  useEffect(() => {
+    if (detailBooking) {
+      const fresh = bookings.find(b => b.bookingId === detailBooking.bookingId);
+      if (fresh) setDetailBooking(fresh);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
 
   return (
     <>
       <Navbar />
-    <div className="my-flights-container">
-      
-      {/* CỘT TRÁI: DANH SÁCH CHUYẾN BAY */}
-      <div className="flights-list-sidebar">
-        <h2 className="sidebar-title">Chuyến bay của tôi</h2>
-        
-        <div className="booking-cards-wrapper">
-          {mockBookings.map((booking) => (
-            <div 
-              key={booking.id} 
-              className={`booking-card ${selectedBooking?.id === booking.id ? 'active' : ''}`}
-              onClick={() => setSelectedBooking(booking)}
-            >
-              <div className="card-header">
-                <span className="pnr-badge">PNR: {booking.pnrCode}</span>
-                <span className={`status-badge ${booking.status.toLowerCase()}`}>{booking.status}</span>
-              </div>
-              <div className="card-route">
-                <strong>{booking.flight.departureAirportCode}</strong>
-                <i className="fa-solid fa-arrow-right"></i>
-                <strong>{booking.flight.arrivalAirportCode}</strong>
-              </div>
-              <div className="card-airline">
-                {booking.flight.airlineName} • {booking.flight.flightCode}
-              </div>
-              <div className="card-date">
-                <i className="fa-regular fa-calendar"></i> {formatDateTime(booking.flight.departureTime)}
-              </div>
-            </div>
+      <div className="mf-page">
+        <div className="mf-head">
+          <h1>Chuyến bay của tôi</h1>
+          <p>Toàn bộ các chuyến bay bạn đã đặt từ trước đến nay.</p>
+        </div>
+
+        <div className="mf-tabs">
+          {FILTERS.map(f => (
+            <button key={f.key}
+              className={`mf-tab ${filter === f.key ? 'active' : ''}`}
+              onClick={() => setFilter(f.key)}>
+              {f.label} ({countFor(f)})
+            </button>
           ))}
         </div>
-      </div>
 
-      {/* CỘT PHẢI: CHI TIẾT VÉ (Giống hệt UI BookingSuccess) */}
-      <div className="flight-detail-content">
-        {selectedBooking ? (
-          <div className="booking-success-container no-margin">
-            
-            {/* 1. LỜI CHÀO & XÁC NHẬN */}
-            <div className="success-greeting">
-              <p>Xin chào <strong>{selectedBooking.tickets[0]?.passenger.fullName}</strong></p>
-              <p className="sub-text">Dear <strong>{selectedBooking.tickets[0]?.passenger.fullName}</strong></p>
-              <p className="mt-15">Trạng thái đặt chỗ: <strong>{selectedBooking.status}</strong></p>
-            </div>
-
-            {/* 2. KHUNG MÃ ĐẶT CHỖ */}
-            <div className="reservation-code-box">
-              <h4>MÃ ĐẶT CHỖ <span className="sub-text font-normal">RESERVATION CODE</span></h4>
-              <h1 className="pnr-code">{selectedBooking.pnrCode}</h1>
-              <p className="instruction">Đưa mã này cho nhân viên soát vé</p>
-              <p className="sub-text">Show this code to the check-in officer</p>
-            </div>
-
-            {/* 3. THÔNG TIN HÀNH KHÁCH TỪ TICKETS */}
-            <div className="passenger-info-section">
-              <div className="section-header">
-                <h4>THÔNG TIN HÀNH KHÁCH</h4>
-                <p className="sub-text">PASSENGER INFORMATION</p>
-              </div>
-
-              <div className="passenger-list-wrapper">
-                {selectedBooking.tickets.map((ticket, index) => (
-                  <div key={ticket.ticketNumber} className="passenger-item-block">
-                    <div className="info-row row-highlight">
-                      <div className="row-label">Hành khách<br/><span className="sub-text">Passenger</span></div>
-                      <div className="row-value font-bold">{ticket.passenger.fullName}</div>
-                    </div>
-                    
-                    <div className="info-row">
-                      <div className="row-label">Số giấy tờ<br/><span className="sub-text">Document number</span></div>
-                      <div className="row-value">{ticket.passenger.documentNumber}</div>
-                    </div>
-                    
-                    <div className="info-row">
-                      <div className="row-label">Ghế<br/><span className="sub-text">Seat</span></div>
-                      <div className="row-value font-bold">{ticket.flightSeat?.seatNumber || 'Chưa chọn'}</div>
-                    </div>
-                    
-                    <div className="info-row">
-                      <div className="row-label">Mã vé<br/><span className="sub-text">Ticket code</span></div>
-                      <div className="row-value">{ticket.ticketNumber}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 4. THANH TOÁN */}
-            <div className="payment-section">
-              <div className="section-header-inline">
-                <h4>THANH TOÁN <span className="sub-text font-normal">PAYMENT</span></h4>
-              </div>
-              <div className="payment-box">
-                <p className="font-bold">TỔNG TIỀN <span className="sub-text font-normal">TOTAL AMOUNT</span></p>
-                <h2 className="total-amount-text">{new Intl.NumberFormat('vi-VN').format(selectedBooking.totalAmount)}đ</h2>
-              </div>
-            </div>
-
+        {loading ? (
+          <div className="mf-empty"><i className="fa-solid fa-spinner"></i>Đang tải danh sách vé...</div>
+        ) : visible.length === 0 ? (
+          <div className="mf-empty">
+            <i className="fa-regular fa-plane"></i>
+            {bookings.length === 0 ? 'Bạn chưa đặt chuyến bay nào.' : 'Không có đơn nào ở mục này.'}
+            {bookings.length === 0 && (
+              <div><button className="mf-empty-btn" onClick={() => navigate('/customer/home')}>Đặt vé ngay</button></div>
+            )}
           </div>
         ) : (
-          <div className="empty-state">
-            Vui lòng chọn một chuyến bay để xem chi tiết.
+          <div className="mf-list">
+            {visible.map(b => {
+              const st = (b.status || '').toLowerCase();
+              const canSeat = b.status === 'PAID' && !b.seatsAssigned;
+              return (
+                <div className="mf-card" key={b.bookingId}>
+                  <div className="mf-card-left">
+                    <div className="mf-airline">
+                      {b.airlineName || 'Hãng hàng không'}
+                      <span className="mf-flightcode">• {b.flightCode}</span>
+                    </div>
+                    <div className="mf-route">
+                      <div className="mf-point">
+                        <span className="t">{fmtTime(b.departureTime)}</span>
+                        <span className="c">{b.departureAirportCode}</span>
+                      </div>
+                      <div className="mf-path">
+                        <div className="line"></div>
+                        <span className="date">{fmtDate(b.departureTime)}</span>
+                      </div>
+                      <div className="mf-point">
+                        <span className="t">{fmtTime(b.arrivalTime)}</span>
+                        <span className="c">{b.arrivalAirportCode}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mf-card-right">
+                    <span className={`mf-status ${st}`}>{STATUS_LABEL[b.status] || b.status}</span>
+                    <span className="mf-pnr">PNR: {b.pnrCode}</span>
+                    <span className="mf-amount">{fmtMoney(b.totalAmount)}đ</span>
+                    <div className="mf-actions">
+                      <button className="mf-btn-detail" onClick={() => setDetailBooking(b)}>Chi tiết</button>
+                      {canSeat && (
+                        <button className="mf-btn-seat" onClick={() => setSeatBooking(b)}>Đặt chỗ ngồi</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
-      
-    </div>
-    <Footer />
+
+      {detailBooking && (
+        <BookingDetailModal
+          booking={detailBooking}
+          onClose={() => setDetailBooking(null)}
+          onChooseSeat={() => { setSeatBooking(detailBooking); setDetailBooking(null); }}
+        />
+      )}
+
+      {seatBooking && (
+        <SeatSelectionModal
+          booking={seatBooking}
+          onClose={() => setSeatBooking(null)}
+          onDone={refreshAfterSeat}
+        />
+      )}
+
+      <Footer />
     </>
   );
 }

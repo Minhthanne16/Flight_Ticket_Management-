@@ -44,6 +44,16 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**").permitAll()
+
+                                                // ===== PUBLIC: trang Home cho khách tra cứu sân bay + tìm chuyến bay =====
+                                                .requestMatchers(HttpMethod.GET, "/admin/airports", "/admin/airports/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/flights/search")
+                                                .permitAll()
+                                                // Khách xem hạng vé (giá + hành lý) khi chọn chuyến bay
+                                                .requestMatchers(HttpMethod.GET, "/admin/ticket-classes")
+                                                .permitAll()
+
                                                 .requestMatchers("/orders/**").hasAnyRole("CUSTOMER", "ADMIN", "STAFF")
                                                 .requestMatchers("/reports/**").hasAnyRole("ADMIN", "STAFF")
                                                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -108,7 +118,7 @@ public class SecurityConfig {
                                                 .hasRole("ADMIN")
 
                                                 // ================= NOTIFICATION =================
-                                                .requestMatchers(HttpMethod.GET, "/notifications").hasRole("STAFF")
+                                                .requestMatchers(HttpMethod.GET, "/notifications").hasAnyRole("ADMIN", "STAFF")
 
                                                 .requestMatchers(HttpMethod.GET, "/notifications/my")
                                                 .hasAnyRole("CUSTOMER", "STAFF")
@@ -118,6 +128,7 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.PUT, "/notifications/**").hasRole("STAFF")
 
                                                 .requestMatchers(HttpMethod.POST, "/vouchers/apply").hasRole("CUSTOMER")
+                                                .requestMatchers(HttpMethod.POST, "/vouchers/preview").hasRole("CUSTOMER")
                                                 .requestMatchers("/vouchers", "/vouchers/", "/vouchers/**")
                                                 .hasAnyRole("ADMIN", "STAFF")
                                                 .anyRequest().authenticated())

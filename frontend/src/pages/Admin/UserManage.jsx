@@ -1,23 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, CheckCircle, Shield, UserCheck } from 'lucide-react';
 import { ADMIN_STAFF } from '../../data/adminMockData';
+import { staffService } from '../../api/services/staffService';
 
 const ROLE_STYLE = { ADMIN: 'bg-red-50 text-red-700 border border-red-200', STAFF: 'bg-violet-50 text-violet-700 border border-violet-200', AGENT: 'bg-blue-50 text-blue-700 border border-blue-200' };
 const ROLE_LABEL = { ADMIN: 'Quản trị viên', STAFF: 'Nhân viên', AGENT: 'Đại lý' };
 const DEPTS = ['Ban Giám đốc', 'Vận hành mặt đất', 'Check-in', 'Chăm sóc khách hàng', 'Đặt vé', 'Bảo trì'];
 
-function Toast({ msg, onClose }) {
+const errMsg = (e, fallback) =>
+  e?.response?.data?.message || e?.message || fallback || 'Có lỗi xảy ra';
+
+// StaffResponse (DB) -> shape dùng trong bảng mock
+const mapDbStaff = (s) => ({
+  id: `db-${s.id}`,
+  dbId: s.id,
+  fullName: s.fullName,
+  email: s.email,
+  phone: s.phoneNumber,
+  role: 'STAFF',
+  department: s.department,
+  status: s.status,
+  joinDate: s.hireDate,
+  lastLogin: '—',
+  staffCode: s.staffCode,
+});
+
+// Gộp mock + DB, dedupe theo email (ưu tiên DB)
+const mergeStaff = (mock, db) => {
+  const map = new Map();
+  mock.forEach(s => map.set(String(s.email).toLowerCase(), { ...s, dbId: s.dbId ?? null }));
+  db.forEach(s => map.set(String(s.email).toLowerCase(), s));
+  return Array.from(map.values());
+};
+
+function Toast({ msg, type, onClose }) {
   if (!msg) return null;
+  const isError = type === 'error';
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white bg-violet-600 min-w-[260px]">
-      <CheckCircle className="w-4 h-4 shrink-0" /><span className="flex-1">{msg}</span>
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white min-w-[280px] max-w-[90vw]"
+      style={{ backgroundColor: isError ? '#DC2626' : '#16A34A' }}>
+      {isError ? <X className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+      <span className="flex-1">{msg}</span>
       <button onClick={onClose}><X className="w-4 h-4 opacity-70" /></button>
     </div>
   );
 }
 
 function StaffModal({ initial, onSave, onClose }) {
-  const [form, setForm] = useState(initial || { fullName: '', email: '', phone: '', role: 'STAFF', department: DEPTS[0], status: 'ACTIVE' });
+  const [form, setForm] = useState(initial || { fullName: '', email: '', phone: '', role: 'STAFF', department: DEPTS[0], status: 'ACTIVE', staffCode: '', hireDate: '' });
   const [pwd, setPwd] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   return (
@@ -44,6 +74,18 @@ function StaffModal({ initial, onSave, onClose }) {
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Mã nhân viên</label>
+              <input type="number" min={1} value={form.staffCode} onChange={e => set('staffCode', e.target.value)} placeholder="VD: 1001"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 transition-all" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Ngày vào làm</label>
+              <input type="date" value={form.hireDate} onChange={e => set('hireDate', e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 transition-all" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Vai trò</label>
               <select value={form.role} onChange={e => set('role', e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 transition-all">
                 <option value="ADMIN">Quản trị viên</option>
@@ -68,7 +110,7 @@ function StaffModal({ initial, onSave, onClose }) {
         </div>
         <div className="flex gap-3 p-5 pt-0">
           <button onClick={onClose} className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">Hủy</button>
-          <button onClick={() => onSave(form)} disabled={!form.fullName || !form.email} className="flex-1 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Lưu</button>
+          <button onClick={() => onSave({ ...form, password: pwd })} disabled={!form.fullName || !form.email} className="flex-1 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Lưu</button>
         </div>
       </div>
     </div>
@@ -76,12 +118,30 @@ function StaffModal({ initial, onSave, onClose }) {
 }
 
 export default function UserManage() {
-  const [staff, setStaff] = useState(ADMIN_STAFF);
+  const [staff, setStaff] = useState(ADMIN_STAFF.map(s => ({ ...s, dbId: null })));
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [modal, setModal] = useState(null);
-  const [toast, setToast] = useState('');
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type }), 3000);
+  };
+
+  // Tải nhân viên thật từ DB rồi gộp với mock
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await staffService.getAll();
+        const dbStaff = (res.data?.data || res.data || []).map(mapDbStaff);
+        if (mounted) setStaff(mergeStaff(ADMIN_STAFF, dbStaff));
+      } catch {
+        // API lỗi -> giữ nguyên mock
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const filtered = staff.filter(s => {
     const matchSearch = s.fullName.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase()) || s.department.toLowerCase().includes(search.toLowerCase());
@@ -89,27 +149,82 @@ export default function UserManage() {
     return matchSearch && matchRole;
   });
 
-  const saveStaff = (form) => {
+  const saveStaff = async (form) => {
+    const phoneNumber = (form.phone || '').replace(/\s+/g, '');
+    const basePayload = {
+      fullName: (form.fullName || '').trim(),
+      email: (form.email || '').trim(),
+      phoneNumber,
+      staffCode: Number(form.staffCode),
+      department: form.department,
+      hireDate: form.hireDate,
+      status: form.status,
+    };
+
+    // SỬA
     if (modal.data) {
-      setStaff(prev => prev.map(s => s.id === modal.data.id ? { ...s, ...form } : s));
-      showToast('Đã cập nhật thông tin nhân viên!');
-    } else {
-      const newId = `ST${String(staff.length + 1).padStart(3, '0')}`;
-      setStaff(prev => [...prev, { ...form, id: newId, joinDate: new Date().toISOString().split('T')[0], lastLogin: 'Chưa đăng nhập' }]);
-      showToast('Đã thêm nhân viên mới!');
+      if (modal.data.dbId) {
+        try {
+          // password @NotBlank ở DTO nhưng update không dùng tới -> gửi placeholder
+          const res = await staffService.update(modal.data.dbId, { ...basePayload, password: form.password?.trim() || 'unchanged' });
+          const mapped = { ...mapDbStaff(res.data), id: modal.data.id, role: form.role, lastLogin: modal.data.lastLogin };
+          setStaff(prev => prev.map(s => s.id === modal.data.id ? mapped : s));
+          showToast('Đã cập nhật nhân viên trong DB!');
+          setModal(null);
+        } catch (e) { showToast(errMsg(e, 'Cập nhật nhân viên thất bại.'), 'error'); }
+      } else {
+        setStaff(prev => prev.map(s => s.id === modal.data.id ? { ...s, ...form } : s));
+        showToast('Đã cập nhật nhân viên (cục bộ).');
+        setModal(null);
+      }
+      return;
     }
-    setModal(null);
+
+    // TẠO MỚI
+    if (!basePayload.fullName || !basePayload.email || !form.password?.trim() || !phoneNumber || !form.staffCode || !form.hireDate) {
+      showToast('Vui lòng nhập đủ: Họ tên, Email, Mật khẩu, SĐT, Mã NV, Ngày vào làm.', 'error');
+      return;
+    }
+    try {
+      const res = await staffService.create({ ...basePayload, password: form.password.trim() });
+      const mapped = { ...mapDbStaff(res.data), role: form.role };
+      setStaff(prev => {
+        const rest = prev.filter(s => String(s.email).toLowerCase() !== mapped.email.toLowerCase());
+        return [...rest, mapped];
+      });
+      showToast('Đã thêm nhân viên và lưu vào DB!');
+      setModal(null);
+    } catch (e) { showToast(errMsg(e, 'Thêm nhân viên thất bại.'), 'error'); }
   };
-  const deactivate = (id) => {
-    setStaff(prev => prev.map(s => s.id === id ? { ...s, status: 'INACTIVE' } : s));
-    showToast('Đã vô hiệu hóa tài khoản nhân viên.');
+
+  const deactivate = async (id) => {
+    const s = staff.find(x => x.id === id);
+    if (s?.dbId) {
+      try {
+        await staffService.update(s.dbId, {
+          fullName: s.fullName,
+          email: s.email,
+          password: 'unchanged',
+          phoneNumber: (s.phone || '').replace(/\s+/g, ''),
+          staffCode: Number(s.staffCode),
+          department: s.department,
+          hireDate: s.joinDate,
+          status: 'INACTIVE',
+        });
+        setStaff(prev => prev.map(x => x.id === id ? { ...x, status: 'INACTIVE' } : x));
+        showToast('Đã vô hiệu hóa tài khoản (DB).');
+      } catch (e) { showToast(errMsg(e, 'Thao tác thất bại.'), 'error'); }
+    } else {
+      setStaff(prev => prev.map(x => x.id === id ? { ...x, status: 'INACTIVE' } : x));
+      showToast('Đã vô hiệu hóa tài khoản (cục bộ).');
+    }
   };
 
   const counts = { ALL: staff.length, ADMIN: staff.filter(s => s.role === 'ADMIN').length, STAFF: staff.filter(s => s.role === 'STAFF').length, AGENT: staff.filter(s => s.role === 'AGENT').length };
 
   return (
     <div className="space-y-5">
-      <Toast msg={toast} onClose={() => setToast('')} />
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: toast.type })} />
       {modal && <StaffModal initial={modal.data} onSave={saveStaff} onClose={() => setModal(null)} />}
 
       <div className="flex items-start justify-between">

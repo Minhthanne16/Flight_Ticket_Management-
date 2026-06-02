@@ -11,7 +11,6 @@ import {
   LogOut,
   AlertTriangle,
 } from 'lucide-react';
-import { STAFF_USER } from '../data/sharedData';
 import logoImg from '../assets/logo.png';
 
 const navGroups = [
@@ -46,7 +45,8 @@ function Sidebar() {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
-    navigate('/');
+    localStorage.removeItem('token');
+    navigate('/signin');
   };
 
   return (

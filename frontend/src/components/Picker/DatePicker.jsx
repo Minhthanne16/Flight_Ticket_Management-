@@ -39,7 +39,7 @@ const DatePicker = ({ departureDate, setDepartureDate, returnDate, setReturnDate
         style={{ flex: 1, cursor: "pointer" }}
       >
         <i className="fas fa-calendar"></i>
-        <span> DEPARTURE DAY</span>
+        <span> NGÀY ĐI</span>
         <div className="date-val">{format(departureDate, "dd/MM/yyyy")}</div>
       </div>
 
@@ -58,7 +58,7 @@ const DatePicker = ({ departureDate, setDepartureDate, returnDate, setReturnDate
         }}
       >
         <i className="fas fa-calendar"></i>
-        <span> RETURN DATE</span>
+        <span> NGÀY VỀ</span>
         <div className="date-val">{isOneWay ? "---" : format(returnDate, "dd/MM/yyyy")}</div>
       </div>
 

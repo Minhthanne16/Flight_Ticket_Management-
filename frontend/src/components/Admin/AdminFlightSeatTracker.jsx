@@ -1,393 +1,249 @@
-import React, { useState, useMemo } from 'react';
-import { Plane, User, Hash, AlertTriangle, ShieldAlert, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plane, Loader2, User, Hash, Ticket as TicketIcon } from 'lucide-react';
+import { flightService } from '../../api/services/flightService';
 
-// --- MOCK DATA GENERATION ---
-const generateAdminSeatData = (businessRows = 4, economyRows = 16) => {
-  const data = [];
-  const names = ["Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Thị D", "Hoàng Văn E", "Vũ Thị F"];
-  const pnrs = ["VN1234", "XY8901", "AB4567", "CD2345", "EF6789", "GH0123"];
-  
-  // Business Class (2-2 layout: A, B - C, D)
-  for (let r = 1; r <= businessRows; r++) {
-    ['A', 'B', 'C', 'D'].forEach(letter => {
-      const rand = Math.random();
-      let status = 'AVAILABLE';
-      if (rand < 0.4) status = 'SOLD';
-      else if (rand < 0.6) status = 'LOCKED';
-      else if (rand < 0.65) status = 'MAINTENANCE';
+// Màu cho từng hạng ghế (theo thứ tự xuất hiện)
+const CLASS_COLORS = ['#7C3AED', '#0891B2', '#059669', '#D97706', '#E11D48', '#475569'];
 
-      data.push({
-        id: `${r}${letter}`,
-        row: r,
-        col: letter,
-        class: 'BUSINESS',
-        status,
-        passengerName: (status === 'SOLD' || status === 'LOCKED') ? names[Math.floor(Math.random() * names.length)] : null,
-        pnr: (status === 'SOLD' || status === 'LOCKED') ? pnrs[Math.floor(Math.random() * pnrs.length)] : null,
-      });
-    });
-  }
-
-  // Economy Class (3-3 layout: A, B, C - D, E, F)
-  for (let r = businessRows + 1; r <= businessRows + economyRows; r++) {
-    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(letter => {
-      const rand = Math.random();
-      let status = 'AVAILABLE';
-      if (rand < 0.3) status = 'SOLD';
-      else if (rand < 0.5) status = 'LOCKED';
-      else if (rand < 0.55) status = 'MAINTENANCE';
-
-      data.push({
-        id: `${r}${letter}`,
-        row: r,
-        col: letter,
-        class: 'ECONOMY',
-        status,
-        passengerName: (status === 'SOLD' || status === 'LOCKED') ? names[Math.floor(Math.random() * names.length)] : null,
-        pnr: (status === 'SOLD' || status === 'LOCKED') ? pnrs[Math.floor(Math.random() * pnrs.length)] : null,
-      });
-    });
-  }
-  return data;
+// Trạng thái ghế theo chuyến bay
+const STATUS_STYLE = {
+  AVAILABLE: { label: 'Trống', bg: '#ffffff', border: '#CBD5E1', text: '#64748B' },
+  HELD: { label: 'Đang giữ', bg: '#FEF3C7', border: '#F59E0B', text: '#B45309' },
+  BOOKED: { label: 'Đã đặt', bg: '#003366', border: '#003366', text: '#ffffff' },
+  BLOCKED: { label: 'Khóa', bg: '#FEE2E2', border: '#DC2626', text: '#B91C1C' },
 };
+const statusOf = (s) => STATUS_STYLE[s] || STATUS_STYLE.AVAILABLE;
 
-// --- AIRPLANE SILHOUETTE COMPONENT ---
-const AirplaneSilhouette = () => (
-  <svg viewBox="0 0 400 1400" className="w-full h-auto drop-shadow-xl" preserveAspectRatio="xMidYMin meet">
-    {/* Fuselage (Sleeker Main Body) */}
-    <path d="M 200 20 C 130 20, 60 120, 60 250 L 60 1200 C 60 1320, 150 1380, 200 1380 C 250 1380, 340 1320, 340 1200 L 340 250 C 340 120, 270 20, 200 20 Z" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="8"/>
-    
-    {/* Cockpit Window */}
-    <path d="M 200 60 C 160 60, 120 100, 120 140 C 120 160, 280 160, 280 140 C 280 100, 240 60, 200 60 Z" fill="#475569" opacity="0.8"/>
-  </svg>
-);
-
-// --- INDIVIDUAL SEAT COMPONENT ---
-const Seat = ({ seat, onMouseEnter, onMouseLeave, onClick }) => {
-  let baseStyle = "flex items-center justify-center font-bold text-xs select-none transition-transform ";
-  let shapeStyle = "rounded-t-3xl rounded-b-md border-2 ";
-  
-  if (seat.class === 'BUSINESS') {
-    baseStyle += "w-10 h-12 lg:w-12 lg:h-14 text-sm "; 
-  } else {
-    baseStyle += "w-8 h-10 lg:w-9 lg:h-11 text-xs ";
-  }
-
-  switch (seat.status) {
-    case 'AVAILABLE':
-      baseStyle += "bg-white border-slate-300 text-slate-500 hover:bg-slate-50 hover:border-slate-400";
-      break;
-    case 'LOCKED':
-      baseStyle += "bg-amber-100 border-amber-400 text-amber-600 hover:brightness-95";
-      break;
-    case 'SOLD':
-      baseStyle += "bg-[#003366] border-[#003366] text-white hover:brightness-110 shadow-md";
-      break;
-    case 'MAINTENANCE':
-      // Using a repeating linear gradient for the cross-hatch/maintenance look
-      baseStyle += "bg-[repeating-linear-gradient(45deg,#ef4444,#ef4444_5px,#f87171_5px,#f87171_10px)] border-red-600 text-white";
-      break;
-    default:
-      break;
-  }
-
-  return (
-    <div 
-      className={`${baseStyle} ${shapeStyle} relative group cursor-pointer`}
-      onMouseEnter={(e) => onMouseEnter(e, seat)}
-      onMouseLeave={onMouseLeave}
-      onClick={() => onClick && onClick(seat)}
-    >
-      {seat.status === 'MAINTENANCE' ? (
-        <ShieldAlert className="w-4 h-4 drop-shadow-md" />
-      ) : (
-        seat.id
-      )}
-    </div>
-  );
-};
-
-// --- MAIN TRACKER COMPONENT ---
 export default function AdminFlightSeatTracker({ flight }) {
+  const [seatMap, setSeatMap] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, seat: null });
-  const [bookingModal, setBookingModal] = useState({ visible: false, seat: null });
-  
-  // Use state instead of memo to allow modifications
-  const [seatData, setSeatData] = useState(() => generateAdminSeatData(4, 16));
 
-  const handleSeatClick = (seat) => {
-    if (seat.status === 'AVAILABLE') {
-      setBookingModal({ visible: true, seat });
-    }
-  };
+  useEffect(() => {
+    if (!flight?.dbId) { setSeatMap([]); return; }
+    let mounted = true;
+    setLoading(true);
+    setError('');
+    flightService.getSeatMap(flight.dbId)
+      .then(data => { if (mounted) setSeatMap(data || []); })
+      .catch(() => { if (mounted) setError('Không tải được sơ đồ ghế từ máy chủ.'); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, [flight?.dbId]);
 
-  const confirmBooking = () => {
-    if (bookingModal.seat) {
-      setSeatData(prev => prev.map(s => 
-        s.id === bookingModal.seat.id 
-          ? { ...s, status: 'SOLD', passengerName: 'Khách mua tại quầy', pnr: 'WALKIN' }
-          : s
-      ));
-      setBookingModal({ visible: false, seat: null });
-    }
-  };
+  // Bảng màu theo hạng ghế
+  const classColor = useMemo(() => {
+    const ids = [...new Set(seatMap.map(s => s.ticketClassId).filter(v => v != null))];
+    const map = new Map();
+    ids.forEach((id, i) => map.set(String(id), CLASS_COLORS[i % CLASS_COLORS.length]));
+    return (id) => map.get(String(id)) || '#94A3B8';
+  }, [seatMap]);
 
-  const handleMouseMove = (e) => {
-    if (tooltip.visible) {
-      // Offset slightly to avoid cursor blocking
-      setTooltip(prev => ({ ...prev, x: e.clientX + 15, y: e.clientY + 15 }));
-    }
-  };
+  const classLegend = useMemo(() => {
+    const seen = new Map();
+    seatMap.forEach(s => {
+      if (s.ticketClassId != null && !seen.has(String(s.ticketClassId))) {
+        seen.set(String(s.ticketClassId), s.ticketClassName || `Hạng ${s.ticketClassId}`);
+      }
+    });
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  }, [seatMap]);
 
-  const handleMouseEnter = (e, seat) => {
-    if (seat.status === 'SOLD' || seat.status === 'LOCKED' || seat.status === 'MAINTENANCE') {
-      setTooltip({ visible: true, x: e.clientX + 15, y: e.clientY + 15, seat });
-    }
-  };
+  // Nhóm theo hàng + xác định các cột (để chừa lối đi)
+  const { rows, columns, split } = useMemo(() => {
+    const byRow = new Map();
+    const colSet = new Set();
+    seatMap.forEach(s => {
+      const r = s.rowNumber ?? 0;
+      if (!byRow.has(r)) byRow.set(r, new Map());
+      byRow.get(r).set(s.columnLetter, s);
+      if (s.columnLetter) colSet.add(s.columnLetter);
+    });
+    const cols = Array.from(colSet).sort();
+    const rowsArr = Array.from(byRow.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rowNum, seatsByCol]) => ({ rowNum, seatsByCol }));
+    return { rows: rowsArr, columns: cols, split: Math.ceil(cols.length / 2) };
+  }, [seatMap]);
 
-  const handleMouseLeave = () => {
-    setTooltip(prev => ({ ...prev, visible: false }));
-  };
+  // Thống kê
+  const stats = useMemo(() => {
+    const s = { total: seatMap.length, AVAILABLE: 0, HELD: 0, BOOKED: 0, BLOCKED: 0 };
+    seatMap.forEach(x => { s[x.status] = (s[x.status] || 0) + 1; });
+    return s;
+  }, [seatMap]);
+
+  const showTip = (e, seat) => setTooltip({ visible: true, x: e.clientX + 16, y: e.clientY + 16, seat });
+  const moveTip = (e) => setTooltip(t => (t.visible ? { ...t, x: e.clientX + 16, y: e.clientY + 16 } : t));
+  const hideTip = () => setTooltip(t => ({ ...t, visible: false }));
 
   if (!flight) return null;
 
-  // Group seats by row
-  const rows = useMemo(() => {
-    const rowMap = {};
-    seatData.forEach(s => {
-      if (!rowMap[s.row]) rowMap[s.row] = { rowNum: s.row, seats: [] };
-      rowMap[s.row].seats.push(s);
-    });
-    return Object.values(rowMap).sort((a, b) => a.rowNum - b.rowNum);
-  }, [seatData]);
-
-  const businessRows = rows.filter(r => r.seats[0]?.class === 'BUSINESS');
-  const economyRows = rows.filter(r => r.seats[0]?.class === 'ECONOMY');
-
-  // Stats
-  const totalSeats = seatData.length;
-  const soldSeats = seatData.filter(s => s.status === 'SOLD').length;
-  const lockedSeats = seatData.filter(s => s.status === 'LOCKED').length;
-  const maintenanceSeats = seatData.filter(s => s.status === 'MAINTENANCE').length;
-  const availableSeats = seatData.filter(s => s.status === 'AVAILABLE').length;
-
   return (
-    <div className="w-full" onMouseMove={handleMouseMove}>
-      
-      {/* Tooltip Overlay */}
+    <div className="flex flex-col xl:flex-row gap-6" onMouseMove={moveTip}>
+      {/* Tooltip */}
       {tooltip.visible && tooltip.seat && (
-        <div 
-          className="fixed z-[100] bg-slate-900 text-white rounded-xl shadow-2xl p-4 w-56 pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-20px] transition-opacity"
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          <div className="flex justify-between items-start mb-2 border-b border-slate-700 pb-2">
-            <div>
-              <p className="font-black text-lg text-emerald-400">Ghế {tooltip.seat.id}</p>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400">{tooltip.seat.class === 'BUSINESS' ? 'Thương gia' : 'Phổ thông'}</p>
-            </div>
-            <div className={`text-[10px] px-2 py-1 rounded font-bold uppercase
-              ${tooltip.seat.status === 'SOLD' ? 'bg-emerald-900 text-emerald-300' : 
-                tooltip.seat.status === 'LOCKED' ? 'bg-amber-900 text-amber-300' : 
-                'bg-red-900 text-red-300'}`}
-            >
-              {tooltip.seat.status}
-            </div>
+        <div className="fixed z-[100] w-60 bg-slate-900 text-white rounded-xl shadow-2xl p-4 pointer-events-none"
+          style={{ left: tooltip.x, top: tooltip.y }}>
+          <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
+            <p className="font-black text-base text-emerald-400">Ghế {tooltip.seat.seatNumber}</p>
+            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+              style={{ backgroundColor: statusOf(tooltip.seat.status).bg, color: statusOf(tooltip.seat.status).text, border: `1px solid ${statusOf(tooltip.seat.status).border}` }}>
+              {statusOf(tooltip.seat.status).label}
+            </span>
           </div>
-          
-          {tooltip.seat.status !== 'MAINTENANCE' ? (
-            <div className="space-y-2 mt-3">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-medium">{tooltip.seat.passengerName}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Hash className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-medium">PNR: <span className="text-blue-300">{tooltip.seat.pnr}</span></span>
-              </div>
+          <p className="text-xs text-slate-300 mb-2">Hạng: <span className="font-semibold text-white">{tooltip.seat.ticketClassName || '—'}</span></p>
+          {tooltip.seat.passengerName ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-sm"><User className="w-4 h-4 text-slate-400" /><span className="font-medium">{tooltip.seat.passengerName}</span></div>
+              <div className="flex items-center gap-2 text-xs"><TicketIcon className="w-4 h-4 text-slate-400" /><span>Mã vé: <span className="text-amber-300 font-semibold">{tooltip.seat.ticketNumber || '—'}</span></span></div>
+              <div className="flex items-center gap-2 text-xs"><Hash className="w-4 h-4 text-slate-400" /><span>PNR: <span className="text-sky-300 font-semibold">{tooltip.seat.pnrCode || '—'}</span></span></div>
             </div>
           ) : (
-            <div className="mt-3 flex items-start gap-2 text-red-300">
-              <AlertTriangle className="w-4 h-4 mt-0.5" />
-              <span className="text-xs">Ghế đang được khóa lại để bảo trì hoặc sửa chữa.</span>
-            </div>
+            <p className="text-xs text-slate-400 italic">Chưa có khách đặt ghế này.</p>
           )}
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-8">
-        
-        {/* LEFT COLUMN: AIRPLANE MAP */}
-        <div className="xl:w-8/12 flex justify-center bg-[#F8FAFC] rounded-3xl p-8 shadow-inner overflow-hidden relative">
-          
-          <div className="relative w-full max-w-[400px]">
-            {/* SVG Silhouette */}
-            <AirplaneSilhouette />
-
-            {/* Seat Map Overlay */}
-            <div className="absolute top-[12%] bottom-[12%] left-[15%] right-[15%] flex flex-col items-center">
-              <div className="w-full h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-10 px-4">
-                
-                {/* Business Class */}
-                <div className="w-full mb-8">
-                  <div className="text-center mb-6">
-                    <span className="text-[#C0A062] text-[10px] font-black px-4 py-1.5 uppercase tracking-[0.2em] border-b-2 border-[#C0A062]">
-                      Thương gia
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    {businessRows.map(row => (
-                      <div key={row.rowNum} className="flex justify-between items-center">
-                        <div className="flex gap-3">
-                          {row.seats.slice(0, 2).map(seat => <Seat key={seat.id} seat={seat} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleSeatClick} />)}
-                        </div>
-                        <div className="w-8 text-center text-slate-400 font-bold text-xs">{row.rowNum}</div>
-                        <div className="flex gap-3">
-                          {row.seats.slice(2, 4).map(seat => <Seat key={seat.id} seat={seat} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleSeatClick} />)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="w-3/4 mx-auto h-px bg-slate-300 mb-8 relative">
-                  <div className="absolute inset-0 flex justify-center items-center -top-3">
-                    <div className="bg-[#F8FAFC] px-2 text-slate-400 flex items-center gap-2">
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-red-500 border border-red-200 px-1 rounded">Cửa thoát hiểm</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Economy Class */}
-                <div className="w-full">
-                  <div className="text-center mb-6">
-                    <span className="text-[#003366] text-[10px] font-black px-4 py-1.5 uppercase tracking-[0.2em] border-b-2 border-[#003366]">
-                      Phổ thông
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {economyRows.map(row => (
-                      <div key={row.rowNum} className="flex justify-between items-center px-1">
-                        <div className="flex gap-1.5">
-                          {row.seats.slice(0, 3).map(seat => <Seat key={seat.id} seat={seat} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleSeatClick} />)}
-                        </div>
-                        <div className="w-5 text-center text-slate-400 font-bold text-[10px]">{row.rowNum}</div>
-                        <div className="flex gap-1.5">
-                          {row.seats.slice(3, 6).map(seat => <Seat key={seat.id} seat={seat} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleSeatClick} />)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+      {/* Khoang máy bay */}
+      <div className="xl:w-8/12 bg-[#F8FAFC] rounded-3xl p-6 shadow-inner">
+        <div className="flex items-center justify-center gap-2 mb-4 text-[#003366]">
+          <Plane size={18} style={{ transform: 'rotate(-45deg)' }} />
+          <span className="text-sm font-bold uppercase tracking-widest">Sơ đồ ghế · {flight.id}</span>
         </div>
 
-        {/* RIGHT COLUMN: ADMIN SUMMARY */}
-        <div className="xl:w-4/12">
-          <div className="flex flex-col gap-6 sticky top-8">
-            
-            <div className="bg-[#003366] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Plane size={120} />
-              </div>
-              
-              <h3 className="text-xs font-black text-[#C0A062] uppercase tracking-widest mb-6">Trạng thái chuyến bay</h3>
-              
-              <div className="mb-8">
-                <p className="text-3xl font-black mb-1">{flight.id}</p>
-                <p className="text-sm text-slate-300">{flight.aircraft} • Khởi hành: {flight.dep} {flight.from}</p>
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-16 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin" /> Đang tải sơ đồ ghế...
+          </div>
+        )}
+        {!loading && error && <div className="py-16 text-center text-sm text-red-500">{error}</div>}
+        {!loading && !error && seatMap.length === 0 && (
+          <div className="py-16 text-center text-sm text-slate-400">Chưa có dữ liệu ghế cho chuyến bay này trong DB.</div>
+        )}
+
+        {!loading && !error && seatMap.length > 0 && (
+          <div className="overflow-auto max-h-[64vh] py-2">
+            {/* Thân máy bay */}
+            <div className="relative mx-auto w-fit">
+              {/* Mũi máy bay */}
+              <div className="h-16 w-full bg-gradient-to-b from-slate-100 to-slate-200 border-2 border-b-0 border-slate-300 rounded-t-[50%] flex items-start justify-center pt-3">
+                <div className="w-16 h-5 bg-slate-400/60 rounded-full" />
               </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 font-medium mb-1 uppercase">Đã bán</p>
-                  <p className="text-2xl font-bold text-emerald-400">{soldSeats} <span className="text-sm text-slate-500 font-normal">/ {totalSeats}</span></p>
-                </div>
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 font-medium mb-1 uppercase">Trống</p>
-                  <p className="text-2xl font-bold text-white">{availableSeats}</p>
-                </div>
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 font-medium mb-1 uppercase">Đang giữ</p>
-                  <p className="text-2xl font-bold text-amber-400">{lockedSeats}</p>
-                </div>
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 font-medium mb-1 uppercase">Bảo trì</p>
-                  <p className="text-2xl font-bold text-red-400">{maintenanceSeats}</p>
+              {/* Thân + cánh */}
+              <div className="relative bg-slate-200 border-x-2 border-slate-300 px-6 py-4">
+                {/* Cánh trái/phải */}
+                <div className="absolute -left-12 top-6 w-12 h-28 bg-slate-200 border-2 border-slate-300 rounded-l-2xl -skew-y-12" />
+                <div className="absolute -right-12 top-6 w-12 h-28 bg-slate-200 border-2 border-slate-300 rounded-r-2xl skew-y-12" />
+
+                <div className="relative inline-flex flex-col gap-1.5 items-center">
+                  {/* header cột */}
+                  <div className="flex items-center gap-1">
+                    <div className="w-6" />
+                    {columns.map((c, idx) => (
+                      <React.Fragment key={`h${c}`}>
+                        {idx === split && <div className="w-5" />}
+                        <div className="w-9 text-center text-[10px] font-bold text-slate-400">{c}</div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  {/* các hàng */}
+                  {rows.map(({ rowNum, seatsByCol }) => (
+                    <div key={rowNum} className="flex items-center gap-1">
+                      <div className="w-6 text-center text-[10px] font-bold text-slate-400">{rowNum}</div>
+                      {columns.map((c, idx) => {
+                        const seat = seatsByCol.get(c);
+                        const node = seat ? (() => {
+                          const st = statusOf(seat.status);
+                          return (
+                            <div
+                              onMouseEnter={(e) => showTip(e, seat)}
+                              onMouseLeave={hideTip}
+                              className="w-9 h-9 rounded-md flex items-center justify-center text-[9px] font-bold cursor-pointer transition-transform hover:scale-110 hover:ring-2 hover:ring-[#003366]/40"
+                              style={{
+                                backgroundColor: st.bg,
+                                color: st.text,
+                                border: `1px solid ${st.border}`,
+                                borderTop: `3px solid ${classColor(seat.ticketClassId)}`,
+                              }}
+                            >
+                              {seat.seatNumber || c}
+                            </div>
+                          );
+                        })() : <div className="w-9 h-9" />;
+                        return (
+                          <React.Fragment key={`${rowNum}${c}`}>
+                            {idx === split && <div className="w-5 flex items-center justify-center text-slate-300 text-[9px]">┊</div>}
+                            {node}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Legend Summary */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-4 h-4 rounded bg-[#003366] border border-slate-500"></div>
-                  <span className="text-slate-300 flex-1">Ghế đã thanh toán</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-4 h-4 rounded bg-amber-100 border border-amber-400"></div>
-                  <span className="text-slate-300 flex-1">Chờ thanh toán (Giữ chỗ)</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-4 h-4 rounded bg-white border border-slate-300"></div>
-                  <span className="text-slate-300 flex-1">Sẵn sàng</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-4 h-4 rounded bg-[repeating-linear-gradient(45deg,#ef4444,#ef4444_2px,#f87171_2px,#f87171_4px)] border border-red-500"></div>
-                  <span className="text-slate-300 flex-1">Khóa bảo trì / Hỏng</span>
-                </div>
-              </div>
-
+              {/* Đuôi máy bay */}
+              <div className="h-14 w-full bg-gradient-to-t from-slate-100 to-slate-200 border-2 border-t-0 border-slate-300 rounded-b-[45%]" />
             </div>
+            <p className="text-center text-[11px] text-slate-400 mt-3">Rê chuột vào ghế để xem chi tiết hành khách / vé</p>
+          </div>
+        )}
+      </div>
 
+      {/* Tổng quan */}
+      <div className="xl:w-4/12">
+        <div className="bg-[#003366] text-white rounded-3xl p-6 shadow-xl relative overflow-hidden sticky top-6">
+          <div className="absolute top-0 right-0 p-4 opacity-10"><Plane size={120} /></div>
+          <h3 className="text-xs font-black text-[#C0A062] uppercase tracking-widest mb-4">Tổng quan ghế</h3>
+          <div className="mb-6">
+            <p className="text-2xl font-black mb-1">{flight.id}</p>
+            <p className="text-sm text-slate-300">{flight.aircraft} • {flight.from} → {flight.to}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {[
+              ['Tổng ghế', stats.total, 'text-white'],
+              ['Trống', stats.AVAILABLE, 'text-emerald-400'],
+              ['Đã đặt', stats.BOOKED, 'text-sky-300'],
+              ['Đang giữ', stats.HELD, 'text-amber-400'],
+            ].map(([lbl, val, cls]) => (
+              <div key={lbl} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                <p className="text-xs text-slate-400 uppercase mb-1">{lbl}</p>
+                <p className={`text-2xl font-bold ${cls}`}>{val}</p>
+              </div>
+            ))}
+          </div>
+
+          {classLegend.length > 0 && (
+            <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700 mb-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Hạng ghế (viền trên)</p>
+              <div className="space-y-2">
+                {classLegend.map(c => (
+                  <div key={c.id} className="flex items-center gap-3 text-sm">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: classColor(c.id) }} />
+                    <span className="text-slate-300">{c.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
+            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Trạng thái</p>
+            <div className="space-y-2">
+              {Object.values(STATUS_STYLE).map(st => (
+                <div key={st.label} className="flex items-center gap-3 text-sm">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: st.bg, border: `1px solid ${st.border}` }} />
+                  <span className="text-slate-300">{st.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Booking Modal */}
-      {bookingModal.visible && bookingModal.seat && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[200]">
-          <div className="bg-white rounded-3xl p-6 w-[400px] shadow-2xl relative border border-slate-100">
-            <button 
-              onClick={() => setBookingModal({ visible: false, seat: null })}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-full transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <h2 className="text-xl font-bold text-[#003366] mb-6 border-b border-slate-100 pb-4">Thanh toán vé tại quầy</h2>
-            
-            <div className="space-y-3 mb-8">
-              <div className="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-xl">
-                <span className="text-sm font-medium text-slate-500">Mã ghế</span>
-                <span className="text-2xl font-black text-[#003366]">{bookingModal.seat.id}</span>
-              </div>
-              <div className="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-xl">
-                <span className="text-sm font-medium text-slate-500">Hạng vé</span>
-                <span className="font-bold text-[#C0A062]">
-                  {bookingModal.seat.class === 'BUSINESS' ? 'Thương gia' : 'Phổ thông'}
-                </span>
-              </div>
-              <div className="flex justify-between items-end border-t-2 border-dashed border-slate-200 pt-4 mt-2 px-2">
-                <span className="text-sm font-medium text-slate-500 mb-1">Giá vé</span>
-                <span className="text-3xl font-black text-emerald-600 font-serif tracking-tight">
-                  {bookingModal.seat.class === 'BUSINESS' ? '2.500.000' : '1.000.000'} <span className="text-xl text-emerald-500">₫</span>
-                </span>
-              </div>
-            </div>
-
-            <button 
-              onClick={confirmBooking}
-              className="w-full bg-[#003366] hover:bg-[#002244] text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
-            >
-              Xác nhận mua & Thanh toán
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

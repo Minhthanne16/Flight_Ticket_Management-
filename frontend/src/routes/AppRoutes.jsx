@@ -21,12 +21,19 @@ import SearchResults from '../components/Customer/SearchResults';
 import TicketInformation from '../components/Customer/TicketInformation';
 import Payment from '../components/Customer/Payment';
 import BookingSuccess from '../components/Customer/BookingSuccess';
+import MyFlights from '../components/Customer/MyFlights';
 
 // --- Admin Pages ---
 import AdminDashboard from '../pages/Admin/Dashboard';
 import FlightManage from '../pages/Admin/FlightManage';
 import BookingManage from '../pages/Admin/BookingManage';
 import AirportManage from '../pages/Admin/AirportManage';
+import RouteManage from '../pages/Admin/RouteManage';
+import AirlineManage from '../pages/Admin/AirlineManage';
+import AirplaneManage from '../pages/Admin/AirplaneManage';
+import AirplaneModelManage from '../pages/Admin/AirplaneModelManage';
+import TicketClassManage from '../pages/Admin/TicketClassManage';
+import VoucherManage from '../pages/Admin/VoucherManage';
 import UserManage from '../pages/Admin/UserManage';
 import RegulationManage from '../pages/Admin/RegulationManage';
 import AdminProfile from '../pages/Admin/Profile';
@@ -65,11 +72,7 @@ function AppRoutes() {
 
   <Route
     path="/customer/flight-results"
-    element={
-      <ProtectedRoute allowedRoles={['CUSTOMER']}>
-        <SearchResults />
-      </ProtectedRoute>
-    }
+    element={<SearchResults />}
   />
   <Route
   path="/customer/booking-success"
@@ -84,6 +87,22 @@ function AppRoutes() {
   element={
     <ProtectedRoute allowedRoles={['CUSTOMER']}>
       <TicketInformation />
+    </ProtectedRoute>
+  }
+/>
+  <Route
+  path="/customer/payment"
+  element={
+    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+      <Payment />
+    </ProtectedRoute>
+  }
+/>
+  <Route
+  path="/customer/my-flights"
+  element={
+    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+      <MyFlights />
     </ProtectedRoute>
   }
 />
@@ -122,6 +141,12 @@ function AppRoutes() {
           <Route path="flight-schedule" element={<FlightManage />} />
           <Route path="bookings" element={<BookingManage />} />
           <Route path="airports" element={<AirportManage />} />
+          <Route path="routes" element={<RouteManage />} />
+          <Route path="airlines" element={<AirlineManage />} />
+          <Route path="airplanes" element={<AirplaneManage />} />
+          <Route path="airplane-models" element={<AirplaneModelManage />} />
+          <Route path="ticket-classes" element={<TicketClassManage />} />
+          <Route path="vouchers" element={<VoucherManage />} />
           <Route path="staff" element={<UserManage />} />
           <Route path="regulations" element={<RegulationManage />} />
           {/* Redirect legacy paths */}

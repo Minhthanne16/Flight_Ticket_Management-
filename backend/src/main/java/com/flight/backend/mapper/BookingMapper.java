@@ -31,6 +31,7 @@ public class BookingMapper {
                 .pnrCode(booking.getPnrCode())
                 .status(booking.getStatus())
                 .totalAmount(booking.getTotalAmount())
+                .refundAmount(booking.getRefundAmount())
                 .bookingDate(booking.getBookingDate())
                 .expirationTime(booking.getExpirationTime())
                 // Flight

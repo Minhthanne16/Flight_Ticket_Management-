@@ -10,6 +10,7 @@ import com.flight.backend.entity.Airport;
 import com.flight.backend.entity.Route;
 import com.flight.backend.entity.enums.RouteStatus;
 import com.flight.backend.repository.AirportRepository;
+import com.flight.backend.repository.FlightRepository;
 import com.flight.backend.repository.RouteRepository;
 
 import jakarta.transaction.Transactional;
@@ -19,13 +20,16 @@ public class RouteService {
 
     private final RouteRepository routeRepository;
     private final AirportRepository airportRepository;
+    private final FlightRepository flightRepository;
 
     public RouteService(
             RouteRepository routeRepository,
-            AirportRepository airportRepository) {
+            AirportRepository airportRepository,
+            FlightRepository flightRepository) {
 
         this.routeRepository = routeRepository;
         this.airportRepository = airportRepository;
+        this.flightRepository = flightRepository;
     }
 
     @Transactional
@@ -164,8 +168,11 @@ public class RouteService {
                         new RuntimeException(
                                 "Không tìm thấy tuyến bay"));
 
-        route.setStatus(RouteStatus.INACTIVE);
+        if (!flightRepository.findByRouteId(id).isEmpty()) {
+            throw new RuntimeException(
+                    "Không thể xóa: tuyến bay đang được dùng trong chuyến bay.");
+        }
 
-        routeRepository.save(route);
+        routeRepository.delete(route);
     }
 }

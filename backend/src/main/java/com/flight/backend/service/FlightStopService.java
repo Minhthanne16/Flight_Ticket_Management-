@@ -26,12 +26,16 @@ public class FlightStopService {
 
     public List<FlightStopResponse> createFlightStop(Flight flight, List<CreateFlightStopRequest> fts) {
         List<FlightStop> flightStops = new ArrayList<>();
+        if (fts == null || fts.isEmpty()) {
+            return new ArrayList<>();
+        }
         for (CreateFlightStopRequest ft : fts) {
             FlightStop flightStop = new FlightStop();
             flightStop.setFlight(flight);
             flightStop.setStopAirport(airportService.getAirportById(ft.getAirportStopId()));
             flightStop.setArrivalTime(ft.getArrivalTime());
             flightStop.setDepartureTime(ft.getDepartureTime());
+            flightStop.setStopOrder(ft.getStopOrder());
             Duration duration = Duration.between(ft.getArrivalTime(), ft.getDepartureTime());
             flightStop.setStopDuration(duration.toMinutes());
             flightStops.add(flightStop);

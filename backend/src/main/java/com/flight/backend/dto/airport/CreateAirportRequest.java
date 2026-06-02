@@ -8,15 +8,15 @@ import lombok.Setter;
 @Setter
 public class CreateAirportRequest {
 
-    @NotBlank(message = "Airport code is required")
+    @NotBlank(message = "Vui lòng nhập mã sân bay")
     private String airportCode;
 
-    @NotBlank(message = "Airport name is required")
+    @NotBlank(message = "Vui lòng nhập tên sân bay")
     private String name;
 
-    @NotBlank(message = "City is required")
+    @NotBlank(message = "Vui lòng nhập thành phố")
     private String city;
 
-    @NotBlank(message = "Country is required")
+    @NotBlank(message = "Vui lòng nhập quốc gia")
     private String country;
 }

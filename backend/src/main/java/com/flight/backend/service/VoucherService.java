@@ -103,10 +103,154 @@ public class VoucherService {
         return voucherRepository.save(voucher);
     }
 
+    // UPDATE VOUCHER
+    public Voucher updateVoucher(
+            Long id, CreateVoucherRequest req) {
+
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Voucher not found"));
+
+        String voucherCode =
+                req.getVoucherCode()
+                        .trim()
+                        .toUpperCase();
+
+        if (!voucherCode.equals(voucher.getVoucherCode())
+                && voucherRepository.existsByVoucherCode(
+                        voucherCode)) {
+
+            throw new RuntimeException(
+                    "Voucher code already exists");
+        }
+
+        if (req.getStartTime()
+                .isAfter(req.getEndTime())) {
+
+            throw new RuntimeException(
+                    "Start time must be before end time");
+        }
+
+        if (req.getDiscountType()
+                == VoucherDiscountType.PERCENTAGE
+                &&
+                (req.getDiscountValue() < 1
+                        || req.getDiscountValue() > 100)) {
+
+            throw new RuntimeException(
+                    "Percentage discount must be between 1 and 100");
+        }
+
+        if (req.getUsageLimit()
+                < voucher.getUsedCount()) {
+
+            throw new RuntimeException(
+                    "Usage limit cannot be less than used count");
+        }
+
+        voucher.setVoucherCode(voucherCode);
+
+        voucher.setName(req.getName());
+
+        voucher.setDiscountType(req.getDiscountType());
+
+        voucher.setDiscountValue(req.getDiscountValue());
+
+        voucher.setMinBookingAmount(
+                req.getMinBookingAmount());
+
+        voucher.setMaxDiscountAmount(
+                req.getMaxDiscountAmount());
+
+        voucher.setStartTime(
+                req.getStartTime());
+
+        voucher.setEndTime(
+                req.getEndTime());
+
+        voucher.setUsageLimit(
+                req.getUsageLimit());
+
+        voucher.setUpdatedAt(
+                LocalDateTime.now());
+
+        return voucherRepository.save(voucher);
+    }
+
+    // DELETE VOUCHER
+    public void deleteVoucher(Long id) {
+
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Voucher not found"));
+
+        if (bookingVoucherRepository
+                .existsByVoucherId(id)) {
+
+            throw new RuntimeException(
+                    "Không thể xóa: voucher đã được sử dụng trong đơn đặt chỗ.");
+        }
+
+        voucherRepository.delete(voucher);
+    }
+
     // GET ALL
     public List<Voucher> getAllVouchers() {
 
         return voucherRepository.findAll();
+    }
+
+    // Tính số tiền giảm theo loại voucher
+    private BigDecimal computeDiscount(Voucher voucher, BigDecimal total) {
+        BigDecimal discount;
+        if (voucher.getDiscountType() == VoucherDiscountType.PERCENTAGE) {
+            discount = total
+                    .multiply(BigDecimal.valueOf(voucher.getDiscountValue()))
+                    .divide(BigDecimal.valueOf(100));
+            if (voucher.getMaxDiscountAmount() != null) {
+                discount = discount.min(BigDecimal.valueOf(voucher.getMaxDiscountAmount()));
+            }
+        } else {
+            discount = BigDecimal.valueOf(voucher.getDiscountValue());
+        }
+        return discount;
+    }
+
+    // PREVIEW VOUCHER — kiểm tra hợp lệ & tính giảm giá nhưng KHÔNG lưu (dùng ở trang nhập thông tin)
+    public ApplyVoucherResponse previewVoucher(String code, BigDecimal amount) {
+
+        if (code == null || code.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập mã giảm giá");
+        }
+
+        Voucher voucher = voucherRepository
+                .findByVoucherCode(code.trim().toUpperCase())
+                .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (voucher.getStatus() != VoucherStatus.ACTIVE) {
+            throw new RuntimeException("Mã giảm giá không còn hiệu lực");
+        }
+        if (now.isBefore(voucher.getStartTime()) || now.isAfter(voucher.getEndTime())) {
+            throw new RuntimeException("Mã giảm giá đã hết hạn");
+        }
+        if (voucher.getUsedCount() >= voucher.getUsageLimit()) {
+            throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng");
+        }
+
+        BigDecimal total = amount != null ? amount : BigDecimal.ZERO;
+        if (total.compareTo(BigDecimal.valueOf(voucher.getMinBookingAmount())) < 0) {
+            throw new RuntimeException("Đơn hàng chưa đạt giá trị tối thiểu "
+                    + voucher.getMinBookingAmount() + " VND để dùng mã này");
+        }
+
+        BigDecimal discount = computeDiscount(voucher, total);
+        BigDecimal finalAmount = total.subtract(discount).max(BigDecimal.ZERO);
+
+        return new ApplyVoucherResponse(total, discount, finalAmount);
     }
 
     // APPLY VOUCHER

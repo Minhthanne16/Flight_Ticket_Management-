@@ -1,12 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, HelpCircle, ChevronDown, AlertCircle, CheckCircle, Info, X, User, LogOut } from 'lucide-react';
+import { notificationService } from '../../api/services/notificationService';
+
+// Map loại notification của backend sang kiểu icon hiển thị
+const mapType = (type) => {
+  if (['SYSTEM_ALERT', 'PAYMENT_FAILED', 'FLIGHT_UPDATED'].includes(type)) return 'alert';
+  if (['PAYMENT_SUCCESS', 'BOOKING_CREATED', 'VOUCHER_APPLIED'].includes(type)) return 'success';
+  return 'info';
+};
+
+const formatTime = (sentAt) => {
+  if (!sentAt) return 'Vừa xong';
+  const d = new Date(sentAt);
+  return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+};
 
 const AdminHeader = ({ title = '', onMenuClick }) => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -22,11 +37,38 @@ const AdminHeader = ({ title = '', onMenuClick }) => {
   };
   const initials = getInitials(displayName);
 
-  const notifications = [
-    { id: 1, type: 'alert', message: 'Chuyến bay VN305 bị delay 30 phút do thời tiết xấu.', time: '10 phút trước', read: false },
-    { id: 2, type: 'success', message: 'Bảo trì thành công ghế 4A trên VN201.', time: '1 giờ trước', read: false },
-    { id: 3, type: 'info', message: 'Hệ thống tự động cập nhật giá vé cuối tuần.', time: '2 giờ trước', read: true },
-  ];
+  // Lấy danh sách thông báo thật từ backend
+  const loadNotifications = async () => {
+    try {
+      const data = await notificationService.getAll();
+      const list = Array.isArray(data) ? data : [];
+      setNotifications(
+        list.map((n) => ({
+          id: n.id,
+          type: mapType(n.type),
+          message: n.title ? `${n.title}${n.content ? ' — ' + n.content : ''}` : (n.content || n.message || ''),
+          time: formatTime(n.sentAt),
+          read: n.unread === false || n.status === 'READ',
+        }))
+      );
+    } catch (err) {
+      console.error('Không tải được thông báo:', err);
+      setNotifications([]);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    window.addEventListener('storage', loadNotifications);
+    return () => window.removeEventListener('storage', loadNotifications);
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAllRead = () => {
+    notificationService.markAllRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -86,10 +128,12 @@ const AdminHeader = ({ title = '', onMenuClick }) => {
             title="Notifications"
           >
             <Bell size={20} style={{ color: '#003366' }} />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border border-white"
-              style={{ backgroundColor: '#EF4444' }}
-            />
+            {unreadCount > 0 && (
+              <span
+                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border border-white"
+                style={{ backgroundColor: '#EF4444' }}
+              />
+            )}
           </button>
 
           {/* Notification Dropdown */}
@@ -105,29 +149,37 @@ const AdminHeader = ({ title = '', onMenuClick }) => {
                 </button>
               </div>
               <div className="max-h-[320px] overflow-y-auto">
-                {notifications.map((note) => (
-                  <div 
-                    key={note.id} 
-                    className={`flex gap-3 p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${note.read ? 'opacity-70' : 'bg-blue-50/30'}`}
-                  >
-                    <div className="mt-1 flex-shrink-0">
-                      {note.type === 'alert' && <AlertCircle size={18} className="text-red-500" />}
-                      {note.type === 'success' && <CheckCircle size={18} className="text-emerald-500" />}
-                      {note.type === 'info' && <Info size={18} className="text-blue-500" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`text-sm text-slate-700 ${!note.read ? 'font-semibold' : ''}`}>{note.message}</p>
-                      <p className="text-xs text-slate-400 mt-1">{note.time}</p>
-                    </div>
-                    {!note.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>}
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-slate-400">
+                    Chưa có thông báo nào.
                   </div>
-                ))}
+                ) : (
+                  notifications.map((note) => (
+                    <div
+                      key={note.id}
+                      className={`flex gap-3 p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${note.read ? 'opacity-70' : 'bg-blue-50/30'}`}
+                    >
+                      <div className="mt-1 flex-shrink-0">
+                        {note.type === 'alert' && <AlertCircle size={18} className="text-red-500" />}
+                        {note.type === 'success' && <CheckCircle size={18} className="text-emerald-500" />}
+                        {note.type === 'info' && <Info size={18} className="text-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm text-slate-700 ${!note.read ? 'font-semibold' : ''}`}>{note.message}</p>
+                        <p className="text-xs text-slate-400 mt-1">{note.time}</p>
+                      </div>
+                      {!note.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>}
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="p-3 text-center border-t border-slate-100 bg-slate-50">
-                <button className="text-sm font-semibold text-[#003366] hover:underline">
-                  Đánh dấu tất cả đã đọc
-                </button>
-              </div>
+              {notifications.length > 0 && unreadCount > 0 && (
+                <div className="p-3 text-center border-t border-slate-100 bg-slate-50">
+                  <button onClick={handleMarkAllRead} className="text-sm font-semibold text-[#003366] hover:underline">
+                    Đánh dấu tất cả đã đọc
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

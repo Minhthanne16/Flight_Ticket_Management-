@@ -18,15 +18,15 @@ import lombok.Setter;
 @Builder
 public class CreateFlightStopRequest {
 
-    @NotNull(message = "Stop airport is required")
+    @NotNull(message = "Vui lòng chọn sân bay dừng")
     private Long airportStopId;
 
-    @NotNull(message = "Arrival time is required")
+    @NotNull(message = "Vui lòng nhập giờ đến")
     private LocalDateTime arrivalTime;
 
-    @NotNull(message = "Departure time is required")
+    @NotNull(message = "Vui lòng nhập giờ đi")
     private LocalDateTime departureTime;
 
-    @Min(value = 1, message = "Stop order must be greater than 0")
+    @Min(value = 1, message = "Thứ tự điểm dừng phải lớn hơn 0")
     private int stopOrder;
 }

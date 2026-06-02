@@ -51,6 +51,10 @@ public class Ticket {
     @JoinColumn(name = "flight_seat_id", unique = true)
     private FlightSeat flightSeat;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_class_id")
+    private TicketClass ticketClass;
+
     @Column(name = "price")
     private BigDecimal price;
 

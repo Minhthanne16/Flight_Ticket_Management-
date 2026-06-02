@@ -62,6 +62,18 @@ export const bookingService = {
     return mapped;
   },
   create: (data) => api.post('/bookings', data),
+  getMy: async () => {
+    const res = await api.get('/bookings/my');
+    return res.data?.data || res.data || [];
+  },
+  getAvailableSeats: async (flightId) => {
+    const res = await api.get(`/flights/${flightId}/available-seats`);
+    return res.data?.data || res.data || [];
+  },
+  selectSeats: async (bookingId, assignments) => {
+    const res = await api.post(`/bookings/${bookingId}/select-seats`, { assignments });
+    return res.data?.data || res.data;
+  },
   expire: async (id) => {
     try {
       const res = await api.put(`/bookings/${id}/expire`);
@@ -77,19 +89,17 @@ export const bookingService = {
       const res = await api.delete(`/bookings/${id}`);
       saveLocalBookingState(id, { status: 'CANCELLED' });
       return res.data?.data || res.data;
-    } catch {
+    } catch (e) {
+      // Lỗi nghiệp vụ từ server (vd: vi phạm quy định hủy vé) -> báo cho người dùng
+      if (e?.response) throw e;
+      // Lỗi mạng -> fallback cục bộ
       saveLocalBookingState(id, { status: 'CANCELLED' });
       return { id, status: 'CANCELLED' };
     }
   },
   confirmPayment: async (bookingId) => {
-    try {
-      const res = await api.post(`/payments/booking/${bookingId}/success`);
-      saveLocalBookingState(bookingId, { paymentStatus: 'PAID', status: 'CONFIRMED' });
-      return res.data?.data || res.data;
-    } catch {
-      saveLocalBookingState(bookingId, { paymentStatus: 'PAID', status: 'CONFIRMED' });
-      return { bookingId, paymentStatus: 'PAID', status: 'CONFIRMED' };
-    }
+    const res = await api.post(`/bookings/${bookingId}/confirm-payment`);
+    saveLocalBookingState(bookingId, { paymentStatus: 'PAID', status: 'PAID' });
+    return res.data?.data || res.data;
   }
 };

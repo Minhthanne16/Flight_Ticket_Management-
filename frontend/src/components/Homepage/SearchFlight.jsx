@@ -1,11 +1,28 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowRightLeft, Search } from 'lucide-react';
+import { ArrowRightLeft, Search, X, CheckCircle } from 'lucide-react';
 
 import PassengerPicker from '../Picker/PassengerPicker';
 import Airport from '../Picker/AirportPicker';
 import DatePicker from '../Picker/DatePicker';
+
+function Toast({ msg, type, onClose }) {
+  if (!msg) return null;
+  const isError = type === 'error';
+  // Render qua portal ra body để không bị "nhốt" trong stacking context (z-20) của ô tìm kiếm,
+  // nếu không toast sẽ bị Navbar (z-50, fixed) che mất.
+  return createPortal(
+    <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white min-w-[280px] max-w-[90vw]"
+      style={{ backgroundColor: isError ? '#DC2626' : '#16A34A' }}>
+      {isError ? <X className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+      <span className="flex-1">{msg}</span>
+      <button onClick={onClose}><X className="w-4 h-4 opacity-70" /></button>
+    </div>,
+    document.body
+  );
+}
 
 function SearchFlight() {
 
@@ -18,9 +35,14 @@ function SearchFlight() {
   const [tripType, setTripType] = useState('round-trip');
 
   // BỔ SUNG THÊM STATE MỚI
-  const [isDirect, setIsDirect] = useState(false);
   const [cabinClass, setCabinClass] = useState('economy');
   const [passengers, setPassengers] = useState(1);
+
+  const [toast, setToast] = useState({ msg: '', type: 'error' });
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type }), 3000);
+  };
 
   const handleSwap = () => {
     const temp = fromCity;
@@ -32,18 +54,21 @@ function SearchFlight() {
 
   if (!fromCity || !toCity) {
 
-    alert(
-      'Vui lòng chọn điểm đi và điểm đến!'
-    );
+    showToast('Vui lòng chọn điểm đi và điểm đến!');
+
+    return;
+  }
+
+  if (fromCity.airportCode === toCity.airportCode) {
+
+    showToast('Điểm đi và điểm đến không được trùng nhau!');
 
     return;
   }
 
   if (!departureDate) {
 
-    alert(
-      'Vui lòng chọn ngày đi!'
-    );
+    showToast('Vui lòng chọn ngày đi!');
 
     return;
   }
@@ -53,18 +78,7 @@ function SearchFlight() {
     !returnDate
   ) {
 
-    alert(
-      'Vui lòng chọn ngày về!'
-    );
-
-    return;
-  }
-
-  if (tripType === 'multi-city') {
-
-    alert(
-      'Chức năng nhiều chặng đang phát triển!'
-    );
+    showToast('Vui lòng chọn ngày về!');
 
     return;
   }
@@ -94,8 +108,6 @@ function SearchFlight() {
             )
           : '',
 
-      isDirect,
-
       cabinClass,
 
       passengers
@@ -109,43 +121,28 @@ function SearchFlight() {
 
   return (
     <div className="relative -mt-24 z-20 container mx-auto px-4 md:px-8 max-w-6xl">
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: toast.type })} />
       <div className="relative z-50 bg-white rounded-2xl shadow-xl p-6 md:p-8 overflow-visible">
-        
+
         {/* Top Options Row */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex space-x-2 bg-slate-100 p-1 rounded-xl">
-            <button 
+            <button
               className={`px-6 py-2 rounded-lg font-medium text-sm transition-colors ${tripType === 'one-way' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-600 hover:bg-slate-200'}`}
               onClick={() => setTripType('one-way')}
             >
               Một chiều
             </button>
-            <button 
+            <button
               className={`px-6 py-2 rounded-lg font-medium text-sm transition-colors ${tripType === 'round-trip' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-600 hover:bg-slate-200'}`}
               onClick={() => setTripType('round-trip')}
             >
               Khứ hồi
             </button>
-            <button 
-              className={`px-6 py-2 rounded-lg font-medium text-sm transition-colors ${tripType === 'multi-city' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-600 hover:bg-slate-200'}`}
-              onClick={() => setTripType('multi-city')}
-            >
-              Nhiều chặng
-            </button>
           </div>
 
           <div className="flex items-center space-x-4">
-             <label className="flex items-center space-x-2 cursor-pointer">
-                 <input 
-                   type="checkbox" 
-                   className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
-                   checked={isDirect}
-                   onChange={(e) => setIsDirect(e.target.checked)}
-                 />
-                 <span className="text-sm text-slate-600 font-medium">Bay thẳng</span>
-             </label>
-             <div className="w-px h-6 bg-slate-200"></div>
-             <select 
+             <select
                className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer"
                value={cabinClass}
                onChange={(e) => setCabinClass(e.target.value)}

@@ -1,14 +1,36 @@
 import React, { useState, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import '../../css/Customer/SearchResults.css';
 
-import Navbar from '../Homepage/Navbar'; 
+import Navbar from '../Homepage/Navbar';
 import Footer from '../Homepage/Footer';
 import Banner from '../Homepage/Banner';
-import Filter from './Filter'; 
+import Filter from './Filter';
+import AirportPicker from '../Picker/AirportPicker';
 // THÊM DÒNG IMPORT NÀY ĐỂ TRÁNH LỖI NOT DEFINED
-import ConfirmBookingFlights from './ConfirmBookingFlights'; 
+import ConfirmBookingFlights from './ConfirmBookingFlights';
+
+// Toast thông báo lỗi/thành công cho người dùng
+function Toast({ msg, type, onClose }) {
+  if (!msg) return null;
+  const isError = type === 'error';
+  return (
+    <div
+      style={{
+        position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+        zIndex: 9999, display: 'flex', alignItems: 'center', gap: '12px',
+        padding: '12px 16px', borderRadius: '12px', color: '#fff',
+        fontSize: '14px', fontWeight: 500, minWidth: '280px', maxWidth: '90vw',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        backgroundColor: isError ? '#DC2626' : '#16A34A',
+      }}
+    >
+      <span style={{ flex: 1 }}>{msg}</span>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.7 }}>✕</button>
+    </div>
+  );
+}
 
 const fetchAirports = async () => {
   const response = await fetch('http://localhost:5000/admin/airports'); 
@@ -23,7 +45,10 @@ const fetchFlights = async (fromId, toId, filters) => {
   const query = new URLSearchParams();
   if (fromId) query.append('from', fromId);
   if (toId) query.append('to', toId);
-  
+  // Quy định: chỉ hiển thị chuyến còn đủ chỗ cho số khách yêu cầu
+  const numPassengers = parseInt(filters.passengers, 10) || 1;
+  query.append('passengers', numPassengers);
+
   const response = await fetch(`http://localhost:5000/flights/search?${query.toString()}`);
   if (!response.ok) {
     throw new Error(`Server trả về lỗi: ${response.status}`);
@@ -45,7 +70,7 @@ const fetchFlights = async (fromId, toId, filters) => {
 
   if (filters.transit) {
     allFlights = allFlights.filter(flight => {
-      const stops = flight.flightStops?.length || 0;
+      const stops = flight.stops?.length || 0;
       if (filters.transit === 'direct') return stops === 0;
       if (filters.transit === '1-transit') return stops === 1;
       if (filters.transit === '2-transit') return stops === 2;
@@ -64,6 +89,9 @@ const fetchFlights = async (fromId, toId, filters) => {
     });
   }
 
+  // Phòng thủ: ẩn chuyến không còn đủ chỗ (chỉ áp dụng khi backend trả availableSeats)
+  allFlights = allFlights.filter(f => f.availableSeats == null || f.availableSeats >= numPassengers);
+
   return allFlights;
 };
 
@@ -80,9 +108,14 @@ const generateDateRange = (startDateStr, numDays = 5) => {
 };
 
 const formatDisplayDate = (date) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  return `${days[date.getDay()]}, ${date.getDate()} Thg ${date.getMonth() + 1}`;
+};
+
+const cabinClassLabel = (cabinClass) => {
+  if (cabinClass === 'business') return 'Thương gia';
+  if (cabinClass === 'first-class') return 'Hạng nhất';
+  return 'Phổ thông';
 };
 
 const formatUrlDate = (date) => {
@@ -97,6 +130,25 @@ const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTicket, setSelectedTicket] = useState(null);
   const dateInputRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [toast, setToast] = useState({ msg: '', type: 'error' });
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type }), 3000);
+  };
+
+  // Khi click "Chọn": yêu cầu đăng nhập, nếu chưa thì chuyển sang trang đăng nhập
+  const handleChoose = (flight) => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+      showToast('Vui lòng đăng nhập để chọn chuyến bay này!');
+      navigate('/signin', { state: { from: location } });
+      return;
+    }
+    setSelectedTicket(flight);
+  };
 
   const fromCode = searchParams.get('from'); 
   const toCode = searchParams.get('to');
@@ -117,8 +169,43 @@ const SearchResults = () => {
     staleTime: 5 * 60 * 1000, 
   });
 
-  const fromId = airports.find(a => a.airportCode === fromCode)?.id;
-  const toId = airports.find(a => a.airportCode === toCode)?.id;
+  const fromAirport = airports.find(a => a.airportCode === fromCode);
+  const toAirport = airports.find(a => a.airportCode === toCode);
+  const fromId = fromAirport?.id;
+  const toId = toAirport?.id;
+
+  // Đổi lại tuyến bay khi bấm vào kính lúp
+  const [showSearchEdit, setShowSearchEdit] = useState(false);
+  const [editFrom, setEditFrom] = useState(null);
+  const [editTo, setEditTo] = useState(null);
+
+  const toggleSearchEdit = () => {
+    setEditFrom(fromAirport || null);
+    setEditTo(toAirport || null);
+    setShowSearchEdit(prev => !prev);
+  };
+
+  const applySearchEdit = () => {
+    if (!editFrom || !editTo) {
+      showToast('Vui lòng chọn cả điểm đi và điểm đến!');
+      return;
+    }
+    if (editFrom.airportCode === editTo.airportCode) {
+      showToast('Điểm đi và điểm đến không được trùng nhau!');
+      return;
+    }
+    setSearchParams(prev => {
+      prev.set('from', editFrom.airportCode);
+      prev.set('to', editTo.airportCode);
+      return prev;
+    });
+    setShowSearchEdit(false);
+  };
+
+  const handleSwapEdit = () => {
+    setEditFrom(editTo);
+    setEditTo(editFrom);
+  };
 
   const { data: flights = [], isLoading: isLoadingFlights, isError: isErrorFlights, error } = useQuery({
     queryKey: ['flights', fromId, toId, filters], 
@@ -185,6 +272,7 @@ const SearchResults = () => {
 
   return (
     <>
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: toast.type })} />
       <Navbar />
       <Banner />
 
@@ -197,22 +285,48 @@ const SearchResults = () => {
         <div className="flight-results-container">
           
           <div className="search-header-widget">
+            <div className="search-header-bg"></div>
             <div className="search-pill">
               <div className="pill-content">
                  <div className="pill-title">{fromCode} <i className="fa-solid fa-arrow-right"></i> {toCode}</div>
-                 
+
                  <div className="pill-subtitle">
-                    {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''} | 
-                    {' '}<strong style={{color: '#ff5e1f'}}>{filters.passengers}</strong> passenger(s) | 
-                    {' '}<span style={{textTransform: 'capitalize'}}>
-                       {filters.cabinClass === 'economy' ? 'Economy' : 'Business Class'}
-                    </span>
+                    {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''} |
+                    {' '}<strong style={{color: '#ff5e1f'}}>{filters.passengers}</strong> hành khách |
+                    {' '}<span>{cabinClassLabel(filters.cabinClass)}</span>
                  </div>
               </div>
-              <button className="pill-search-btn">
+              <button className="pill-search-btn" onClick={toggleSearchEdit} title="Đổi tuyến bay">
                 <i className="fa-solid fa-magnifying-glass"></i>
               </button>
             </div>
+
+            {showSearchEdit && (
+              <div className="search-edit-panel">
+                <div className="search-edit-field">
+                  <span className="search-edit-label">Điểm đi</span>
+                  <AirportPicker
+                    label="Chọn điểm đi"
+                    selectedAirport={editFrom}
+                    onSelect={setEditFrom}
+                  />
+                </div>
+                <button className="search-edit-swap" onClick={handleSwapEdit} title="Đảo chiều">
+                  <i className="fa-solid fa-right-left"></i>
+                </button>
+                <div className="search-edit-field">
+                  <span className="search-edit-label">Điểm đến</span>
+                  <AirportPicker
+                    label="Chọn điểm đến"
+                    selectedAirport={editTo}
+                    onSelect={setEditTo}
+                  />
+                </div>
+                <button className="search-edit-apply" onClick={applySearchEdit}>
+                  <i className="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                </button>
+              </div>
+            )}
 
             <div className="date-selector-bar">
               {dateList.map((dateObj) => {
@@ -226,14 +340,14 @@ const SearchResults = () => {
                     onClick={() => handleDateChange(dateString)}
                   >
                     <div className="date-label">{formatDisplayDate(dateObj)}</div>
-                    <div className="date-price">Tìm giá</div> 
+                    <div className="date-price">Xem giá</div>
                   </div>
                 );
               })}
               
               <div className="calendar-btn" onClick={handleOpenCalendar}>
                 <i className="fa-regular fa-calendar"></i>
-                <span>Calendar</span>
+                <span>Lịch</span>
                 <input 
                   type="date" 
                   ref={dateInputRef}
@@ -245,7 +359,7 @@ const SearchResults = () => {
             </div>
           </div>
 
-          <h3 className="results-title">All flights</h3>
+          <h3 className="results-title">Tất cả chuyến bay</h3>
           
           {isLoadingFlights ? (
              <div className="loading-state">Đang tìm kiếm chuyến bay...</div>
@@ -255,11 +369,10 @@ const SearchResults = () => {
             </div>
           ) : (
             flights.map((flight) => {
-              const currentAirlineName = flight.airplane?.airline?.airlineName || 'Bamboo Airways';
-              const currentAirlineLogo = flight.airplane?.airline?.logo || '/default-airline.png';
-              const depCode = flight.route?.departureAirport?.airportCode || fromCode;
-              const arrCode = flight.route?.arrivalAirport?.airportCode || toCode;
-              const airplaneModelName = flight.airplane?.model?.modelName || 'Airbus A320';
+              const currentAirlineName = flight.airlineName || 'Hãng hàng không';
+              const currentAirlineLogo = flight.airlineLogo || '/default-airline.png';
+              const depCode = flight.departureAirportCode || fromCode;
+              const arrCode = flight.arrivalAirportCode || toCode;
 
               const passengerCount = parseInt(filters.passengers, 10) || 1;
               const totalPrice = flight.basePrice * passengerCount;
@@ -279,9 +392,9 @@ const SearchResults = () => {
                           <span>{depCode}</span>
                         </div>
                         <div className="duration-block">
-                          <span>{flight.estimateDuration} min</span>
+                          <span>{flight.estimateDuration} phút</span>
                           <div className="line-path"></div>
-                          <span>{flight.flightStops?.length > 0 ? `${flight.flightStops.length} stop` : 'Direct'}</span>
+                          <span>{flight.stops?.length > 0 ? `${flight.stops.length} điểm dừng` : 'Bay thẳng'}</span>
                         </div>
                         <div className="time-block">
                           <strong>{formatTime(flight.arrivalTime)}</strong>
@@ -290,80 +403,95 @@ const SearchResults = () => {
                       </div>
 
                       <div className="price-info">
-                         <p className="save-tag"><i className="fa-solid fa-percent"></i> Tiết kiệm 10%</p>
-                         
                          <h3 className="price-text">
                             {formatPrice(totalPrice)} VND
-                            <span>{passengerCount > 1 ? ` / ${passengerCount} pax` : '/pax'}</span>
+                            <span>{passengerCount > 1 ? ` / ${passengerCount} khách` : '/khách'}</span>
                          </h3>
-                         
-                         <button className="btn-choose" onClick={() => setSelectedTicket(flight)}>Choose</button>
+
+                         <button className="btn-choose" onClick={() => handleChoose(flight)}>Chọn</button>
+                         {flight.availableSeats != null && (
+                           <span
+                             style={{
+                               display: 'block',
+                               marginTop: 6,
+                               fontSize: 12,
+                               fontWeight: 600,
+                               color: flight.availableSeats <= 5 ? '#dc2626' : '#16a34a',
+                             }}
+                           >
+                             {flight.availableSeats <= 5
+                               ? `Chỉ còn ${flight.availableSeats} chỗ!`
+                               : `Còn ${flight.availableSeats} chỗ`}
+                           </span>
+                         )}
                       </div>
                     </div>
 
-                    <div className="extra-info">
-                       <div className="amenities">
-                          <span><i className="fa-solid fa-briefcase"></i> 23kg</span>
-                          <span><i className="fa-solid fa-utensils"></i></span>
-                          <span><i className="fa-solid fa-film"></i></span>
-                       </div>
-                       <div className="promo-tags">
-                          <span className="tag">MASUPILAMI up to 300K OFF</span>
-                          <span className="tag">Holiday Deals</span>
-                       </div>
-                    </div>
-
-                    <div 
-                        className={`details-toggle ${showDetails === flight.id ? 'active' : ''}`} 
+                    <div
+                        className={`details-toggle ${showDetails === flight.id ? 'active' : ''}`}
                         onClick={() => toggleDetails(flight.id)}
                         >
-                    Flight Details 
+                    Chi tiết chuyến bay
                     </div>
                   </div>
 
                   {showDetails === flight.id && (
                     <div className="flight-details-panel">
                        <div className="details-content">
-                          <div className="timeline">
-                             <div className="time-point">
-                                <div className="time-col">
+                          <div className="fd-timeline">
+                             {/* Điểm khởi hành */}
+                             <div className="fd-row">
+                                <div className="fd-time">
                                    <strong>{formatTime(flight.departureTime)}</strong>
                                    <small>Khởi hành</small>
                                 </div>
-                                <div className="dot-line">
-                                   <div className="circle-outline"></div>
-                                   <div className="vertical-line"></div>
+                                <div className="fd-marker">
+                                   <div className="fd-dot"></div>
+                                   <div className="fd-line"></div>
                                 </div>
-                                <div className="info-col">
-                                   <strong>{flight.route?.departureAirport?.name || 'Sân bay khởi hành'} ({depCode})</strong>
-                                   <p>Terminal 1</p>
-                                </div>
-                             </div>
-
-                             <div className="flight-segment">
-                                <div className="segment-info">
-                                   <img src={currentAirlineLogo} className="small-logo" alt="logo" />
-                                   <strong>{currentAirlineName} • {flight.flightCode} • Economy</strong>
-                                   <div className="specs-grid">
-                                      <span><i className="fa-solid fa-briefcase"></i> Baggage 23 kg</span>
-                                      <span><i className="fa-solid fa-plug"></i> Power available</span>
-                                      <span><i className="fa-solid fa-utensils"></i> Free Meal</span>
-                                      <span><i className="fa-solid fa-plane"></i> {airplaneModelName}</span>
+                                <div className="fd-body">
+                                   <strong>{flight.departureCity || 'Sân bay khởi hành'} ({depCode})</strong>
+                                   <div className="fd-airline">
+                                      <img src={currentAirlineLogo} alt="logo" />
+                                      {currentAirlineName} • {flight.flightCode}
                                    </div>
                                 </div>
                              </div>
 
-                             <div className="time-point">
-                                <div className="time-col">
+                             {/* Các sân bay dừng */}
+                             {(flight.stops || []).map((stop) => (
+                                <div className="fd-row" key={stop.stopOrder}>
+                                   <div className="fd-time">
+                                      <strong>{formatTime(stop.arrivalTime)}</strong>
+                                      <small>Điểm dừng</small>
+                                   </div>
+                                   <div className="fd-marker">
+                                      <div className="fd-dot stop"></div>
+                                      <div className="fd-line"></div>
+                                   </div>
+                                   <div className="fd-body">
+                                      <strong>{stop.stopCity || stop.stopAirportName || 'Sân bay dừng'} ({stop.stopAirportCode})</strong>
+                                      {stop.stopAirportName && stop.stopCity && (
+                                         <p className="fd-sub">{stop.stopAirportName}</p>
+                                      )}
+                                      {stop.stopDuration > 0 && (
+                                         <div className="fd-layover">Thời gian dừng: {stop.stopDuration} phút</div>
+                                      )}
+                                   </div>
+                                </div>
+                             ))}
+
+                             {/* Điểm đến */}
+                             <div className="fd-row">
+                                <div className="fd-time">
                                    <strong>{formatTime(flight.arrivalTime)}</strong>
                                    <small>Đến nơi</small>
                                 </div>
-                                <div className="dot-line">
-                                   <div className="circle-fill"></div>
+                                <div className="fd-marker">
+                                   <div className="fd-dot filled"></div>
                                 </div>
-                                <div className="info-col">
-                                   <strong>{flight.route?.arrivalAirport?.name || 'Sân bay đến'} ({arrCode})</strong>
-                                   <p>Terminal 2</p>
+                                <div className="fd-body">
+                                   <strong>{flight.arrivalCity || 'Sân bay đến'} ({arrCode})</strong>
                                 </div>
                              </div>
                           </div>

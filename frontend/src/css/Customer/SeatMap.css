@@ -1,0 +1,198 @@
+/* Nút "Đặt chỗ ngồi" trong chi tiết vé */
+.seat-cta {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 18px 0;
+  text-align: center;
+}
+.seat-cta p { margin: 8px 0 0; font-size: 13px; color: #047857; }
+
+.btn-choose-seat {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 11px 26px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-choose-seat:hover { background: #15803d; }
+.btn-choose-seat i { margin-right: 8px; }
+
+.pending-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #b45309;
+}
+.pending-hint i { margin-right: 6px; }
+
+.status-text.paid { color: #16a34a; }
+.status-text.pending { color: #d97706; }
+.status-text.cancelled, .status-text.expired { color: #dc2626; }
+
+/* ===== Modal sơ đồ ghế ===== */
+.seatmap-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.seatmap-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 640px;
+  max-width: 96%;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.seatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid #eef1f5;
+}
+.seatmap-header h3 { margin: 0; font-size: 16px; color: #0f172a; }
+.seatmap-close {
+  background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer;
+}
+
+.seatmap-passengers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 22px 4px;
+}
+.pax-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pax-chip.active { border-color: #16a34a; background: #ecfdf5; }
+.pax-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+.pax-seat { font-size: 12px; color: #64748b; }
+
+.seatmap-body { padding: 16px 22px; }
+.seatmap-info { text-align: center; color: #64748b; padding: 24px; }
+
+.seatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-num {
+  width: 22px;
+  text-align: right;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.seat {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.seat.available { background: #e0e7ff; color: #4338ca; }
+.seat.available:hover { transform: scale(1.08); background: #c7d2fe; }
+.seat.selected { background: #16a34a; color: #fff; }
+.seat.taken { background: #e2e8f0; color: #cbd5e1; cursor: not-allowed; }
+.seat.otherclass { background: #fafafa; color: #d4d4d8; cursor: not-allowed; border: 1px dashed #e5e7eb; }
+
+.seatmap-class-note {
+  margin: 0;
+  padding: 10px 22px;
+  font-size: 13px;
+  color: #475569;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef1f5;
+}
+.seatmap-class-note i { color: #2563eb; margin-right: 6px; }
+
+.seatmap-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 6px 22px 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+.seatmap-legend .dot {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.seatmap-legend .dot.available { background: #e0e7ff; }
+.seatmap-legend .dot.selected { background: #16a34a; }
+.seatmap-legend .dot.taken { background: #e2e8f0; }
+.seatmap-legend .dot.otherclass { background: #fafafa; border: 1px dashed #e5e7eb; }
+
+.seatmap-error {
+  margin: 0 22px 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.seatmap-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid #eef1f5;
+}
+.seatmap-btn-cancel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 11px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.seatmap-btn-confirm {
+  flex: 2;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 11px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.seatmap-btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }

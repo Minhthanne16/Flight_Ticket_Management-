@@ -33,4 +33,9 @@ public class AirplaneController {
     public AirplaneResponse getById(@PathVariable Long id) {
         return airplaneService.getById(id);
     }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        airplaneService.delete(id);
+    }
 }

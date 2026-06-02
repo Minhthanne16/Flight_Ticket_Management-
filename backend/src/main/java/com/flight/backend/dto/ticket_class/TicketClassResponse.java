@@ -17,4 +17,5 @@ public class TicketClassResponse {
     private String className;
     private String description;
     private BigDecimal priceMultiplier;
+    private int baggageAllowanceKg;
 }

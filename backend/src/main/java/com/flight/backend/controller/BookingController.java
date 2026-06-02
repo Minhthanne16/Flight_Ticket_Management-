@@ -3,10 +3,11 @@ package com.flight.backend.controller;
 import com.flight.backend.dto.ApiResponse;
 import com.flight.backend.dto.booking.BookingResponse;
 import com.flight.backend.dto.booking.CreateBookingRequest;
-import com.flight.backend.entity.Booking;
+import com.flight.backend.dto.booking.MyBookingResponse;
 import com.flight.backend.service.BookingService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +25,26 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
-            @RequestBody CreateBookingRequest req) {
-        BookingResponse resp = this.bookingService.createBooking(req);
+            @RequestBody CreateBookingRequest req,
+            Authentication authentication) {
+        String email = authentication != null ? authentication.getName() : null;
+        BookingResponse resp = this.bookingService.createBooking(req, email);
         return ApiResponse.success(resp, "Tạo booking thành công");
+    }
+
+    // Vé của khách hàng đang đăng nhập
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<MyBookingResponse>>> getMyBookings(
+            Authentication authentication) {
+        List<MyBookingResponse> resp = this.bookingService.getMyBookings(authentication.getName());
+        return ApiResponse.success(resp, "Lấy danh sách vé thành công");
+    }
+
+    // Staff xác nhận đã nhận chuyển khoản
+    @PostMapping("/{id}/confirm-payment")
+    public ResponseEntity<ApiResponse<BookingResponse>> confirmPayment(@PathVariable Long id) {
+        BookingResponse resp = this.bookingService.confirmPaymentByBooking(id);
+        return ApiResponse.success(resp, "Xác nhận thanh toán thành công");
     }
 
     @GetMapping("/{id}")
@@ -36,20 +54,20 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Booking>>> getAllBookings() {
-        List<Booking> bookings = this.bookingService.getAllBookings();
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings() {
+        List<BookingResponse> bookings = this.bookingService.getAllBookings();
         return ApiResponse.success(bookings, "Lấy danh sách booking thành công");
     }
 
     @PutMapping("/{id}/expire")
-    public ResponseEntity<ApiResponse<Booking>> expireBooking(@PathVariable Long id) {
-        Booking booking = this.bookingService.expireBooking(id);
+    public ResponseEntity<ApiResponse<BookingResponse>> expireBooking(@PathVariable Long id) {
+        BookingResponse booking = this.bookingService.expireBooking(id);
         return ApiResponse.success(booking, "Booking đã hết hạn");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Booking>> cancelBooking(@PathVariable Long id) {
-        Booking booking = this.bookingService.cancelBooking(id);
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
+        BookingResponse booking = this.bookingService.cancelBooking(id);
         return ApiResponse.success(booking, "Xóa Booking thành công");
     }
 }

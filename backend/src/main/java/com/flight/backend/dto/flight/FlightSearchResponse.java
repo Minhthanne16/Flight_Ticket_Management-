@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -41,4 +42,11 @@ public class FlightSearchResponse {
     // Price
     private BigDecimal basePrice;
     private FlightStatus status;
+
+    // Tình trạng chỗ ngồi
+    private Integer availableSeats;
+    private Integer totalSeats;
+
+    // Các điểm dừng (sân bay trung chuyển), rỗng nếu bay thẳng
+    private List<FlightSearchStopResponse> stops;
 }

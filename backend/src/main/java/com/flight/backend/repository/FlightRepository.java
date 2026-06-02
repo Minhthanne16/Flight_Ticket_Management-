@@ -3,6 +3,7 @@ package com.flight.backend.repository;
 import com.flight.backend.entity.Flight;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -14,4 +15,5 @@ public interface FlightRepository extends JpaRepository<Flight, Long>, JpaSpecif
 
     List<Flight> findByRouteId(Long routeId);
     boolean existsByFlightCode(String flightCode);
+    Optional<Flight> findByFlightCode(String flightCode);
 }

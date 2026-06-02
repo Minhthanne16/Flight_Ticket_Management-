@@ -18,32 +18,32 @@ import lombok.Setter;
 @Setter
 public class StaffRequest {
 
-    @NotBlank(message = "Full name is required")
+    @NotBlank(message = "Vui lòng nhập họ tên")
     private String fullName;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @Email(message = "Email không hợp lệ")
+    @NotBlank(message = "Vui lòng nhập email")
     private String email;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Vui lòng nhập mật khẩu")
     private String password;
 
     @Pattern(
             regexp = "^(0|\\+84)[0-9]{9,10}$",
-            message = "Invalid phone number")
+            message = "Số điện thoại không hợp lệ")
     private String phoneNumber;
 
-    @NotNull(message = "Staff code is required")
-    @Positive(message = "Staff code must be positive")
+    @NotNull(message = "Vui lòng nhập mã nhân viên")
+    @Positive(message = "Mã nhân viên phải là số dương")
     private Integer staffCode;
 
-    @NotBlank(message = "Department is required")
+    @NotBlank(message = "Vui lòng nhập phòng ban")
     private String department;
 
-    @NotNull(message = "Hire date is required")
-    @PastOrPresent(message = "Hire date cannot be in the future")
+    @NotNull(message = "Vui lòng nhập ngày vào làm")
+    @PastOrPresent(message = "Ngày vào làm không được ở tương lai")
     private LocalDate hireDate;
 
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Vui lòng chọn trạng thái")
     private StaffStatus status;
 }

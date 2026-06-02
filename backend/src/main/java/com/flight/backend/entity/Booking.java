@@ -60,6 +60,9 @@ public class Booking {
     @Column(name = "final_amount")
     private BigDecimal finalAmount;
 
+    @Column(name = "refund_amount")
+    private BigDecimal refundAmount;
+
     @Column(name = "pnr_code", unique = true, length = 10)
     private String pnrCode;
 

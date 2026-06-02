@@ -30,6 +30,8 @@ public class BookingResponse {
 
     private BigDecimal totalAmount;
 
+    private BigDecimal refundAmount;
+
     private LocalDateTime bookingDate;
 
     private LocalDateTime expirationTime;

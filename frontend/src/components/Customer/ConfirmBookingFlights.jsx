@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../css/Customer/SearchResults.css';
 
@@ -14,39 +14,64 @@ const formatPrice = (price) => {
 };
 
 const formatDisplayDate = (date) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  return `${days[date.getDay()]}, ${date.getDate()} Thg ${date.getMonth() + 1}`;
 };
 
 function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
-  if (!flight) return null;
   const navigate = useNavigate();
+  const [ticketClasses, setTicketClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('http://localhost:5000/admin/ticket-classes')
+      .then(res => {
+        if (!res.ok) throw new Error(`Server trả về lỗi: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (!mounted) return;
+        const list = Array.isArray(data) ? data : (data?.data || []);
+        // Sắp xếp theo hệ số giá tăng dần
+        list.sort((a, b) => Number(a.priceMultiplier ?? 1) - Number(b.priceMultiplier ?? 1));
+        setTicketClasses(list);
+      })
+      .catch(() => { if (mounted) setLoadError('Không thể tải danh sách hạng vé. Vui lòng thử lại sau.'); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  if (!flight) return null;
   const passengerCount = parseInt(filters.passengers, 10) || 1;
-  const totalPrice = flight.basePrice * passengerCount;
-  const handleSelectClass = (cabinClass, priceMultiplier) => {
-  const finalPrice = flight.basePrice * priceMultiplier * passengerCount;
 
-  navigate('/customer/booking-details', {
-    state: {
-      flight,
-      filters,
-      fromCode,
-      toCode,
-      cabinClass,
-      totalPrice: finalPrice,
-      passengerCount
-    }
-  });
+  const handleSelectClass = (ticketClass) => {
+    const multiplier = Number(ticketClass.priceMultiplier ?? 1);
+    const finalPrice = Number(flight.basePrice) * multiplier * passengerCount;
 
-  onClose();
-};
+    navigate('/customer/booking-details', {
+      state: {
+        flight,
+        filters,
+        fromCode,
+        toCode,
+        cabinClass: ticketClass.className,
+        ticketClassId: ticketClass.id,
+        baggageAllowanceKg: ticketClass.baggageAllowanceKg,
+        totalPrice: finalPrice,
+        passengerCount
+      }
+    });
+
+    onClose();
+  };
   return (
     <div className="ticket-modal-overlay" onClick={onClose}>
       <div className="ticket-modal-content" onClick={(e) => e.stopPropagation()}>
         
         <div className="modal-header">
-          <h3><i className="fa-solid fa-plane-departure"></i> Select ticket type</h3>
+          <h3><i className="fa-solid fa-plane-departure"></i> Chọn hạng vé</h3>
           <button className="close-btn" onClick={onClose}>
             <i className="fa-solid fa-xmark"></i>
           </button>
@@ -57,7 +82,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
     {/* Phần Header */}
     <div className="summary-header">
       <div className="header-left">
-        <strong>Departure</strong> 
+        <strong>Chuyến đi</strong>
       </div>
       <span className="summary-date">
         {filters.departDate ? formatDisplayDate(new Date(filters.departDate)) : ''}
@@ -67,7 +92,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
     {/* Phần Details (Sẽ áp dụng lưới Grid 4 cột) */}
     <div className="summary-details">
   <div className="summary-logo">
-    <img src={flight.airplane?.airline?.logo || '/default-airline.png'} alt="logo" className="modal-airline-logo" />
+    <img src={flight.airlineLogo || '/default-airline.png'} alt="logo" className="modal-airline-logo" />
   </div>
 
   <div className="summary-time">
@@ -83,7 +108,7 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
     </div>
     <div className="route-line-container">
       <div className="route-line"></div>
-      <div className="route-type">Direct</div>
+      <div className="route-type">Bay thẳng</div>
     </div>
   </div>
 
@@ -96,39 +121,34 @@ function ConfirmBookingFlights({ flight, onClose, fromCode, toCode, filters }) {
 
 
          
-          <div className="ticket-options-grid">
-            
-            <div className="ticket-option-card">
-              <h4>{filters.cabinClass === 'business' ? 'Business Class' : 'Economy Class'}</h4>
-              <h2 className="modal-price">
-                {formatPrice(totalPrice)} VND
-                <small>/ {passengerCount} pax</small>
-              </h2>
-              <ul className="modal-amenities">
-                <li><i className="fa-solid fa-briefcase"></i> Cabin baggage 7 kg</li>
-                <li><i className="fa-solid fa-suitcase-rolling"></i> Checked baggage 2 x 23 kg</li>
-                <li className="disabled-text"><i className="fa-solid fa-ban"></i> Reschedule not available</li>
-                <li className="disabled-text"><i className="fa-solid fa-ban"></i> Non-refundable</li>
-              </ul>
-              <button className="btn-select-final" onClick={() => handleSelectClass('ECONOMY', 1)}>Select</button>
+          {loading ? (
+            <div className="loading-state">Đang tải hạng vé...</div>
+          ) : loadError ? (
+            <div className="error-state" style={{ color: '#DC2626', padding: '16px', textAlign: 'center' }}>{loadError}</div>
+          ) : ticketClasses.length === 0 ? (
+            <div className="no-flights">Chưa có hạng vé nào trong hệ thống.</div>
+          ) : (
+            <div className="ticket-options-grid">
+              {ticketClasses.map((tc) => {
+                const multiplier = Number(tc.priceMultiplier ?? 1);
+                const classPrice = Number(flight.basePrice) * multiplier * passengerCount;
+                return (
+                  <div key={tc.id} className="ticket-option-card">
+                    <h4>{tc.className}</h4>
+                    {tc.description && <p className="ticket-class-desc">{tc.description}</p>}
+                    <h2 className="modal-price">
+                      {formatPrice(classPrice)} VND
+                      <small>/ {passengerCount} khách</small>
+                    </h2>
+                    <ul className="modal-amenities">
+                      <li><i className="fa-solid fa-suitcase-rolling"></i> Hành lý ký gửi {tc.baggageAllowanceKg} kg</li>
+                    </ul>
+                    <button className="btn-select-final" onClick={() => handleSelectClass(tc)}>Chọn</button>
+                  </div>
+                );
+              })}
             </div>
-
-            <div className="ticket-option-card recommended">
-              <h4>Business Class {filters.cabinClass === 'business'}</h4>
-              <h2 className="modal-price">
-                {formatPrice((totalPrice + (totalPrice * 0.5)) * passengerCount)} VND
-                <small>/ {passengerCount} pax</small>
-              </h2>
-              <ul className="modal-amenities">
-                <li><i className="fa-solid fa-briefcase"></i> Cabin baggage 7 kg</li>
-                <li><i className="fa-solid fa-suitcase-rolling"></i> Checked baggage 2 x 23 kg</li>
-                <li className="success-text"><i className="fa-solid fa-check"></i> Free Reschedule</li>
-                <li className="success-text"><i className="fa-solid fa-check"></i> Refundable</li>
-              </ul>
-              <button className="btn-select-final" onClick={() => handleSelectClass('BUSINESS', 1.5)}>Select</button>
-            </div>
-
-          </div>
+          )}
         </div>
 
       </div>

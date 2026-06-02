@@ -26,7 +26,7 @@ public class StaffService {
         request.getStaffCode())) {
 
     throw new RuntimeException(
-            "Staff code already exists");
+            "Mã nhân viên đã tồn tại");
 }
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -129,7 +129,7 @@ public StaffResponse update(
                     request.getStaffCode())) {
 
         throw new RuntimeException(
-                "Staff code already exists");
+                "Mã nhân viên đã tồn tại");
     }
 
     user.setFullName(request.getFullName());

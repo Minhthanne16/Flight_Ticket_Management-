@@ -53,10 +53,10 @@ function Navbar() {
 
         {/* Khối 2: Menu giữa */}
         <ul className="hidden lg:flex items-center space-x-8">
-          <li><Link to="/" className={`font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Về chúng tôi</Link></li>
-          <li><Link to="/" className={`font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Đặt vé</Link></li>
-          <li><Link to="/" className={`font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Chuyến bay của tôi</Link></li>
-          <li><Link to="/" className={`font-medium transition-colors hover:text-orange-600 ${isScrolled ? 'text-orange-500' : 'text-orange-400'}`}>Khuyến mãi 🔥</Link></li>
+          <li><Link to="/" className={`text-lg font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Về chúng tôi</Link></li>
+          <li><Link to="/" className={`text-lg font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Đặt vé</Link></li>
+          <li><Link to="/customer/my-flights" className={`text-lg font-medium transition-colors hover:text-blue-600 ${isScrolled ? 'text-slate-700' : 'text-white'}`}>Chuyến bay của tôi</Link></li>
+          <li><Link to="/" className={`text-lg font-medium transition-colors hover:text-orange-600 ${isScrolled ? 'text-orange-500' : 'text-orange-400'}`}>Khuyến mãi 🔥</Link></li>
         </ul>
 
         {/* Khối 3: Authen phải */}

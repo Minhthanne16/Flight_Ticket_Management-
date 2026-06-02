@@ -54,11 +54,11 @@ public class UserService {
 
     public UserResponse registerUser(RegisterUserRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("Email đã tồn tại");
         }
 
         if (userRepository.existsByPhoneNumber(req.getPhoneNumber())) {
-            throw new RuntimeException("Phone number already exists");
+            throw new RuntimeException("Số điện thoại đã tồn tại");
         }
 
         User newUser = new User();
@@ -106,14 +106,14 @@ public class UserService {
 
         // 5. Fetch user details to get fullName
         User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
         return new LoginResponse(userDetails.getUsername(), role, token, user.getFullName());
     }
 
     public User getUserById(Long id) {
         return this.userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
     }
 
     public void forgotPassword(ForgotPasswordRequest req) {

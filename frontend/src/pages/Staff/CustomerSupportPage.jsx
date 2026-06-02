@@ -406,7 +406,7 @@ function CancelTab({ requests, addToast, onRequestAction }) {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-[#E8E8F0] bg-[#FAFAFE] text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
-              <th className="px-6 py-4">Booking ID</th>
+              <th className="px-6 py-4">Mã Yêu Cầu</th>
               <th className="px-6 py-4">Khách Hàng</th>
               <th className="px-6 py-4">Thông Tin Chuyến Bay</th>
               <th className="px-6 py-4">Lý Do</th>

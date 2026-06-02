@@ -54,7 +54,7 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
                 
                 <div className="city-display">
                     <strong style={{ fontSize: '18px' }}>
-                        {selectedAirport?.city || "Select City"}
+                        {selectedAirport?.city || "Chọn thành phố"}
                     </strong> 
 
                     {selectedAirport && (
@@ -65,7 +65,7 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
                 </div>
 
                 <small className="airport-subtext" style={{ color: '#6B7280', opacity: 0.7 }}>
-                    {selectedAirport?.name || "Search for airport..."}
+                    {selectedAirport?.name || "Tìm sân bay..."}
                 </small>
             </div>
 
@@ -76,7 +76,7 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
                         <span className="search-icon">🔍</span>
                         <input
                             type="text"
-                            placeholder={label === "From" ? "Where from?" : "Where to?"}
+                            placeholder={label === "Chọn điểm đi" ? "Bạn muốn bay từ đâu?" : "Bạn muốn bay đến đâu?"}
                             autoFocus
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -102,7 +102,7 @@ function AirportPicker({ icon, label, selectedAirport, onSelect }) {
                                 </div>
                             ))
                         ) : (
-                            <p className="no-result">No airports found.</p>
+                            <p className="no-result">Không tìm thấy sân bay nào.</p>
                         )}
                     </div>
                 </div>

@@ -46,15 +46,15 @@ function Filter() {
       {/* Header */}
       <div className="filter-header">
         <span className="filter-title">
-          <i className="fa-solid fa-filter"></i> Filter
+          <i className="fa-solid fa-filter"></i> Bộ lọc
         </span>
-        <button className="reset-btn" onClick={handleReset}>Reset</button>
+        <button className="reset-btn" onClick={handleReset}>Đặt lại</button>
       </div>
 
       {/* Section Hành Khách (Passengers) */}
       <div className="filter-section">
         <div className="section-header">
-          <p className="title">Passengers</p>
+          <p className="title">Hành khách</p>
           <i className="fa-solid fa-chevron-up"></i>
         </div>
         <div className="passenger-counter">
@@ -78,7 +78,7 @@ function Filter() {
       {/* No. of Transit */}
       <div className="filter-section">
         <div className="section-header">
-          <p className="title">No. of transit</p>
+          <p className="title">Số điểm dừng</p>
           <i className="fa-solid fa-chevron-up"></i>
         </div>
         <div className="checkbox-group">
@@ -88,7 +88,7 @@ function Filter() {
               checked={currentTransit === 'direct'}
               onChange={() => updateUrlParam('transit', 'direct')}
             />
-            <span className="checkmark"></span> Direct
+            <span className="checkmark"></span> Bay thẳng
           </label>
           <label className="checkbox-item">
             <input 
@@ -96,7 +96,7 @@ function Filter() {
               checked={currentTransit === '1-transit'}
               onChange={() => updateUrlParam('transit', '1-transit')}
             />
-            <span className="checkmark"></span> 1 transit
+            <span className="checkmark"></span> 1 điểm dừng
           </label>
           <label className="checkbox-item">
             <input 
@@ -104,7 +104,7 @@ function Filter() {
               checked={currentTransit === '2-transit'}
               onChange={() => updateUrlParam('transit', '2-transit')}
             />
-            <span className="checkmark"></span> 2 transit
+            <span className="checkmark"></span> 2 điểm dừng
           </label>
         </div>
       </div>
@@ -112,15 +112,15 @@ function Filter() {
       {/* Departure time */}
       <div className="filter-section">
         <div className="section-header">
-          <p className="title">Departure time</p>
+          <p className="title">Giờ khởi hành</p>
           <i className="fa-solid fa-chevron-up"></i>
         </div>
         <div className="time-grid">
           {[
-            { id: 't1', label: 'Night to morning', time: '00:00 - 06:00' },
-            { id: 't2', label: 'Morning to noon', time: '06:00 - 12:00' },
-            { id: 't3', label: 'Noon to afternoon', time: '12:00 - 18:00' },
-            { id: 't4', label: 'Afternoon to night', time: '18:00 - 00:00' },
+            { id: 't1', label: 'Đêm đến sáng', time: '00:00 - 06:00' },
+            { id: 't2', label: 'Sáng đến trưa', time: '06:00 - 12:00' },
+            { id: 't3', label: 'Trưa đến chiều', time: '12:00 - 18:00' },
+            { id: 't4', label: 'Chiều đến tối', time: '18:00 - 00:00' },
           ].map((item) => (
             <button
               key={item.id}
@@ -136,22 +136,22 @@ function Filter() {
       {/* Class Section */}
       <div className="filter-section">
         <div className="section-header">
-          <p className="title">Class</p>
+          <p className="title">Hạng vé</p>
           <i className="fa-solid fa-chevron-up"></i>
         </div>
         <div className="class-group">
-          <button 
+          <button
             className={`class-btn ${currentClass === 'economy' ? 'active' : ''}`}
             onClick={() => updateUrlParam('cabinClass', 'economy')}
           >
-            Economy Class
+            Phổ thông
           </button>
 
-          <button 
+          <button
             className={`class-btn ${currentClass === 'business' ? 'active' : ''}`}
             onClick={() => updateUrlParam('cabinClass', 'business')}
           >
-            Business Class
+            Thương gia
           </button>
         </div>
       </div>

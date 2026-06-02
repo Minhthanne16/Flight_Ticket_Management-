@@ -3,14 +3,23 @@ import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import countryList from 'react-select-country-list';
-import '../../css/Customer/TicketInformation.css'; 
+import { voucherService } from '../../api/services/voucherService';
+import '../../css/Customer/TicketInformation.css';
 
+const formatDateTime = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm} • ${days[d.getDay()]}, ${d.getDate()} Thg ${d.getMonth() + 1}`;
+};
 
 function TicketInformation() {
   const location = useLocation();
   const navigate = useNavigate();
   const countryOptions = useMemo(() => countryList().getData(), []);
-  const { flight, filters, fromCode, toCode, cabinClass, totalPrice, passengerCount } = location.state || {};
+  const { flight, filters, fromCode, toCode, cabinClass, ticketClassId, baggageAllowanceKg, totalPrice, passengerCount } = location.state || {};
 
   const [passengers, setPassengers] = useState(
     Array.from({ length: passengerCount || 1 }, () => ({
@@ -24,6 +33,37 @@ function TicketInformation() {
   );
 
   const [expandedIndexes, setExpandedIndexes] = useState([0]);
+
+  // Voucher giảm giá
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucher, setVoucher] = useState(null); // { code, discount, finalAmount }
+  const [voucherErr, setVoucherErr] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
+
+  const finalTotal = voucher ? voucher.finalAmount : totalPrice;
+
+  const handleApplyVoucher = async () => {
+    const code = voucherInput.trim();
+    if (!code) { setVoucherErr('Vui lòng nhập mã giảm giá.'); return; }
+    setApplyingVoucher(true);
+    setVoucherErr('');
+    try {
+      const res = await voucherService.preview({ voucherCode: code, amount: totalPrice });
+      const data = res.data?.data || res.data;
+      setVoucher({ code: code.toUpperCase(), discount: Number(data.discount), finalAmount: Number(data.finalAmount) });
+    } catch (e) {
+      setVoucher(null);
+      setVoucherErr(e?.response?.data?.message || 'Mã giảm giá không hợp lệ.');
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setVoucher(null);
+    setVoucherInput('');
+    setVoucherErr('');
+  };
 
   const handlePassengerChange = (index, field, value) => {
     const updatedPassengers = [...passengers];
@@ -43,31 +83,23 @@ function TicketInformation() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Tạo payload để sau này bạn dùng gửi xuống Backend
-    const bookingPayload = {
-      flightId: flight.id,
-      cabinClass: cabinClass,
-      passengers: passengers
-    };
-    console.log("Dữ liệu gửi xuống Backend:", bookingPayload);
 
-    // TẠO FAKE DATA ĐỂ HIỂN THỊ TRANG SUCCESS (Tạm bỏ qua bước gọi API thanh toán)
-    // 1. Tạo mã đặt chỗ (PNR) ngẫu nhiên 6 ký tự
-    const reservationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    // 2. Lấy giờ hiện tại
-    const now = new Date();
-    const bookingTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-    console.log("Cấu trúc chuyến bay:", flight);
-    // Chuyển hướng sang trang Success và mang theo dữ liệu
-    navigate('/customer/booking-success', {
+    // Chuyển sang trang thanh toán VietQR, mang theo toàn bộ dữ liệu đặt vé
+    navigate('/customer/payment', {
       state: {
         flight,
-        passengers,
+        filters,
+        fromCode,
+        toCode,
+        cabinClass,
+        ticketClassId,
+        baggageAllowanceKg,
         totalPrice,
-        reservationCode,
-        bookingTime
+        finalTotal,
+        voucherCode: voucher ? voucher.code : null,
+        discount: voucher ? voucher.discount : 0,
+        passengerCount,
+        passengers
       }
     });
   };
@@ -78,7 +110,7 @@ function TicketInformation() {
       <div className="booking-content">
         {/* CỘT TRÁI: FORM ĐIỀN THÔNG TIN */}
         <div className="booking-form-section">
-          <h2>Traveler Details</h2>
+          <h2>Thông tin hành khách</h2>
           <form id="booking-form" onSubmit={handleSubmit}>
             
             {passengers.map((passenger, index) => (
@@ -90,7 +122,7 @@ function TicketInformation() {
 }`}
                   onClick={() => toggleAccordion(index)}
                 >
-                  <h4><i className="fa-solid fa-user"></i> Adult {index + 1}</h4>
+                  <h4><i className="fa-solid fa-user"></i> Hành khách {index + 1}</h4>
                   <i
   className={`fa-solid fa-chevron-${
     expandedIndexes.includes(index) ? 'up' : 'down'
@@ -101,57 +133,57 @@ function TicketInformation() {
                 {expandedIndexes.includes(index) && (
                   <div className="accordion-body">
                     <div className="form-alert">
-                      <i className="fa-solid fa-triangle-exclamation"></i> 
-                      Please input the name exactly as in the travel document.
+                      <i className="fa-solid fa-triangle-exclamation"></i>
+                      Vui lòng nhập họ tên chính xác như trên giấy tờ tùy thân.
                     </div>
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Full Name *</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. NGUYEN VAN ANH"
+                        <label>Họ và tên *</label>
+                        <input
+                          type="text"
+                          placeholder="VD: NGUYEN VAN ANH"
                           value={passenger.fullName}
                           onChange={(e) => handlePassengerChange(index, 'fullName', e.target.value.toUpperCase())}
-                          required 
+                          required
                         />
                       </div>
                       <div className="form-group">
-                        <label>Gender *</label>
-                        <select 
+                        <label>Giới tính *</label>
+                        <select
                           value={passenger.gender}
                           onChange={(e) => handlePassengerChange(index, 'gender', e.target.value)}
                         >
-                          <option value="MALE">Male</option>
-                          <option value="FEMALE">Female</option>
+                          <option value="MALE">Nam</option>
+                          <option value="FEMALE">Nữ</option>
                         </select>
                       </div>
                     </div>
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Date of Birth *</label>
-                        <input 
-                          type="date" 
+                        <label>Ngày sinh *</label>
+                        <input
+                          type="date"
                           value={passenger.dateOfBirth}
                           onChange={(e) => handlePassengerChange(index, 'dateOfBirth', e.target.value)}
-                          required 
+                          required
                         />
                       </div>
                       <div className="form-group">
-                        <label>ID Card / Passport Number *</label>
-                        <input 
-                          type="text" 
+                        <label>CCCD / Số hộ chiếu *</label>
+                        <input
+                          type="text"
                           value={passenger.documentNumber}
                           onChange={(e) => handlePassengerChange(index, 'documentNumber', e.target.value)}
-                          required 
+                          required
                         />
                       </div>
                     </div>
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Nationality</label>
+                        <label>Quốc tịch</label>
                        <Select
   options={countryOptions}
   value={
@@ -166,7 +198,7 @@ function TicketInformation() {
       selectedOption.label
     )
   }
-  placeholder="Select nationality..."
+  placeholder="Chọn quốc tịch..."
   isSearchable
 
   menuPortalTarget={document.body}
@@ -181,9 +213,9 @@ function TicketInformation() {
 />
                       </div>
                       <div className="form-group">
-                        <label>Email (Optional)</label>
-                        <input 
-                          type="email" 
+                        <label>Email (Không bắt buộc)</label>
+                        <input
+                          type="email"
                           value={passenger.email}
                           onChange={(e) => handlePassengerChange(index, 'email', e.target.value)}
                         />
@@ -194,31 +226,82 @@ function TicketInformation() {
               </div>
             ))}
 
-            <button type="submit" className="btn-continue" >Continue to Payment</button>
+            <button type="submit" className="btn-continue" >Xác nhận đặt vé</button>
           </form>
         </div>
 
-        {/* CỘT PHẢI: TÓM TẮT CHUYẾN BAY (Tương tự ảnh bạn gửi) */}
+        {/* CỘT PHẢI: TÓM TẮT CHUYẾN BAY */}
         <div className="booking-summary-section">
           <div className="summary-card">
-            <h3>Flight Summary</h3>
+            <h3>Tóm tắt chuyến bay</h3>
             <div className="route-info">
               <span className="city">{fromCode}</span>
               <i className="fa-solid fa-arrow-right"></i>
               <span className="city">{toCode}</span>
             </div>
             <div className="flight-details-mini">
-              <p>Class: <strong>{cabinClass}</strong></p>
-              <p>Passengers: <strong>{passengerCount}</strong></p>
+              {flight?.airlineName && (
+                <p>Hãng bay: <strong>{flight.airlineName}</strong></p>
+              )}
+              {flight?.flightCode && (
+                <p>Số hiệu: <strong>{flight.flightCode}</strong></p>
+              )}
+              {flight?.departureTime && (
+                <p>Khởi hành: <strong>{formatDateTime(flight.departureTime)}</strong></p>
+              )}
+              <p>Hạng vé: <strong>{cabinClass}</strong></p>
+              {(baggageAllowanceKg ?? null) !== null && (
+                <p>Hành lý ký gửi: <strong>{baggageAllowanceKg} kg</strong></p>
+              )}
+              <p>Số hành khách: <strong>{passengerCount}</strong></p>
             </div>
           </div>
 
+          {/* Mã giảm giá */}
+          <div className="summary-card voucher-card">
+            <h3>Mã giảm giá</h3>
+            {voucher ? (
+              <div className="voucher-applied">
+                <div>
+                  <i className="fa-solid fa-circle-check"></i> Đã áp dụng <strong>{voucher.code}</strong>
+                  <p>Giảm {new Intl.NumberFormat('vi-VN').format(voucher.discount)} VND</p>
+                </div>
+                <button type="button" className="voucher-remove" onClick={handleRemoveVoucher}>Bỏ</button>
+              </div>
+            ) : (
+              <>
+                <div className="voucher-input-row">
+                  <input
+                    type="text"
+                    placeholder="Nhập mã giảm giá"
+                    value={voucherInput}
+                    onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                  />
+                  <button type="button" onClick={handleApplyVoucher} disabled={applyingVoucher}>
+                    {applyingVoucher ? '...' : 'Áp dụng'}
+                  </button>
+                </div>
+                {voucherErr && <p className="voucher-error">{voucherErr}</p>}
+              </>
+            )}
+          </div>
+
           <div className="summary-card price-card">
-            <h3>Price Details</h3>
+            <h3>Chi tiết giá</h3>
+            <div className="price-row">
+              <span>Tạm tính</span>
+              <span>{new Intl.NumberFormat('vi-VN').format(totalPrice)} VND</span>
+            </div>
+            {voucher && (
+              <div className="price-row discount">
+                <span>Giảm giá</span>
+                <span>- {new Intl.NumberFormat('vi-VN').format(voucher.discount)} VND</span>
+              </div>
+            )}
             <div className="price-row total">
-              <span>Total you pay</span>
+              <span>Tổng thanh toán</span>
               <span className="price-amount">
-                {new Intl.NumberFormat('vi-VN').format(totalPrice)} VND
+                {new Intl.NumberFormat('vi-VN').format(finalTotal)} VND
               </span>
             </div>
           </div>

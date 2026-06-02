@@ -18,8 +18,11 @@ export function useApi(apiFn, deps = [], options = {}) {
     if (!silent) { setLoading(true); setError(null); }
     try {
       const res = await apiFn();
-      // Handle both raw arrays and ApiResponse wrappers { data: [...] }
-      setData(res.data?.data ?? res.data);
+      // Service có thể trả về:
+      //  1) Nguyên response axios kèm ApiResponse wrapper: res.data.data
+      //  2) Nguyên response axios với payload trực tiếp: res.data
+      //  3) Dữ liệu đã bóc tách sẵn (mảng/đối tượng): res
+      setData(res?.data?.data ?? res?.data ?? res);
       if (!silent) setError(null);
     } catch (err) {
       if (!silent) setError(err.response?.data?.message || err.message || 'Lỗi kết nối máy chủ');

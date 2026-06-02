@@ -38,6 +38,7 @@ function ConfirmDialog({ open, title, message, confirmLabel, confirmClass, onCon
 
 const STATUS_STYLES = {
   CONFIRMED: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+  PAID: 'text-emerald-700 bg-emerald-50 border-emerald-200',
   PENDING: 'text-amber-700 bg-amber-50 border-amber-200',
   CANCELLED: 'text-slate-500 bg-slate-100 border-slate-200',
   EXPIRED: 'text-red-700 bg-red-50 border-red-200'
@@ -45,6 +46,7 @@ const STATUS_STYLES = {
 
 const STATUS_LABELS = {
   CONFIRMED: 'Đã xác nhận',
+  PAID: 'Đã thanh toán',
   PENDING: 'Chờ thanh toán',
   CANCELLED: 'Đã hủy',
   EXPIRED: 'Đã hết hạn'
@@ -258,7 +260,7 @@ function BookingDetailPage() {
               </div>
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-slate-500"><span>Phương thức</span><span className="font-semibold">{booking.paymentMethod || 'Chưa chọn'}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Phương thức</span><span className="font-semibold">Chuyển khoản</span></div>
               <div className="flex justify-between text-slate-500"><span>Ngày đặt</span><span>{formatDateTime(booking.bookingDate)}</span></div>
               <div className="flex justify-between text-slate-500"><span>Hết hạn</span><span>{formatDateTime(booking.expirationTime)}</span></div>
             </div>
@@ -455,7 +457,7 @@ function BookingDetailPage() {
             </div>
             <div>
               <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Phương thức</p>
-              <p className="text-xs text-slate-700 font-medium">{booking.paymentMethod || 'Chưa thanh toán'}</p>
+              <p className="text-xs text-slate-700 font-medium">Chuyển khoản</p>
             </div>
             <div>
               <p className="text-[10px] uppercase text-slate-400 font-semibold mb-1">Hạn thanh toán</p>

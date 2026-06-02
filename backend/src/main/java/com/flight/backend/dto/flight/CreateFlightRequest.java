@@ -8,8 +8,8 @@ import com.flight.backend.entity.enums.FlightStatus;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -20,30 +20,30 @@ import lombok.Setter;
 @Setter
 public class CreateFlightRequest {
 
-    @NotBlank(message = "Flight code is required")
+    @NotBlank(message = "Vui lòng nhập mã chuyến bay")
     private String flightCode;
 
-    @NotNull(message = "Airplane is required")
+    @NotNull(message = "Vui lòng chọn máy bay")
     private Long airplaneId;
 
-    @NotNull(message = "Route is required")
+    @NotNull(message = "Vui lòng chọn tuyến bay")
     private Long routeId;
 
-    @NotNull(message = "Departure time is required")
+    @NotNull(message = "Vui lòng nhập giờ khởi hành")
+    @Future(message = "Giờ khởi hành phải ở tương lai")
     private LocalDateTime departureTime;
 
-    @Positive(message = "Estimate duration must be greater than 0")
+    @Positive(message = "Thời lượng bay phải lớn hơn 0")
     private int estimateDuration;
 
-    @NotNull(message = "Base price is required")
+    @NotNull(message = "Vui lòng nhập giá cơ bản")
     @DecimalMin(value = "0.0", inclusive = false,
-            message = "Base price must be greater than 0")
+            message = "Giá cơ bản phải lớn hơn 0")
     private BigDecimal basePrice;
 
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Vui lòng chọn trạng thái")
     private FlightStatus status;
 
     @Valid
-    @NotEmpty(message = "Flight stops cannot be empty")
     private List<CreateFlightStopRequest> flightStops;
 }

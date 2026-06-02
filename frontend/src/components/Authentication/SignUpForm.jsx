@@ -22,6 +22,7 @@ function SignUpForm() {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const [agreeTerms, setAgreeTerms] = useState(false);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -44,6 +45,25 @@ function SignUpForm() {
         setErrorMsg('');
         setSuccessMsg('');
 
+        // ===== Validate phía client, hiển thị thông báo cho người dùng =====
+        if (!formData.fullName.trim()) {
+            setErrorMsg('Vui lòng nhập họ và tên.');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email.trim())) {
+            setErrorMsg('Email không hợp lệ. Vui lòng kiểm tra lại.');
+            return;
+        }
+
+        // khớp với @Pattern ở backend: ^(0|\+84)[0-9]{9,10}$
+        const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+        if (!phoneRegex.test(formData.phoneNumber.trim())) {
+            setErrorMsg('Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setErrorMsg('Mật khẩu xác nhận không khớp!');
             return;
@@ -51,6 +71,11 @@ function SignUpForm() {
 
         if (formData.password.length < 8) {
             setErrorMsg('Mật khẩu phải chứa ít nhất 8 ký tự!');
+            return;
+        }
+
+        if (!agreeTerms) {
+            setErrorMsg('Vui lòng đồng ý với Điều khoản & Chính sách.');
             return;
         }
 
@@ -102,7 +127,7 @@ function SignUpForm() {
                     <p className="signup-subtext">Tạo tài khoản để trải nghiệm dịch vụ hàng không đẳng cấp.</p>
 
                     {/* Form */}
-                    <form className="signup-form-fields" onSubmit={handleSubmit}>
+                    <form className="signup-form-fields" onSubmit={handleSubmit} noValidate>
 
                         {/* Error and Success Alerts */}
                         {errorMsg && (
@@ -228,7 +253,7 @@ function SignUpForm() {
 
                         {/* Checkbox */}
                         <label className="terms-checkbox">
-                            <input type="checkbox" required />
+                            <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} />
                             <span>
                                 Tôi đồng ý với{' '}
                                 <button type="button" className="link-inline">Điều khoản &amp; Chính sách</button>

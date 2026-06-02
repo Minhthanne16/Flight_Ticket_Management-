@@ -85,11 +85,7 @@ function PassengerPicker({ setPassengers }) {
     if (counts.adult > 0) {
 
       details.push(
-        `${counts.adult} Adult${
-          counts.adult > 1
-            ? 's'
-            : ''
-        }`
+        `${counts.adult} Người lớn`
       );
 
     }
@@ -97,20 +93,12 @@ function PassengerPicker({ setPassengers }) {
     if (counts.child > 0) {
 
       details.push(
-        `${counts.child} ${
-          counts.child > 1
-            ? 'Children'
-            : 'Child'
-        }`
+        `${counts.child} Trẻ em`
       );
 
     }
 
-    return `${totalPassengers} Passenger${
-      totalPassengers > 1
-        ? 's'
-        : ''
-    } (${details.join(', ')})`;
+    return `${totalPassengers} Hành khách (${details.join(', ')})`;
 
   };
 
@@ -153,8 +141,8 @@ function PassengerPicker({ setPassengers }) {
         <div className="passenger-dropdown">
 
           <PassengerRow
-            label="Adult"
-            desc="(12 and over)"
+            label="Người lớn"
+            desc="(12 tuổi trở lên)"
             count={counts.adult}
             onUpdate={(step) =>
               updateCount(
@@ -165,8 +153,8 @@ function PassengerPicker({ setPassengers }) {
           />
 
           <PassengerRow
-            label="Child"
-            desc="(2 - 11)"
+            label="Trẻ em"
+            desc="(2 - 11 tuổi)"
             count={counts.child}
             onUpdate={(step) =>
               updateCount(

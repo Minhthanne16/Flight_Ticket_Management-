@@ -1,24 +1,74 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, X, CheckCircle, Info } from 'lucide-react';
 import { REGULATIONS as INIT_REGS } from '../../data/adminMockData';
+import { regulationService } from '../../api/services/regulationService';
 
 const GROUP_COLORS = { 'Chuyến bay': 'bg-violet-50 text-violet-700 border-violet-200', 'Đặt vé': 'bg-blue-50 text-blue-700 border-blue-200', 'Thanh toán': 'bg-emerald-50 text-emerald-700 border-emerald-200' };
 
-function Toast({ msg, onClose }) {
+const errMsg = (e, fallback) =>
+  e?.response?.data?.message || e?.message || fallback || 'Có lỗi xảy ra';
+
+// RegulationResponse (DB) -> shape dùng trong UI (giữ group/label/type theo mock nếu trùng settingKey)
+const mapDbReg = (c, mockByKey) => {
+  const mock = mockByKey.get(c.settingKey);
+  return {
+    id: `db-${c.id}`,
+    dbId: c.id,
+    group: mock?.group || 'Cấu hình khác',
+    key: c.settingKey,
+    label: c.regulationName,
+    value: String(c.settingValue ?? ''),
+    type: 'NUMBER',
+    description: c.description || mock?.description || '',
+    unit: c.unit || '',
+  };
+};
+
+// Gộp mock + DB, dedupe theo settingKey (ưu tiên DB)
+const mergeRegs = (mock, db) => {
+  const map = new Map();
+  mock.forEach(r => map.set(r.key, { ...r, dbId: r.dbId ?? null, unit: r.unit ?? '' }));
+  db.forEach(r => map.set(r.key, r));
+  return Array.from(map.values());
+};
+
+function Toast({ msg, type, onClose }) {
   if (!msg) return null;
+  const isError = type === 'error';
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white bg-violet-600 min-w-[260px]">
-      <CheckCircle className="w-4 h-4 shrink-0" /><span className="flex-1">{msg}</span>
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white min-w-[280px] max-w-[90vw]"
+      style={{ backgroundColor: isError ? '#DC2626' : '#16A34A' }}>
+      {isError ? <X className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+      <span className="flex-1">{msg}</span>
       <button onClick={onClose}><X className="w-4 h-4 opacity-70" /></button>
     </div>
   );
 }
 
 export default function RegulationManage() {
-  const [regs, setRegs] = useState(INIT_REGS);
+  const [regs, setRegs] = useState(INIT_REGS.map(r => ({ ...r, dbId: null, unit: '' })));
   const [edited, setEdited] = useState({});
-  const [toast, setToast] = useState('');
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type }), 3000);
+  };
+
+  // Tải quy định thật từ DB rồi gộp với mock
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await regulationService.getAll();
+        const mockByKey = new Map(INIT_REGS.map(r => [r.key, r]));
+        const dbRegs = (res.data?.data || res.data || []).map(c => mapDbReg(c, mockByKey));
+        if (mounted) setRegs(mergeRegs(INIT_REGS, dbRegs));
+      } catch {
+        // API lỗi -> giữ nguyên mock
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const groups = [...new Set(regs.map(r => r.group))];
   const hasChanges = Object.keys(edited).length > 0;
@@ -32,17 +82,49 @@ export default function RegulationManage() {
     }
   };
 
-  const handleSave = () => {
-    setRegs(prev => prev.map(r => edited[r.id] !== undefined ? { ...r, value: edited[r.id] } : r));
+  const handleSave = async () => {
+    const ids = Object.keys(edited);
+    let savedCount = 0, firstErr = null;
+    const newDbIds = {}; // reg.id (cũ) -> dbId vừa tạo
+    for (const id of ids) {
+      const reg = regs.find(r => r.id === id);
+      if (!reg) continue;
+      const payload = {
+        regulationName: reg.label,
+        settingKey: reg.key,
+        settingValue: Number(edited[id]),
+        unit: reg.unit?.trim() ? reg.unit : '-', // backend yêu cầu unit không rỗng
+        description: reg.description || '',
+      };
+      try {
+        if (reg.dbId) {
+          await regulationService.update(reg.dbId, payload);
+        } else {
+          // Chưa có trong DB -> tạo mới để quy định thực sự có hiệu lực ở backend
+          const res = await regulationService.create(payload);
+          const created = res?.data?.data || res?.data || res;
+          if (created?.id) newDbIds[reg.id] = created.id;
+        }
+        savedCount++;
+      } catch (e) {
+        firstErr = firstErr || errMsg(e);
+      }
+    }
+    setRegs(prev => prev.map(r => {
+      let next = edited[r.id] !== undefined ? { ...r, value: edited[r.id] } : r;
+      if (newDbIds[r.id]) next = { ...next, dbId: newDbIds[r.id], id: `db-${newDbIds[r.id]}` };
+      return next;
+    }));
     setEdited({});
-    showToast(`Đã lưu ${Object.keys(edited).length} cài đặt thành công!`);
+    if (firstErr) showToast(`Có lỗi khi lưu: ${firstErr}`, 'error');
+    else showToast(`Đã lưu ${savedCount} quy định vào DB.`);
   };
 
   const handleReset = () => { setEdited({}); showToast('Đã hoàn tác tất cả thay đổi.'); };
 
   return (
     <div className="space-y-5">
-      <Toast msg={toast} onClose={() => setToast('')} />
+      <Toast msg={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: toast.type })} />
 
       <div className="flex items-start justify-between">
         <div>

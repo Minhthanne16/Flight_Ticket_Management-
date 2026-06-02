@@ -67,9 +67,11 @@ public class PaymentService {
 
             ticket.setStatus(TicketStatus.ISSUED);
 
+            // Ghế được chọn SAU khi thanh toán -> có thể chưa có ghế tại thời điểm này
             FlightSeat seat = ticket.getFlightSeat();
-
-            seat.setStatus(FlightSeatStatus.BOOKED);
+            if (seat != null) {
+                seat.setStatus(FlightSeatStatus.BOOKED);
+            }
         }
 
         paymentRepository.save(payment);

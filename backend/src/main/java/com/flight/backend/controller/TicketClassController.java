@@ -31,8 +31,22 @@ public class TicketClassController {
         return ApiResponse.success(res, "Tạo hạng vé mới thành công");
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TicketClassResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateTicketClassRequest request) {
+        TicketClassResponse res = this.ticketClassService.update(id, request);
+        return ApiResponse.success(res, "Cập nhật hạng vé thành công");
+    }
+
     @GetMapping
     public List<TicketClass> getAll() {
         return ticketClassService.getAll();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Long id) {
+        ticketClassService.delete(id);
+        return ApiResponse.success("OK", "Xóa hạng ghế thành công");
     }
 }

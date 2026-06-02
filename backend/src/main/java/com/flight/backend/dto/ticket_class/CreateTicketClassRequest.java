@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -35,4 +36,8 @@ public class CreateTicketClassRequest {
             fraction = 2,
             message = "Price multiplier format is invalid")
     private BigDecimal priceMultiplier;
+
+    @NotNull(message = "Baggage allowance is required")
+    @Min(value = 0, message = "Baggage allowance must be greater than or equal to 0")
+    private Integer baggageAllowanceKg;
 }

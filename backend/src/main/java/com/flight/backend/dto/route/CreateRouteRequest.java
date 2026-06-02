@@ -11,13 +11,13 @@ import lombok.Setter;
 @Setter
 public class CreateRouteRequest {
 
-    @NotBlank(message = "Route code is required")
+    @NotBlank(message = "Vui lòng nhập mã tuyến bay")
     private String routeCode; // Ví dụ: SGN-HAN
 
-    @NotNull(message = "Departure airport is required")
+    @NotNull(message = "Vui lòng chọn sân bay đi")
     private Long departureAirportId;
 
-    @NotNull(message = "Arrival airport is required")
+    @NotNull(message = "Vui lòng chọn sân bay đến")
     private Long arrivalAirportId;
 
     private RouteStatus status;
