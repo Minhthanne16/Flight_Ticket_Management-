@@ -103,13 +103,6 @@ public class BookingService {
 
         Flight flight = flightService.getFlightById(req.getFlightId());
 
-        // Chỉ cho đặt vé chậm nhất 1 ngày trước giờ khởi hành
-        if (flight.getDepartureTime() != null
-                && flight.getDepartureTime().isBefore(LocalDateTime.now().plusDays(1))) {
-            throw new RuntimeException(
-                    "Chỉ được đặt vé chậm nhất 1 ngày trước giờ khởi hành.");
-        }
-
         TicketClass ticketClass = this.ticketClassService.findTicketClassById(req.getTicketClassId());
 
         // R06: số vé tối đa mỗi đơn theo quy định
@@ -169,7 +162,8 @@ public class BookingService {
         return this.bookingMapper.toResponse(booking);
     }
 
-    // Thông báo "khách đã chuyển khoản, chờ xác nhận" — staff xem ở /notifications, khách xem ở /notifications/my
+    // Thông báo "khách đã chuyển khoản, chờ xác nhận" — staff xem ở /notifications,
+    // khách xem ở /notifications/my
     private void createTransferNotification(Booking booking, User customer, BigDecimal amount) {
         Notification noti = new Notification();
         noti.setUser(customer);
@@ -266,7 +260,8 @@ public class BookingService {
                         .seatNumber(seat != null ? seat.getSeatNumber() : null)
                         .ticketClassName(tc != null ? tc.getClassName()
                                 : (seat != null && seat.getTicketClass() != null
-                                        ? seat.getTicketClass().getClassName() : null))
+                                        ? seat.getTicketClass().getClassName()
+                                        : null))
                         .status(t.getStatus() != null ? t.getStatus().name() : null)
                         .build());
             }
@@ -277,19 +272,23 @@ public class BookingService {
                 .pnrCode(b.getPnrCode())
                 .status(b.getStatus() != null ? b.getStatus().name() : null)
                 .paymentStatus(p != null && p.getStatus() != null ? p.getStatus().name() : "PENDING")
-                .totalAmount(b.getFinalAmount() != null ? b.getFinalAmount() : b.getTotalAmount())
+                .totalAmount(b.getTotalAmount())
                 .bookingDate(b.getBookingDate())
                 .flightId(f != null ? f.getId() : null)
                 .airlineName(airline != null ? airline.getAirlineName() : null)
                 .flightCode(f != null ? f.getFlightCode() : null)
                 .departureAirportCode(route != null && route.getDepartureAirport() != null
-                        ? route.getDepartureAirport().getAirportCode() : null)
+                        ? route.getDepartureAirport().getAirportCode()
+                        : null)
                 .arrivalAirportCode(route != null && route.getArrivalAirport() != null
-                        ? route.getArrivalAirport().getAirportCode() : null)
+                        ? route.getArrivalAirport().getAirportCode()
+                        : null)
                 .departureCity(route != null && route.getDepartureAirport() != null
-                        ? route.getDepartureAirport().getCity() : null)
+                        ? route.getDepartureAirport().getCity()
+                        : null)
                 .arrivalCity(route != null && route.getArrivalAirport() != null
-                        ? route.getArrivalAirport().getCity() : null)
+                        ? route.getArrivalAirport().getCity()
+                        : null)
                 .departureTime(f != null ? f.getDepartureTime() : null)
                 .arrivalTime(f != null ? f.getArrivalTime() : null)
                 .ticketClassId(purchasedClassId)

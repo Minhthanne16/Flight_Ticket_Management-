@@ -55,6 +55,9 @@ function Header() {
   };
 
   useEffect(() => {
+    // Fetch-on-mount hợp lệ: setNotifications chạy sau await trong loadNotifications,
+    // không phải setState đồng bộ nên không gây cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadNotifications();
     // Sync notifications across components/tabs when custom storage event fires
     window.addEventListener('storage', loadNotifications);
