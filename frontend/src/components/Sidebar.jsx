@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -32,7 +33,6 @@ const navGroups = [
   {
     title: 'TÀI KHOẢN',
     items: [
-      { name: 'Thông tin cá nhân', path: '/staff/personal-info', icon: User },
       { name: 'Quy định', path: '/staff/regulations', icon: ScrollText },
     ]
   }
@@ -119,7 +119,7 @@ function Sidebar() {
       </aside>
 
       {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
+      {showLogoutModal && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center"
           onClick={() => setShowLogoutModal(false)}
@@ -160,7 +160,8 @@ function Sidebar() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal animations */}
